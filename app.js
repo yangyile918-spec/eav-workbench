@@ -1456,6 +1456,7 @@
 
         let headers = [];
         let dataStartIndex = 0;
+        let expectedCols = 0;
 
         if (hasHeader) {
             // 按 Tab 拆表头，同时兼容空格分隔
@@ -1464,23 +1465,54 @@
             if (headers.length <= 1) {
                 headers = firstLine.split(/\s{2,}/).map(h => h.trim());
             }
+            expectedCols = headers.length;
             dataStartIndex = 1;
         } else {
-            // 无表头：根据列数生成默认列名
-            const maxCols = Math.max(...lines.map(l => {
-                const tabCount = (l.match(/\t/g)||[]).length;
-                return tabCount + 1;
-            }));
+            // 无表头：根据第一行 Tab 数列数确定列数
+            const firstLineTabCount = (firstLine.match(/\t/g)||[]).length;
+            expectedCols = firstLineTabCount + 1;
             // 炸机分析表默认列（7列）
             const DEFAULT_HEADERS_7 = ['分析时间','机型','机架号','架次','省份','初步结论','问题定性'];
             // 日常工作录入默认列（10列）
             const DEFAULT_HEADERS_10 = ['分析时间','工单编号','机架号','机型','架次-地块','省份','反馈人','分析人','问题定性','是否质保'];
-            headers = maxCols === 7 ? DEFAULT_HEADERS_7.slice() : DEFAULT_HEADERS_10.slice(0, maxCols);
+            headers = expectedCols === 7 ? DEFAULT_HEADERS_7.slice() : DEFAULT_HEADERS_10.slice(0, expectedCols);
+        }
+
+        // ========== 改进：多行字段合并 ==========
+        // 策略：如果一行 Tab 分隔后的列数 < expectedCols，说明它是上一行的续行（多行字段）
+        // 将续行内容追加到上一行的最后一个字段
+        const mergedLines = [];
+        let currentRow = null;
+
+        for (let i = dataStartIndex; i < lines.length; i++) {
+            const line = lines[i];
+            const tabCount = (line.match(/\t/g)||[]).length;
+            const colCount = tabCount + 1;
+
+            if (colCount >= expectedCols) {
+                // 完整行：保存上一行，开始新行
+                if (currentRow !== null) {
+                    mergedLines.push(currentRow);
+                }
+                currentRow = line;
+            } else {
+                // 续行：追加到当前行的末尾（用换行符连接）
+                if (currentRow !== null) {
+                    currentRow = currentRow + '\n' + line;
+                } else {
+                    // 第一行就是续行（异常情况），当作独立行
+                    currentRow = line;
+                }
+            }
+        }
+        // 保存最后一行
+        if (currentRow !== null) {
+            mergedLines.push(currentRow);
         }
 
         const rows = [];
-        for (let i = dataStartIndex; i < lines.length; i++) {
-            const line = lines[i];
+        for (let i = 0; i < mergedLines.length; i++) {
+            const line = mergedLines[i];
             // 按 Tab 拆分列
             const cols = line.split(/\t+/).map(c => c.trim());
             // 如果只有一个字段，尝试按多空格拆分（OCR结果常见）
