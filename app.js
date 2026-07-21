@@ -843,6 +843,11 @@
         document.getElementById('problemType').value = '';
         document.getElementById('auditResult').value = '';
         document.getElementById('analysisTime').value = formatDateTimeLocal(new Date());
+        // 自动填充分析人为当前登录用户
+        const session = getSession();
+        if (session && session.name) {
+            document.getElementById('analyst').value = session.name;
+        }
     }
 
     function saveRecord() {
@@ -1581,6 +1586,9 @@
             'region': 'region', 'preliminary': 'initialAnalysis', 'analysis': 'initialAnalysis',
             'root': 'problemType', 'cause': 'problemType', 'classification': 'problemType'
         };
+        // 获取当前登录用户
+        const session = getSession();
+        const currentUser = session ? session.name : '';
         let count = 0;
         smartParsedRows.forEach(row => {
             const record = { id: Date.now().toString(36) + Math.random().toString(36).substr(2,5) };
@@ -1588,6 +1596,10 @@
                 const field = FIELD_MAP[key];
                 if (field) record[field] = row[key];
             });
+            // 如果解析结果中没有分析人，自动填充当前登录用户
+            if (!record.analyst && currentUser) {
+                record.analyst = currentUser;
+            }
             if (record.analysisTime || record.workOrderNo || record.airframeNo) {
                 records.push(record);
                 count++;
