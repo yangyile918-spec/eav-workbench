@@ -890,12 +890,17 @@
         const r = records.find(x => x.id === id);
         if (!r) return;
         editingId = id;
+        const session = getSession();
         ['analysisTime','workOrderNo','airframeNo','model','flightBatch','feedbackPerson',
          'analyst','problemType','auditResult','tracker','reviewer','problemDescription',
          'faultCondition','initialAnalysis','followUp','finalConclusion','region'].forEach(k => {
             const el = document.getElementById(k);
             if (el) el.value = r[k] || '';
         });
+        // 分析人同步为当前登录用户
+        if (session && session.name) {
+            document.getElementById('analyst').value = session.name;
+        }
         switchPage('entry');
     };
 
