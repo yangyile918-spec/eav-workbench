@@ -123,25 +123,5 @@
   {
     "id": "mruaij980ycgt",
     "analysisTime": "Suspected main controller issue – abnormal barometer readings"
-  },
-  {
-    "id": "mruakzbux48jj",
-    "analysisTime": "2026-07-21T14:43",
-    "workOrderNo": "",
-    "airframeNo": "",
-    "model": "",
-    "flightBatch": "",
-    "feedbackPerson": "",
-    "analyst": "",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "",
-    "faultCondition": "",
-    "initialAnalysis": "",
-    "followUp": "",
-    "finalConclusion": "",
-    "region": ""
   }
 ]
