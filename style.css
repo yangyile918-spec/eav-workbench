@@ -1217,27 +1217,24 @@ body {
     margin-bottom: 20px;
 }
 .summary-card {
-    background: linear-gradient(135deg, var(--primary), var(--primary-light));
-    color: #fff;
+    background: linear-gradient(135deg, #f8f9ff 0%, #e8ecf8 100%);
+    color: var(--primary);
     border-radius: var(--radius);
-    padding: 16px;
+    padding: 20px 16px;
     text-align: center;
+    border: 2px solid var(--primary);
 }
 .summary-label {
     font-size: 14px;
-    color: #ffffff !important;
-    margin-bottom: 8px;
-    font-weight: 600;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
-    background: rgba(255,255,255,0.15);
-    padding: 4px 12px;
-    border-radius: 4px;
-    display: inline-block;
+    color: var(--primary) !important;
+    margin-bottom: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
 }
 .summary-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: #fff;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--primary);
 }
 
 /* ========== 表格增强 ========== */
