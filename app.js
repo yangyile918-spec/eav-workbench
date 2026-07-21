@@ -1728,8 +1728,7 @@
         }
 
         // ========== 改进：多行字段合并 ==========
-        // 策略：如果一行 Tab 分隔后的列数 < expectedCols，说明它是上一行的续行（多行字段）
-        // 将续行内容追加到上一行的最后一个字段
+        // 策略：检测新记录开始（包含日期+机型/机架号特征），否则视为续行
         const mergedLines = [];
         let currentRow = null;
 
@@ -1738,8 +1737,14 @@
             const tabCount = (line.match(/\t/g)||[]).length;
             const colCount = tabCount + 1;
 
-            if (colCount >= expectedCols) {
-                // 完整行：保存上一行，开始新行
+            // 检测是否是新记录的开始：包含日期+机型/机架号
+            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line);
+            const hasModel = /\b(J\d{2,3}|E\d{2,3})\b/i.test(line);
+            const hasFrame = /\b\d{5,6}\b/.test(line);
+            const isNewRecord = hasDate && (hasModel || hasFrame);
+
+            if (isNewRecord || colCount >= expectedCols) {
+                // 新记录开始或完整行：保存上一行，开始新行
                 if (currentRow !== null) {
                     mergedLines.push(currentRow);
                 }
