@@ -1,5 +1,45 @@
 [
   {
+    "id": "mrluccuzfftfl",
+    "analysisTime": "2026-07-15T16:51",
+    "workOrderNo": "TEST001",
+    "airframeNo": "",
+    "model": "",
+    "flightBatch": "",
+    "feedbackPerson": "",
+    "analyst": "",
+    "problemType": "",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
+    "initialAnalysis": "",
+    "followUp": "",
+    "finalConclusion": "",
+    "region": ""
+  },
+  {
+    "id": "mroj0941wbfby",
+    "analysisTime": "2026-07-17T13:56",
+    "workOrderNo": "J202607170001",
+    "airframeNo": "JMZKJ150UAV602595361",
+    "model": "J150",
+    "flightBatch": "SD_FLY-1096-02",
+    "feedbackPerson": "张三",
+    "analyst": "李四",
+    "problemType": "动力",
+    "auditResult": "质保",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "飞行中电机异常停转，导致飞机坠毁",
+    "faultCondition": "电机无响应，ESC报错",
+    "initialAnalysis": "检查发现电机绕组短路，导致ESC过流保护",
+    "followUp": "",
+    "finalConclusion": "",
+    "region": "山东"
+  },
+  {
     "id": "mroitz5qas8t1",
     "analysisTime": "2026-07-17T13:51",
     "workOrderNo": "1",
@@ -45,6 +85,66 @@
     "workOrderNo": "TEST-001",
     "airframeNo": "TESTFRAME001",
     "analyst": "测试员"
+  },
+  {
+    "id": "mrsum7j4x4tj0",
+    "analysisTime": "2026/7/20",
+    "model": "J100",
+    "airframeNo": "85684",
+    "flightBatch": "178449270766261 -- 50242528",
+    "region": "美国 Illinois",
+    "initialAnalysis": "FPV:无人机自主作业，左侧机身部件飞出，向左倾斜炸机。大屏数据：飞机作业速度由3.9m/s，降至2.2m/s,后台数据缺失。暂定分析：左侧机身部件松动、老化、破损，飞机起飞前未做好自检。",
+    "problemType": "人为原因——未自检"
+  },
+  {
+    "id": "mrsum7j470iio",
+    "analysisTime": "2026/7/20",
+    "model": "J100",
+    "airframeNo": "86195",
+    "flightBatch": "178449992038147 -- 50241557",
+    "region": "美国 Illinois",
+    "initialAnalysis": "FPV:无人机自主作业，返航途中坠入边界地块。大屏数据：飞机在49.8v电量预警值附近自主返航，后作业速度、高度下降坠机。后台数据缺失。暂定分析：观测电池电量状态",
+    "problemType": "设置问题——电池电压低 Setting Error – Low Battery Voltage"
+  },
+  {
+    "id": "mrsum7j4gga3k",
+    "analysisTime": "2026/7/20",
+    "model": "J100",
+    "airframeNo": "86323",
+    "flightBatch": "178450259521076 -- 50243491",
+    "region": "美国 Minnesota",
+    "initialAnalysis": "FPV:无 大屏数据：飞机起飞即播报紧急状态，作业速度低。后台数据缺失。",
+    "problemType": "设置问题——参数设置问题 Setting Issue – Parameter Configuration Error"
+  },
+  {
+    "id": "mrsv3c2le04jn",
+    "analysisTime": "2026-07-20",
+    "model": "J100",
+    "airframeNo": "85684",
+    "flightBatch": "178449270766261 -- 50242528",
+    "region": "美国 Illinois",
+    "initialAnalysis": "FPV:无人机自主作业，左侧机身部件飞出，向左倾斜炸机。大屏数据：飞机作业速度由3.9m/s，降至2.2m/s,后台数据缺失。暂定分析：左侧机身部件松动、老化、破损，飞机起飞前未做好自检。",
+    "problemType": "人为原因——未自检"
+  },
+  {
+    "id": "mrsv3c2licdcu",
+    "analysisTime": "2026-07-20",
+    "model": "J100",
+    "airframeNo": "86195",
+    "flightBatch": "178449992038147 -- 50241557",
+    "region": "美国 Illinois",
+    "initialAnalysis": "FPV:无人机自主作业，返航途中坠入边界地块。大屏数据：飞机在49.8v电量预警值附近自主返航，后作业速度、高度下降坠机。后台数据缺失。暂定分析：观测电池电量状态",
+    "problemType": "设置问题——电池电压低 Setting Error – Low Battery Voltage"
+  },
+  {
+    "id": "mrsv3c2lctrib",
+    "analysisTime": "2026-07-20",
+    "model": "J100",
+    "airframeNo": "86323",
+    "flightBatch": "178450259521076 -- 50243491",
+    "region": "美国 Minnesota",
+    "initialAnalysis": "FPV:无 大屏数据：飞机起飞即播报紧急状态，作业速度低。后台数据缺失。",
+    "problemType": "设置问题——参数设置问题 Setting Issue – Parameter Configuration Error"
   },
   {
     "id": "mrookju4rah60",
@@ -191,5 +291,17 @@
     "region": "Suspected Radar Issue — Overly Short",
     "feedbackPerson": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification.",
     "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrueumpriatbb",
+    "analysisTime": "2026-07-21",
+    "workOrderNo": "86295",
+    "airframeNo": "J50pro-12345",
+    "model": "J50pro",
+    "flightBatch": "3-地块A",
+    "feedbackPerson": "张三",
+    "analyst": "李四",
+    "problemType": "操作",
+    "auditResult": "质保"
   }
 ]
