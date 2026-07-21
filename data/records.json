@@ -123,5 +123,25 @@
   {
     "id": "mruaij980ycgt",
     "analysisTime": "Suspected main controller issue – abnormal barometer readings"
+  },
+  {
+    "id": "mruaolrlweupc",
+    "analysisTime": "2026-07-21T14:48",
+    "workOrderNo": "",
+    "airframeNo": "",
+    "model": "86294",
+    "flightBatch": "2026-07-21 02:55:36--03:00:36",
+    "feedbackPerson": "",
+    "analyst": "",
+    "problemType": "操作",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
+    "initialAnalysis": "大屏数据：飞机起飞时，大屏故障同时播报左后机臂未卡紧和炸机。",
+    "followUp": "",
+    "finalConclusion": "疑似操作问题——机臂未卡紧\nSuspected operational error – Unlocked loose arm frame",
+    "region": "美国 Kentucky"
   }
 ]
