@@ -1627,12 +1627,13 @@
                 // 解析失败或质量太差，显示原始OCR文本供手动编辑
                 preview.innerHTML = '<p class="hint">⚠️ OCR识别完成，但解析结果质量较差。请检查识别结果并手动编辑。</p>' +
                     '<textarea id="ocrEditText" rows="8" class="ocr-edit-area">' + esc(text) + '</textarea>' +
-                    '<button class="btn btn-info btn-sm" id="btnReparseOCR" style="margin-top:8px">🔄 重新解析</button>';
+                    '<button class="btn btn-info btn-sm" id="btnReparseOCR" style="margin-top:8px">🔄 重新解析</button>' +
+                    '<p class="hint" style="margin-top:8px;color:#e67e22">💡 提示：编辑文本后点击「重新解析」，解析成功后再点击右下角「确认导入」</p>';
                 document.getElementById('btnReparseOCR').addEventListener('click', () => {
                     const editedText = document.getElementById('ocrEditText').value;
                     smartParsedRows = parseSmartText(editedText);
                     if (smartParsedRows.length > 0) {
-                        preview.innerHTML = `<p class="hint">✅ 识别到 ${smartParsedRows.length} 条记录</p>` +
+                        preview.innerHTML = `<p class="hint">✅ 识别到 ${smartParsedRows.length} 条记录，可以点击右下角「确认导入」</p>` +
                             '<table class="data-table mini"><thead><tr>' +
                             Object.keys(smartParsedRows[0]).map(k => `<th>${k}</th>`).join('') +
                             '</tr></thead><tbody>' +
@@ -1789,7 +1790,19 @@
     }
 
     function confirmSmartEntry() {
-        if (smartParsedRows.length === 0) return;
+        // 如果 smartParsedRows 为空，尝试从文本框重新解析
+        if (smartParsedRows.length === 0) {
+            const textarea = document.getElementById('smartEntryText');
+            if (textarea && textarea.value.trim()) {
+                smartParsedRows = parseSmartText(textarea.value);
+            }
+        }
+        
+        if (smartParsedRows.length === 0) {
+            alert('⚠️ 没有可导入的记录。请先粘贴数据或上传图片进行识别。');
+            return;
+        }
+        
         const FIELD_MAP = {
             // 时间字段
             '分析时间': 'analysisTime', '时间': 'analysisTime', '日期': 'analysisTime', 'Date': 'analysisTime',
