@@ -20,5 +20,27 @@
     "initialAnalysis": "大屏数据：飞机起飞时，大屏故障同时播报左后机臂未卡紧和炸机。",
     "problemType": "疑似操作问题——机臂未卡紧\nSuspected operational error – Unlocked loose arm frame",
     "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrufsd50h9r93",
+    "analysisTime": "2026-07-21",
+    "model": "J70",
+    "airframeNo": "59963",
+    "flightBatch": "178457142332745 -- 50245169",
+    "region": "俄罗斯\nSamara",
+    "initialAnalysis": "FPV:无，无人机自主作业，后切手动，返航至起降点，作业高度降低坠机。\n大屏数据：飞机电池电量低，手动控制，航线末端难以维持动力，作业高度2s内由3.9m降至0.",
+    "problemType": "操作问题——电池电压耗尽 \nOperation Issue – Battery Voltage Depleted",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrufsd50d3plp",
+    "analysisTime": "2026-07-21",
+    "model": "J100",
+    "airframeNo": "86601",
+    "flightBatch": "178457666696773 -- 50245512",
+    "region": "美国\nIndiana",
+    "initialAnalysis": "FPV:无人机自主高速作业，向左偏离航线炸机。\n大屏数据：飞机进出作业速度为12.2m/s,作业高度由3.6米m降至1.9m，左前桨叶动力短时丢失。倾倒炸机。",
+    "problemType": "疑似动力问题——左前异常\nPower Issue – Front-Left Abnormality",
+    "analyst": "杨怡乐"
   }
 ]
