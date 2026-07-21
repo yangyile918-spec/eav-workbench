@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极目售后分析组工作台</title>
+    <link rel="stylesheet" href="style.css?v=27">
+    <script src="chart.umd.min.js"></script>
+    <script src="xlsx.full.min.js"></script>
+    <script src="html2canvas.min.js"></script>
+    <script src="jspdf.umd.min.js"></script>
+    <script src="tesseract.min.js"></script>
+    <script src="https://unpkg.com/docx@8.5.0/build/index.umd.js"></script>
+    <script src="https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+</head>
+<body>
+    <!-- 登录页面 -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-logo">极目</div>
+                <h2>售后分析组工作台</h2>
+                <p class="login-subtitle">请登录以继续</p>
+            </div>
+            <form id="loginForm" autocomplete="off">
+                <div class="login-field">
+                    <label>账号</label>
+                    <input type="text" id="loginAccount" placeholder="请输入账号" required autocomplete="off">
+                </div>
+                <div class="login-field">
+                    <label>密码</label>
+                    <input type="password" id="loginPassword" placeholder="请输入密码" required autocomplete="off">
+                </div>
+                <div class="login-error" id="loginError"></div>
+                <button type="submit" class="login-btn">登 录</button>
+            </form>
+            <div class="login-footer">极目 EAVISION · 售后分析组</div>
+        </div>
+    </div>
+
+    <div class="app" id="mainApp" style="display:none;">
+        <!-- 侧边栏 -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">极目</div>
+                <div class="brand-text">售后分析组工作台</div>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-item active" data-page="entry">
+                    <span class="nav-icon">✏️</span>
+                    <span>日常工作录入</span>
+                </a>
+                <a href="#" class="nav-item" data-page="daily">
+                    <span class="nav-icon">📄</span>
+                    <span>日报预览 / 导出</span>
+                </a>
+                <a href="#" class="nav-item" data-page="weekly">
+                    <span class="nav-icon">📊</span>
+                    <span>周报自动生成</span>
+                </a>
+                <a href="#" class="nav-item" data-page="report">
+                    <span class="nav-icon">📝</span>
+                    <span>定责分析报告</span>
+                </a>
+                <a href="#" class="nav-item" data-page="dashboard">
+                    <span class="nav-icon">📈</span>
+                    <span>数据统计看板</span>
+                </a>
+                <a href="#" class="nav-item" data-page="history">
+                    <span class="nav-icon">📂</span>
+                    <span>历史数据</span>
+                </a>
+                <a href="#" class="nav-item" data-page="trash">
+                    <span class="nav-icon">🗑️</span>
+                    <span>回收站</span>
+                </a>
+                <a href="#" class="nav-item nav-admin" data-page="users" id="navUsers" style="display:none;">
+                    <span class="nav-icon">👥</span>
+                    <span>用户管理</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-info-bar" id="userInfoBar">
+                    <span class="user-avatar" id="userAvatar">👤</span>
+                    <div class="user-detail">
+                        <span class="user-name" id="userName">—</span>
+                        <span class="user-role" id="userRole">—</span>
+                    </div>
+                    <button class="btn-logout" id="btnLogout" title="退出登录">🚪</button>
+                </div>
+                <div class="sync-status" id="syncStatus">
+                    <span class="sync-dot"></span>
+                    <span class="sync-text">本地存储</span>
+                    <button class="btn btn-xs btn-cloud" id="btnSyncNow" title="手动同步">🔄</button>
+                </div>
+                <div class="storage-actions">
+                    <button class="btn btn-sm btn-secondary" id="btnImport">📥 导入</button>
+                    <button class="btn btn-sm btn-secondary" id="btnExportAll">📤 导出</button>
+                    <button class="btn btn-sm btn-cloud" id="btnSettings" title="云同步设置">☁️</button>
+                    <input type="file" id="fileImport" accept=".json" hidden>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main">
+            <header class="topbar">
+                <h1 class="page-title" id="pageTitle">日常工作录入</h1>
+                <div class="user-info">
+                    <span id="currentDate"></span>
+                </div>
+            </header>
+
+            <!-- ========== 页面1：日常工作录入 ========== -->
+            <section class="page active" id="page-entry">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>故障分析记录填报</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-info" id="btnSmartEntry">📋 智能录入</button>
+                            <button class="btn btn-primary" id="btnAddRecord">➕ 新增记录</button>
+                        </div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="analysisTime">分析时间</label>
+                                <input type="datetime-local" id="analysisTime">
+                            </div>
+                            <div class="form-group">
+                                <label for="workOrderNo">工单编号</label>
+                                <input type="text" id="workOrderNo" placeholder="请输入工单编号">
+                            </div>
+                            <div class="form-group">
+                                <label for="airframeNo">机架号</label>
+                                <input type="text" id="airframeNo" placeholder="请输入机架号">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="model">机型</label>
+                                <input type="text" id="model" placeholder="如 J50pro、E50pro">
+                            </div>
+                            <div class="form-group">
+                                <label for="flightBatch">架次-地块</label>
+                                <input type="text" id="flightBatch" placeholder="请输入架次或地块">
+                            </div>
+                            <div class="form-group">
+                                <label for="region">省份/区域</label>
+                                <input type="text" id="region" placeholder="请输入省份或区域">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="feedbackPerson">反馈人</label>
+                                <input type="text" id="feedbackPerson" placeholder="请输入反馈人">
+                            </div>
+                            <div class="form-group">
+                                <label for="analyst">分析人</label>
+                                <input type="text" id="analyst" placeholder="请输入分析人">
+                            </div>
+                            <div class="form-group">
+                                <label for="problemType">问题定性</label>
+                                <input type="text" id="problemType" list="problemTypeList" placeholder="请选择或输入问题定性">
+                                <datalist id="problemTypeList">
+                                    <option value="设置">
+                                    <option value="操作">
+                                    <option value="动力">
+                                    <option value="结构">
+                                    <option value="软件">
+                                    <option value="其他">
+                                </datalist>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="auditResult">是否质保</label>
+                                <select id="auditResult">
+                                    <option value="">请选择</option>
+                                    <option value="质保">质保</option>
+                                    <option value="非质保">非质保</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="tracker">追踪人</label>
+                                <input type="text" id="tracker" placeholder="请输入追踪人">
+                            </div>
+                            <div class="form-group">
+                                <label for="reviewer">审核人</label>
+                                <input type="text" id="reviewer" placeholder="请输入审核人">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label for="problemDescription">问题反馈描述</label>
+                                <textarea id="problemDescription" rows="2" placeholder="请详细描述问题反馈内容"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label for="faultCondition">故障情况</label>
+                                <textarea id="faultCondition" rows="2" placeholder="请描述故障现象"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label for="initialAnalysis">初步分析过程</label>
+                                <textarea id="initialAnalysis" rows="2" placeholder="请记录初步分析思路"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label for="followUp">异常跟进情况</label>
+                                <textarea id="followUp" rows="2" placeholder="请记录后续跟进措施"></textarea>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group form-group-full">
+                                <label for="finalConclusion">最终结论</label>
+                                <textarea id="finalConclusion" rows="2" placeholder="请填写最终结论"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-primary" id="btnSave">💾 保存记录</button>
+                        <button class="btn btn-secondary" id="btnClear">🗑️ 清空表单</button>
+                    </div>
+                </div>
+
+                <!-- 今日记录 -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📋 今日记录 <span id="todayCount" class="badge">0 条</span></h2>
+                    </div>
+                    <table class="data-table" id="todayTable">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>工单编号</th>
+                                <th>机架号</th>
+                                <th>反馈人</th>
+                                <th>分析人</th>
+                                <th>问题定性</th>
+                                <th>是否质保</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <!-- 云同步设置弹窗 -->
+                <div class="modal" id="settingsModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>☁️ 云同步状态</h3>
+                            <button class="modal-close" id="settingsClose">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="sync-status-panel" style="text-align:center;padding:20px;">
+                                <div id="syncStatusIcon" style="font-size:48px;margin-bottom:16px;">☁️</div>
+                                <h4 id="syncStatusTitle" style="margin:0 0 8px 0;">云同步已启用</h4>
+                                <p id="syncStatusDesc" style="color:#666;margin:0 0 16px 0;">数据自动同步到 GitHub 仓库</p>
+                                <div style="background:#f5f5f5;padding:12px;border-radius:8px;margin-bottom:16px;">
+                                    <div style="font-size:12px;color:#888;margin-bottom:4px;">仓库</div>
+                                    <div style="font-family:monospace;font-size:14px;">yangyile918-spec/eav-workbench</div>
+                                </div>
+                                <div style="background:#f5f5f5;padding:12px;border-radius:8px;margin-bottom:16px;">
+                                    <div style="font-size:12px;color:#888;margin-bottom:4px;">同步状态</div>
+                                    <div id="syncStatusText" style="font-size:14px;font-weight:bold;color:#4CAF50;">已同步</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer" style="justify-content:center;">
+                            <button class="btn btn-secondary" id="btnSyncNow"> 立即同步</button>
+                            <button class="btn btn-secondary" id="btnDisableSync" style="display:none;">⏸️ 暂停同步</button>
+                            <button class="btn btn-primary" id="btnEnableSync">✅ 启用同步</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 智能录入弹窗 -->
+                <div class="modal" id="smartEntryModal">
+                    <div class="modal-content modal-lg">
+                        <div class="modal-header">
+                            <h3>📋 智能录入</h3>
+                            <button class="modal-close" id="smartEntryClose">&times;</button>
+                        </div>
+                        <div class="modal-body">
+                            <!-- 输入方式切换 -->
+                            <div class="smart-tabs">
+                                <button class="smart-tab active" data-tab="text">📝 粘贴文本</button>
+                                <button class="smart-tab" data-tab="image">📸 图片识别</button>
+                            </div>
+                            <!-- 文本粘贴区 -->
+                            <div class="smart-tab-content" id="smartTabText">
+                                <p class="hint">粘贴表格数据（支持从Excel/网页复制），系统将自动识别字段并导入。</p>
+                                <textarea id="smartEntryText" rows="10" placeholder="在此粘贴表格数据..."></textarea>
+                            </div>
+                            <!-- 图片OCR区 -->
+                            <div class="smart-tab-content" id="smartTabImage" style="display:none">
+                                <div class="ocr-upload-area" id="ocrUploadArea">
+                                    <div class="ocr-upload-icon">📷</div>
+                                    <p>拖拽图片到此处，或 <label for="ocrFileInput" class="ocr-browse-link">点击选择文件</label></p>
+                                    <p class="hint">支持 JPG / PNG / BMP，建议清晰的表格截图</p>
+                                    <input type="file" id="ocrFileInput" accept="image/*" style="display:none">
+                                </div>
+                                <div class="ocr-preview-area" id="ocrPreviewArea" style="display:none">
+                                    <img id="ocrImagePreview" class="ocr-image">
+                                    <div class="ocr-actions">
+                                        <button class="btn btn-primary" id="btnStartOCR">🔍 开始识别</button>
+                                        <button class="btn btn-secondary" id="btnClearOCR">🗑️ 清除图片</button>
+                                    </div>
+                                    <div class="ocr-progress" id="ocrProgress" style="display:none">
+                                        <div class="ocr-progress-bar" id="ocrProgressBar"></div>
+                                        <span class="ocr-progress-text" id="ocrProgressText">识别中...</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 解析预览 -->
+                            <div id="smartEntryPreview" class="preview-area"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button class="btn btn-secondary" id="smartEntryCancel">取消</button>
+                            <button class="btn btn-primary" id="smartEntryConfirm">确认导入</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 页面2：日报预览 / 导出 ========== -->
+            <section class="page" id="page-daily">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📄 日报生成</h2>
+                        <div class="header-actions">
+                            <input type="date" id="dailyDate">
+                            <button class="btn btn-primary" id="btnGenerateDaily">生成日报</button>
+                            <button class="btn btn-success" id="btnExportDaily">📥 导出Excel</button>
+                            <button class="btn btn-primary" id="btnExportDailyDocx">📄 导出Word</button>
+                        </div>
+                    </div>
+                    <div class="daily-summary" id="dailySummary">
+                        <div class="summary-card">
+                            <div class="summary-label">当日记录</div>
+                            <div class="summary-value" id="dailyTotal">0</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">质保</div>
+                            <div class="summary-value" id="dailyWarranty">0</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">非质保</div>
+                            <div class="summary-value" id="dailyNonWarranty">0</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-label">问题类型分布</div>
+                            <div class="summary-value" id="dailyTypeDist">—</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h2>日报明细</h2></div>
+                    <table class="data-table" id="dailyTable">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>工单编号</th>
+                                <th>机架号</th>
+                                <th>机型</th>
+                                <th>分析人</th>
+                                <th>问题定性</th>
+                                <th>是否质保</th>
+                                <th>初步分析</th>
+                                <th>最终结论</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h2>📊 当日图表</h2></div>
+                    <div class="chart-row">
+                        <div class="chart-container">
+                            <canvas id="dailyTypeChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="dailyAuditChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 页面3：周报自动生成 ========== -->
+            <section class="page" id="page-weekly">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📊 周报自动生成</h2>
+                        <div class="header-actions">
+                            <span class="hint">上传工单导出 + 炸机周报文件，一键生成标准周报</span>
+                        </div>
+                    </div>
+                    <div class="upload-zone">
+                        <div class="upload-row">
+                            <div class="upload-box" id="uploadOrders">
+                                <div class="upload-icon">📋</div>
+                                <div class="upload-title">工单导出文件</div>
+                                <div class="upload-desc">上传「工单管理-全部工单列表导出.xlsx」<br>包含工单列表 + 配件明细</div>
+                                <input type="file" id="fileOrders" accept=".xlsx,.xls" hidden>
+                                <button class="btn btn-primary btn-upload" onclick="document.getElementById('fileOrders').click()">选择文件</button>
+                                <div class="upload-status" id="statusOrders">未上传</div>
+                            </div>
+                            <div class="upload-box" id="uploadCrash">
+                                <div class="upload-icon">💥</div>
+                                <div class="upload-title">炸机周报文件</div>
+                                <div class="upload-desc">上传「X月X号-X月X号炸机周报.xlsx」<br>包含国内 + 海外炸机记录</div>
+                                <input type="file" id="fileCrash" accept=".xlsx,.xls" hidden>
+                                <button class="btn btn-primary btn-upload" onclick="document.getElementById('fileCrash').click()">选择文件</button>
+                                <div class="upload-status" id="statusCrash">未上传</div>
+                            </div>
+                        </div>
+                        <div class="upload-actions">
+                            <div class="form-group-inline">
+                                <label>周报标题日期：</label>
+                                <input type="text" id="weeklyTitleDate" placeholder="如：7月6日-12日" style="width:180px">
+                            </div>
+                            <button class="btn btn-success btn-lg" id="btnGenerateWeekly" disabled>
+                                🚀 生成标准周报
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 解析预览 -->
+                <div class="card" id="weeklyPreviewCard" style="display:none">
+                    <div class="card-header">
+                        <h2>📋 数据解析预览</h2>
+                    </div>
+                    <div class="weekly-preview-grid">
+                        <div class="preview-section">
+                            <h3>工单数据概览</h3>
+                            <div class="preview-stats" id="ordersPreview"></div>
+                        </div>
+                        <div class="preview-section">
+                            <h3>炸机数据概览</h3>
+                            <div class="preview-stats" id="crashPreview"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 生成日志 -->
+                <div class="card" id="weeklyLogCard" style="display:none">
+                    <div class="card-header"><h2>📝 生成日志</h2></div>
+                    <div class="log-area" id="weeklyLog"></div>
+                </div>
+            </section>
+
+            <!-- ========== 页面4：定责分析报告 ========== -->
+            <section class="page" id="page-report">
+                <div class="report-container">
+                    <!-- 左侧输入面板 -->
+                    <div class="report-input-panel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>📝 报告信息填写</h2>
+                            </div>
+                            <div class="report-form">
+                                <div class="form-group">
+                                    <label class="field-label">报告标题</label>
+                                    <input type="text" id="rptTitle" value="极目定责分析报告" placeholder="如：极目定责分析报告">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">机架号</label>
+                                    <input type="text" id="rptBodyId" placeholder="如：111">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">地块ID</label>
+                                    <input type="text" id="rptFlightName" placeholder="如：SD_FLY-1096">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">架次号</label>
+                                    <input type="text" id="rptExpiryDate" placeholder="如：2024-10-23 10:38:22">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">飞行时间</label>
+                                    <input type="text" id="rptFlightTime" placeholder="如：2024-10-18 11:22:05">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">分析飞行过程</label>
+                                    <textarea id="rptFlightProcess" rows="5" placeholder="如：&#10;1. 飞行器处于近地降落模式，控制效果正常；&#10;2. 飞行过程中，飞行器称重值与动力输出不匹配..."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">激活时间（机身SN）</label>
+                                    <input type="text" id="rptBodySN" placeholder="如：78KBM5K0030148">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">审核结果</label>
+                                    <select id="rptAnalysisResult">
+                                        <option value="人为原因导致事故，请付费处理。">人为原因 - 付费处理</option>
+                                        <option value="产品质量问题，免费维修。">质量问题 - 免费维修</option>
+                                        <option value="自然灾害/不可抗力，不予受理。">不可抗力 - 不予受理</option>
+                                        <option value="操作不当导致损坏，建议培训。">操作不当 - 建议培训</option>
+                                        <option value="custom">自定义...</option>
+                                    </select>
+                                    <input type="text" id="rptAnalysisResultCustom" class="hidden" placeholder="输入自定义分析结果" style="margin-top:6px;">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">电池编码</label>
+                                    <input type="text" id="rptElecSN" placeholder="如：无 或 填写编码">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">工单号</label>
+                                    <input type="text" id="rptCaseNo" placeholder="如：J202410180001">
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">现场概况</label>
+                                    <textarea id="rptTrackNo" rows="3" placeholder="如：现场发现飞机坠毁在农田中..."></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label class="field-label">附件图片</label>
+                                    <div class="image-upload-area" id="rptImageUpload">
+                                        <svg viewBox="0 0 24 24"><path d="M19 7v2.99s-1.99.01-2 0V7h-3s.01-1.99 0-2h3V2h2v3h3s-.01 1.99 0 2h-3zm-3 4V8h-3V5H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-8h-3zM5 19l3-4 2 3 3-4 4 5H5z"/></svg>
+                                        <div class="hint">点击或拖拽上传图片（支持多张）</div>
+                                        <input type="file" id="rptImageInput" accept="image/*" multiple hidden>
+                                    </div>
+                                    <div class="image-list" id="rptImageList"></div>
+                                </div>
+                                <div class="report-actions">
+                                    <button class="btn btn-primary" id="btnGenerateReport">📄 生成报告</button>
+                                    <button class="btn btn-success" id="btnExportPDF">📥 导出PDF</button>
+                                    <button class="btn btn-secondary" id="btnClearReport">🗑️ 清空</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 右侧预览面板 -->
+                    <div class="report-preview-panel">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2>👁️ 报告预览</h2>
+                            </div>
+                            <div class="report-preview" id="reportPreview">
+                                <div class="report-placeholder">
+                                    <svg viewBox="0 0 24 24" width="64" height="64"><path fill="#ccc" d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+                                    <p>填写左侧信息后，报告将在此处实时预览</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 页面5：数据统计看板 ========== -->
+            <section class="page" id="page-dashboard">
+                <div class="kpi-row">
+                    <div class="kpi-card">
+                        <div class="kpi-label">总记录数</div>
+                        <div class="kpi-value" id="kpiTotal">0</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">本周记录</div>
+                        <div class="kpi-value" id="kpiWeek">0</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">质保占比</div>
+                        <div class="kpi-value" id="kpiWarranty">0%</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-label">分析人数</div>
+                        <div class="kpi-value" id="kpiAnalysts">0</div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h2>📈 趋势图表</h2></div>
+                    <div class="chart-row">
+                        <div class="chart-container chart-lg">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header"><h2>📊 分布统计</h2></div>
+                    <div class="chart-row">
+                        <div class="chart-container">
+                            <canvas id="typeChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="analystChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 页面6：历史数据 ========== -->
+            <section class="page" id="page-history">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📂 历史数据</h2>
+                        <div class="header-actions">
+                            <span style="font-size:14px;color:#666;">共 <strong id="historyCount">0</strong> 条记录</span>
+                        </div>
+                    </div>
+                    <div class="filter-row" style="display:flex;gap:10px;padding:12px 16px;flex-wrap:wrap;align-items:center;background:#f8f9fa;border-bottom:1px solid #e0e0e0;">
+                        <input type="date" id="historyFilterDate" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;" onchange="renderHistoryPage()">
+                        <input type="text" id="historyFilterModel" placeholder="机型筛选" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100px;" oninput="renderHistoryPage()">
+                        <input type="text" id="historyFilterAnalyst" placeholder="分析人" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100px;" oninput="renderHistoryPage()">
+                        <input type="text" id="historyFilterType" placeholder="问题定性" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100px;" oninput="renderHistoryPage()">
+                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('historyFilterDate').value='';document.getElementById('historyFilterModel').value='';document.getElementById('historyFilterAnalyst').value='';document.getElementById('historyFilterType').value='';renderHistoryPage()">清空筛选</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="historyTable">
+                            <colgroup>
+                                <col style="width:72px">
+                                <col style="width:160px">
+                                <col style="width:150px">
+                                <col style="width:80px">
+                                <col style="width:80px">
+                                <col style="width:90px">
+                                <col style="width:80px">
+                                <col>
+                                <col>
+                                <col style="width:100px">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>工单编号</th>
+                                    <th>机架号</th>
+                                    <th>机型</th>
+                                    <th>分析人</th>
+                                    <th>问题定性</th>
+                                    <th>是否质保</th>
+                                    <th>初步分析</th>
+                                    <th>最终结论</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="9" class="empty-state"><div class="empty-state-icon">📂</div>暂无历史数据</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 页面7：回收站 ========== -->
+            <section class="page" id="page-trash">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🗑️ 回收站</h2>
+                        <div class="header-actions">
+                            <span style="font-size:14px;color:#666;">共 <strong id="trashCount">0</strong> 条</span>
+                            <button class="btn btn-danger btn-sm" onclick="emptyTrash()">🗑️ 清空回收站</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="trashTable">
+                            <colgroup>
+                                <col style="width:72px">
+                                <col style="width:160px">
+                                <col style="width:150px">
+                                <col style="width:80px">
+                                <col style="width:80px">
+                                <col style="width:90px">
+                                <col style="width:80px">
+                                <col>
+                                <col style="width:80px">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>工单编号</th>
+                                    <th>机架号</th>
+                                    <th>机型</th>
+                                    <th>分析人</th>
+                                    <th>问题定性</th>
+                                    <th>是否质保</th>
+                                    <th>初步分析</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="9" class="empty-state"><div class="empty-state-icon">🗑️</div>回收站空空如也</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 用户管理页面 ========== -->
+            <section class="page" id="page-users">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>👥 用户管理</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-primary" id="btnAddUser">➕ 新增用户</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:60px">序号</th>
+                                    <th style="width:120px">姓名</th>
+                                    <th style="width:140px">账号</th>
+                                    <th style="width:120px">角色</th>
+                                    <th style="width:160px">创建时间</th>
+                                    <th style="width:160px">最后登录</th>
+                                    <th style="width:140px">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- 用户编辑弹窗 -->
+    <div class="modal" id="userModal">
+        <div class="modal-content" style="max-width:420px;">
+            <div class="modal-header">
+                <h3 id="userModalTitle">新增用户</h3>
+                <button class="modal-close" onclick="closeUserModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editUserId">
+                <div class="form-group">
+                    <label>姓名 <span style="color:red">*</span></label>
+                    <input type="text" id="editUserName" placeholder="请输入姓名">
+                </div>
+                <div class="form-group">
+                    <label>账号 <span style="color:red">*</span></label>
+                    <input type="text" id="editUserAccount" placeholder="请输入账号（手机号）">
+                </div>
+                <div class="form-group">
+                    <label>密码 <span id="pwdHint" style="color:red">*</span></label>
+                    <input type="password" id="editUserPassword" placeholder="请输入密码">
+                </div>
+                <div class="form-group">
+                    <label>角色</label>
+                    <select id="editUserRole">
+                        <option value="分析员">分析员</option>
+                        <option value="组长">组长</option>
+                        <option value="管理员">管理员</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeUserModal()">取消</button>
+                <button class="btn btn-primary" id="btnSaveUser">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=31"></script>
+</body>
+</html>
