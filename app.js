@@ -1478,14 +1478,34 @@
             expectedCols = headers.length;
             dataStartIndex = 1;
         } else {
-            // 无表头：根据第一行 Tab 数列数确定列数
-            const firstLineTabCount = (firstLine.match(/\t/g)||[]).length;
-            expectedCols = firstLineTabCount + 1;
-            // 炸机分析表默认列（7列）
+            // 无表头：先统计所有行的最大 Tab 列数作为 expectedCols
+            let maxCols = 0;
+            for (let i = 0; i < lines.length; i++) {
+                const tc = (lines[i].match(/\t/g)||[]).length + 1;
+                if (tc > maxCols) maxCols = tc;
+            }
+            expectedCols = maxCols;
+
+            // 智能推断表头：根据内容特征匹配已知格式
+            // 炸机分析表（7列）：日期 | 机型 | 机架号 | 架次 | 省份 | 初步结论 | 问题定性
+            // 日常工作录入（10列）：日期 | 工单编号 | 机架号 | 机型 | 架次-地块 | 省份 | 反馈人 | 分析人 | 问题定性 | 是否质保
+            // 判断依据：检查第一行第2列是否为机型代码（Jxx格式），第3列是否为纯数字机架号
+            const firstRowCols = lines[dataStartIndex].split(/\t+/).map(c => c.trim());
+            const isCrashAnalysisFormat = (
+                firstRowCols.length >= 5 &&
+                /^J\d{2,3}$/i.test(firstRowCols[1]) &&  // 第2列是机型如 J70/J150
+                /^\d{4,6}$/.test(firstRowCols[2])         // 第3列是机架号如 59963
+            );
+
             const DEFAULT_HEADERS_7 = ['分析时间','机型','机架号','架次','省份','初步结论','问题定性'];
-            // 日常工作录入默认列（10列）
             const DEFAULT_HEADERS_10 = ['分析时间','工单编号','机架号','机型','架次-地块','省份','反馈人','分析人','问题定性','是否质保'];
-            headers = expectedCols === 7 ? DEFAULT_HEADERS_7.slice() : DEFAULT_HEADERS_10.slice(0, expectedCols);
+
+            if (isCrashAnalysisFormat) {
+                headers = DEFAULT_HEADERS_7.slice();
+                expectedCols = 7;  // 强制使用7列，即使第一行只有5个Tab
+            } else {
+                headers = DEFAULT_HEADERS_10.slice(0, expectedCols);
+            }
         }
 
         // ========== 改进：多行字段合并 ==========
