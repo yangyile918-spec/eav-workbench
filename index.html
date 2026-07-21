@@ -12,16 +12,33 @@
         .summary-card {
             background: linear-gradient(135deg, #f8f9ff 0%, #e8ecf8 100%) !important;
             border: 2px solid #444e87 !important;
+            height: 120px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            overflow: hidden !important;
         }
         .summary-label {
             color: #444e87 !important;
             font-weight: 700 !important;
             font-size: 14px !important;
+            margin-bottom: 8px !important;
         }
         .summary-value {
             color: #444e87 !important;
             font-weight: 800 !important;
-            font-size: 32px !important;
+            font-size: 28px !important;
+            line-height: 1.2 !important;
+            text-align: center !important;
+            word-break: break-word !important;
+        }
+        #dailyTypeDist {
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            max-height: 80px !important;
+            overflow-y: auto !important;
+            padding: 0 4px !important;
         }
     </style>
     <script src="chart.umd.min.js"></script>
