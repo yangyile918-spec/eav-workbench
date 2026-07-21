@@ -1235,38 +1235,92 @@
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
                 
-                // 放大图像以提高OCR精度（最大2000px宽）
-                const maxWidth = 2000;
+                // 放大图像以提高OCR精度（表格截图建议3倍放大）
+                const maxWidth = 3000;
                 let width = img.width;
                 let height = img.height;
-                if (width < 1200) {
-                    const scale = Math.min(maxWidth / width, 2);
-                    width = Math.round(width * scale);
-                    height = Math.round(height * scale);
-                }
+                const scale = Math.min(maxWidth / width, 3);
+                width = Math.round(width * scale);
+                height = Math.round(height * scale);
                 canvas.width = width;
                 canvas.height = height;
                 
-                // 绘制图像
+                // 绘制图像（使用高质量缩放）
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
                 ctx.drawImage(img, 0, 0, width, height);
                 
-                // 获取像素数据并应用增强
+                // 获取像素数据
                 const imageData = ctx.getImageData(0, 0, width, height);
                 const data = imageData.data;
                 
+                // 第一步：转灰度
+                const grayData = new Uint8ClampedArray(data.length);
                 for (let i = 0; i < data.length; i += 4) {
-                    // 转灰度
                     const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
-                    
-                    // 提高对比度（简单阈值增强）
-                    const enhanced = gray < 128 ? Math.max(0, gray - 30) : Math.min(255, gray + 30);
-                    
-                    data[i] = enhanced;
-                    data[i+1] = enhanced;
-                    data[i+2] = enhanced;
+                    grayData[i] = grayData[i+1] = grayData[i+2] = gray;
+                    grayData[i+3] = 255;
                 }
                 
-                ctx.putImageData(imageData, 0, 0);
+                // 第二步：锐化滤波（3x3 Laplacian）
+                const sharpened = new Uint8ClampedArray(grayData.length);
+                const kernel = [0, -1, 0, -1, 5, -1, 0, -1, 0];
+                const kernelSize = 3;
+                const halfKernel = Math.floor(kernelSize / 2);
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        let sum = 0;
+                        for (let ky = 0; ky < kernelSize; ky++) {
+                            for (let kx = 0; kx < kernelSize; kx++) {
+                                const ny = Math.min(Math.max(y + ky - halfKernel, 0), height - 1);
+                                const nx = Math.min(Math.max(x + kx - halfKernel, 0), width - 1);
+                                const idx = (ny * width + nx) * 4;
+                                sum += grayData[idx] * kernel[ky * kernelSize + kx];
+                            }
+                        }
+                        const idx = (y * width + x) * 4;
+                        sharpened[idx] = sharpened[idx+1] = sharpened[idx+2] = Math.max(0, Math.min(255, sum));
+                        sharpened[idx+3] = 255;
+                    }
+                }
+                
+                // 第三步：Otsu自适应阈值二值化
+                const histogram = new Array(256).fill(0);
+                for (let i = 0; i < sharpened.length; i += 4) {
+                    histogram[sharpened[i]]++;
+                }
+                
+                const totalPixels = width * height;
+                let sum = 0;
+                for (let i = 0; i < 256; i++) sum += i * histogram[i];
+                
+                let sumB = 0, wB = 0, wF = 0;
+                let maxVariance = 0, threshold = 128;
+                
+                for (let t = 0; t < 256; t++) {
+                    wB += histogram[t];
+                    if (wB === 0) continue;
+                    wF = totalPixels - wB;
+                    if (wF === 0) break;
+                    sumB += t * histogram[t];
+                    const mB = sumB / wB;
+                    const mF = (sum - sumB) / wF;
+                    const variance = wB * wF * (mB - mF) * (mB - mF);
+                    if (variance > maxVariance) {
+                        maxVariance = variance;
+                        threshold = t;
+                    }
+                }
+                
+                // 应用阈值（稍微降低阈值以保留更多细节）
+                const adjustedThreshold = threshold * 0.9;
+                for (let i = 0; i < sharpened.length; i += 4) {
+                    const val = sharpened[i] < adjustedThreshold ? 0 : 255;
+                    sharpened[i] = sharpened[i+1] = sharpened[i+2] = val;
+                }
+                
+                ctx.putImageData(new ImageData(sharpened, width, height), 0, 0);
                 
                 // 转回 blob
                 canvas.toBlob((blob) => {
@@ -1277,8 +1331,47 @@
         });
     }
 
+    // OCR文本后处理：修复常见识别错误
+    function fixOCRErrors(text) {
+        // 1. 修复常见字符误识别
+        const replacements = [
+            // 单位修正
+            [/\bmG\b/g, 'm/s'],
+            [/\bmg\b/g, 'm/s'],
+            // 常见单词粘连修复（在字母和数字之间插入空格）
+            [/(at)(the)/gi, '$1 $2'],
+            [/(moment)(of)(fault)(was)/gi, '$1 $2 $3 $4'],
+            [/(terrain)(following)/gi, '$1-$2'],
+            [/(Radar)(Issue)/g, '$1 $2'],
+            [/(dropped)(from)/gi, '$1 $2'],
+            [/(m)(to)\b/gi, '$1 $2'],
+            [/(of)(all)(four)/gi, '$1 $2 $3'],
+            [/(speed)(at)/gi, '$1 $2'],
+            [/(fault)(was)/gi, '$1 $2'],
+            [/(following)(atitude)/gi, '$1 $2'],
+            [/(atitude)/g, 'altitude'],
+            [/(teraintollowing)/g, 'terrain-following'],
+            [/(RadarIssue)/g, 'Radar Issue'],
+            [/(droppedfrom)/g, 'dropped from'],
+            [/(ofallfour)/g, 'of all four'],
+            [/(atthe)/g, 'at the'],
+            [/(momentoffaultwas)/g, 'moment of fault was'],
+            [/(mto)/g, 'm to'],
+        ];
+        
+        let result = text;
+        for (const [pattern, replacement] of replacements) {
+            result = result.replace(pattern, replacement);
+        }
+        
+        return result;
+    }
+
     // OCR文本后处理：清理常见识别错误，恢复Tab分隔
     function cleanOCRText(text) {
+        // 先修复常见OCR错误
+        text = fixOCRErrors(text);
+        
         let lines = text.split('\n').filter(l => l.trim());
         let cleaned = [];
         let structuredCount = 0;
@@ -1426,6 +1519,36 @@
         if (/质保/.test(line)) {
             if (/非.*质保|非质保/.test(line)) fields.push('非质保');
             else fields.push('质保');
+        }
+
+        // 提取长描述文本（FPV描述/Dashboard Data等）
+        // 匹配包含FPV、Dashboard、Preliminary等关键词的长文本
+        const descPatterns = [
+            /FPV[：:]\s*(.+?)(?=Dashboard|Preliminary|Suspected|$)/i,
+            /Dashboard\s*Data[：:]\s*(.+?)(?=Preliminary|Suspected|$)/i,
+            /Preliminary\s*Analysis[：:]\s*(.+?)(?=Suspected|$)/i,
+            /(疑似雷达问题[^。]*)/i,
+            /(Suspected\s+Radar\s+Issue[^.]*)/i,
+        ];
+        for (const pattern of descPatterns) {
+            const descMatch = line.match(pattern);
+            if (descMatch) {
+                fields.push(descMatch[1].trim());
+                break;
+            }
+        }
+
+        // 提取最后一列（问题总结/定性）
+        const summaryPatterns = [
+            /(疑似[^。]{2,20})/i,
+            /(Suspected\s+[^.]{2,30})/i,
+        ];
+        for (const pattern of summaryPatterns) {
+            const summaryMatch = line.match(pattern);
+            if (summaryMatch) {
+                fields.push(summaryMatch[1].trim());
+                break;
+            }
         }
 
         return fields.length >= 3 ? fields : null;
