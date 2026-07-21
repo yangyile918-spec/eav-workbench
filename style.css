@@ -1224,13 +1224,15 @@ body {
     text-align: center;
 }
 .summary-label {
-    font-size: 12px;
-    opacity: 0.85;
-    margin-bottom: 6px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.95);
+    margin-bottom: 8px;
+    font-weight: 500;
 }
 .summary-value {
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 700;
+    color: #fff;
 }
 
 /* ========== 表格增强 ========== */
