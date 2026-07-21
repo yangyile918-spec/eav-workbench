@@ -1107,16 +1107,19 @@
         updateReportPreview();
     };
     function renderTodayTable() {
-        const today = formatDateLocal(new Date());
-        const todayRecords = records.filter(r => r.analysisTime && r.analysisTime.startsWith(today));
-        document.getElementById('todayCount').textContent = `${todayRecords.length} 条`;
+        // 显示最近7天的记录
+        const now = new Date();
+        const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        const sevenDaysAgoStr = formatDateLocal(sevenDaysAgo);
+        const recentRecords = records.filter(r => r.analysisTime && r.analysisTime >= sevenDaysAgoStr);
+        document.getElementById('todayCount').textContent = `${recentRecords.length} 条`;
 
         const tbody = document.querySelector('#todayTable tbody');
-        if (todayRecords.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📝</div>今日暂无记录</td></tr>';
+        if (recentRecords.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
             return;
         }
-        tbody.innerHTML = todayRecords.sort((a,b) => new Date(b.analysisTime) - new Date(a.analysisTime)).map(r => `
+        tbody.innerHTML = recentRecords.sort((a,b) => new Date(b.analysisTime) - new Date(a.analysisTime)).map(r => `
             <tr>
                 <td>${formatDateTime(r.analysisTime)}</td>
                 <td>${esc(r.workOrderNo)}</td>
