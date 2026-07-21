@@ -1894,11 +1894,31 @@
         document.getElementById('dailyWarranty').textContent = dayRecords.filter(r => r.auditResult === '质保').length;
         document.getElementById('dailyNonWarranty').textContent = dayRecords.filter(r => r.auditResult === '非质保').length;
 
-        // 问题类型分布
+        // 问题类型分布 - 精简显示
         const typeCount = {};
-        dayRecords.forEach(r => { if (r.problemType) typeCount[r.problemType] = (typeCount[r.problemType]||0)+1; });
-        const typeDist = Object.entries(typeCount).map(([k,v]) => `${k}:${v}`).join(' ') || '—';
+        dayRecords.forEach(r => { 
+            if (r.problemType) {
+                // 截取问题类型名称，只保留中文部分或前20个字符
+                let shortName = r.problemType;
+                if (shortName.length > 20) {
+                    // 尝试找到第一个英文字母或括号的位置进行截断
+                    const match = shortName.match(/^([^\(A-Za-z]+)/);
+                    shortName = match ? match[1].trim() : shortName.substring(0, 20);
+                }
+                typeCount[shortName] = (typeCount[shortName]||0)+1; 
+            }
+        });
+        
+        // 按数量排序，最多显示前5个
+        const sortedTypes = Object.entries(typeCount)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 5);
+        
+        const typeDist = sortedTypes.length > 0 
+            ? sortedTypes.map(([k,v]) => `${k}:${v}`).join('\n')
+            : '—';
         document.getElementById('dailyTypeDist').textContent = typeDist;
+        document.getElementById('dailyTypeDist').style.whiteSpace = 'pre-line';
 
         // 日报明细表
         const tbody = document.querySelector('#dailyTable tbody');
