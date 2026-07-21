@@ -1227,36 +1227,92 @@
         document.getElementById('ocrProgress').style.display = 'none';
     }
 
+    // 图像预处理：提高OCR识别质量
+    function preprocessImageForOCR(imageFile) {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // 放大图像以提高OCR精度（最大2000px宽）
+                const maxWidth = 2000;
+                let width = img.width;
+                let height = img.height;
+                if (width < 1200) {
+                    const scale = Math.min(maxWidth / width, 2);
+                    width = Math.round(width * scale);
+                    height = Math.round(height * scale);
+                }
+                canvas.width = width;
+                canvas.height = height;
+                
+                // 绘制图像
+                ctx.drawImage(img, 0, 0, width, height);
+                
+                // 获取像素数据并应用增强
+                const imageData = ctx.getImageData(0, 0, width, height);
+                const data = imageData.data;
+                
+                for (let i = 0; i < data.length; i += 4) {
+                    // 转灰度
+                    const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                    
+                    // 提高对比度（简单阈值增强）
+                    const enhanced = gray < 128 ? Math.max(0, gray - 30) : Math.min(255, gray + 30);
+                    
+                    data[i] = enhanced;
+                    data[i+1] = enhanced;
+                    data[i+2] = enhanced;
+                }
+                
+                ctx.putImageData(imageData, 0, 0);
+                
+                // 转回 blob
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, 'image/png');
+            };
+            img.src = URL.createObjectURL(imageFile);
+        });
+    }
+
     // OCR文本后处理：清理常见识别错误，恢复Tab分隔
     function cleanOCRText(text) {
         let lines = text.split('\n').filter(l => l.trim());
         let cleaned = [];
+        let structuredCount = 0;
 
         for (let line of lines) {
-            // 去除中文字符之间的多余空格
-            line = line.replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, '$1$2');
-
             // 检测是否是结构化数据行（包含日期、机架号等特征）
             const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line);
             // 支持多种机架号格式：JMZK/JMZJ/EAVUAV/JMZ 或纯数字（如 95109）
             const hasFrame = /(JMZK|JMZJ|EAVUAV|JMZ|J\d{6,}|\d{5,})/i.test(line);
             // 支持更多机型
-            const hasModel = /(J50|J100|J150|J160|E50|E100|J25|J50pro|E50pro|E100pro)/i.test(line);
+            const hasModel = /\b(J50|J70|J100|J150|J160|E50|E100|J25|J50pro|E50pro|E100pro)\b/i.test(line);
 
             if (hasDate && (hasFrame || hasModel)) {
                 // 这是结构化数据行，尝试智能解析
                 const parsed = parseStructuredLine(line);
-                if (parsed) {
+                if (parsed && parsed.length >= 3) {
                     cleaned.push(parsed.join('\t'));
+                    structuredCount++;
                     continue;
                 }
             }
 
-            // 非结构化行，做基本清理
-            // 将连续空格/0分隔符替换为Tab
+            // 非结构化行或解析失败，做基本清理
+            // 先去除中文字符之间的多余空格（但保留数字和字母周围的空格）
+            line = line.replace(/([\u4e00-\u9fff])\s+([\u4e00-\u9fff])/g, '$1$2');
+            // 将连续空格替换为Tab（但保留单个空格）
             line = line.replace(/\s{2,}/g, '\t');
-            line = line.replace(/\s*0\s*/g, '\t');
             cleaned.push(line);
+        }
+
+        // 如果结构化解析成功数太少，说明OCR质量差，返回原始文本供手动编辑
+        if (structuredCount === 0 && lines.length > 0) {
+            // 返回原始文本，让用户手动编辑
+            return text;
         }
 
         return cleaned.join('\n');
@@ -1285,8 +1341,8 @@
             if (pureNumFrame) fields.push(pureNumFrame[1]);
         }
 
-        // 提取机型（支持 J50/J100/J150/J160/E50/E100 及 Pro 版本）
-        const modelMatch = line.match(/(J160|J150|J100pro|J50pro|E100pro|E50pro|J100|J50|E100|E50|J25)/i);
+        // 提取机型（支持 J50/J70/J100/J150/J160/E50/E100 及 Pro 版本）
+        const modelMatch = line.match(/\b(J160|J150|J100pro|J70|J50pro|E100pro|E50pro|J100|J50|E100|E50|J25)\b/i);
         if (modelMatch) fields.push(modelMatch[1]);
 
         // 提取架次（支持多种格式）
@@ -1297,7 +1353,7 @@
         const batchMatch2 = line.match(/(\d{10,}\s*--\s*\d{5,})/);
         if (batchMatch2) fields.push(batchMatch2[1]);
 
-        // 提取省份/区域（支持中国省份 + 美国州名）
+        // 提取省份/区域（支持中国省份 + 美国州名 + 俄罗斯等）
         const provinces = ['北京','天津','上海','重庆','河北','山西','辽宁','吉林','黑龙江',
             '江苏','浙江','安徽','福建','江西','山东','河南','湖北','湖南','广东','海南',
             '四川','贵州','云南','陕西','甘肃','青海','台湾','广西','内蒙古','西藏','宁夏','新疆'];
@@ -1309,10 +1365,29 @@
             'New Mexico','New York','North Carolina','North Dakota','Ohio','Oklahoma','Oregon',
             'Pennsylvania','Rhode Island','South Carolina','South Dakota','Tennessee','Texas',
             'Utah','Vermont','Virginia','Washington','West Virginia','Wisconsin','Wyoming'];
+        // 其他国家/地区
+        const otherRegions = ['俄罗斯','美国','加拿大','澳大利亚','巴西','阿根廷','乌克兰','哈萨克斯坦'];
 
         let regionFound = false;
-        for (const p of provinces) {
-            if (line.includes(p)) { fields.push(p); regionFound = true; break; }
+        // 先检查其他国家/地区
+        for (const r of otherRegions) {
+            if (line.includes(r)) {
+                // 尝试提取后面的州/城市名
+                const regionMatch = line.match(new RegExp(r + '[\\s,，]*([A-Za-z\\u4e00-\\u9fff]+)'));
+                if (regionMatch) {
+                    fields.push(r + ' ' + regionMatch[1].trim());
+                } else {
+                    fields.push(r);
+                }
+                regionFound = true;
+                break;
+            }
+        }
+        // 检查中国省份
+        if (!regionFound) {
+            for (const p of provinces) {
+                if (line.includes(p)) { fields.push(p); regionFound = true; break; }
+            }
         }
         // 检查美国州名格式（如 "美国 Iowa"）
         if (!regionFound) {
@@ -1335,8 +1410,9 @@
         // 提取人名（2-3个中文字符的连续块）
         const nameMatches = line.match(/[\u4e00-\u9fff]{2,3}(?=[\s0\t,，])/g);
         if (nameMatches) {
-            // 排除已提取的省份名
-            const names = nameMatches.filter(n => !provinces.includes(n) && n.length >= 2);
+            // 排除已提取的省份名和地区名
+            const excludeList = [...provinces, ...otherRegions];
+            const names = nameMatches.filter(n => !excludeList.includes(n) && n.length >= 2);
             fields.push(...names.slice(0, 2)); // 最多取2个人名
         }
 
@@ -1386,10 +1462,16 @@
                 });
             }
 
+            progressBar.style.width = '40%';
+            progressText.textContent = '正在预处理图像...';
+
+            // 图像预处理：提高对比度，转为灰度，提高OCR识别质量
+            const preprocessedImage = await preprocessImageForOCR(ocrImageFile);
+
             progressBar.style.width = '50%';
             progressText.textContent = '正在识别文字...';
 
-            const result = await ocrWorker.recognize(ocrImageFile);
+            const result = await ocrWorker.recognize(preprocessedImage);
             const text = result.data.text;
 
             progressBar.style.width = '100%';
@@ -1409,9 +1491,19 @@
             // 触发解析
             smartParsedRows = parseSmartText(cleanedText);
             const preview = document.getElementById('smartEntryPreview');
-            if (smartParsedRows.length === 0) {
-                preview.innerHTML = '<p class="hint">⚠️ OCR识别完成，但未解析到有效数据。请检查识别结果并手动编辑。</p>' +
-                    '<textarea id="ocrEditText" rows="6" class="ocr-edit-area">' + esc(text) + '</textarea>' +
+            
+            // OCR质量检测：检查解析结果是否合理
+            const hasValidData = smartParsedRows.some(row => {
+                const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(row['分析时间'] || row['时间'] || row['日期'] || '');
+                const hasModel = /J\d{2,3}/i.test(row['机型'] || '');
+                const hasFrame = /\d{4,6}/.test(row['机架号'] || '');
+                return hasDate || hasModel || hasFrame;
+            });
+
+            if (smartParsedRows.length === 0 || !hasValidData) {
+                // 解析失败或质量太差，显示原始OCR文本供手动编辑
+                preview.innerHTML = '<p class="hint">⚠️ OCR识别完成，但解析结果质量较差。请检查识别结果并手动编辑。</p>' +
+                    '<textarea id="ocrEditText" rows="8" class="ocr-edit-area">' + esc(text) + '</textarea>' +
                     '<button class="btn btn-info btn-sm" id="btnReparseOCR" style="margin-top:8px">🔄 重新解析</button>';
                 document.getElementById('btnReparseOCR').addEventListener('click', () => {
                     const editedText = document.getElementById('ocrEditText').value;
