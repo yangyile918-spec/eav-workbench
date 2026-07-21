@@ -1853,6 +1853,14 @@
             if (!record.analyst && currentUser) {
                 record.analyst = currentUser;
             }
+            // 兜底：如果 analysisTime 为空，尝试从原始行文本中提取日期
+            if (!record.analysisTime) {
+                const rawText = Object.values(row).join(' ');
+                const dateMatch = rawText.match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+                if (dateMatch) {
+                    record.analysisTime = dateMatch[1] + '-' + String(dateMatch[2]).padStart(2,'0') + '-' + String(dateMatch[3]).padStart(2,'0');
+                }
+            }
             if (record.analysisTime || record.workOrderNo || record.airframeNo) {
                 records.push(record);
                 count++;
