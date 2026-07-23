@@ -1074,7 +1074,7 @@
                     <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
                     <td title="${esc(r.initialAnalysis||'')}">${esc((r.initialAnalysis||'—').substring(0, 25))}${(r.initialAnalysis||'').length > 25 ? '…' : ''}</td>
                     <td title="${esc(r.finalConclusion||'')}">${esc((r.finalConclusion||'—').substring(0, 25))}${(r.finalConclusion||'').length > 25 ? '…' : ''}</td>
-                    <td><button class="btn btn-text" onclick="editRecord('${r.id}')">✏️</button><button class="btn btn-text" style="color:var(--danger)" onclick="deleteRecord('${r.id}')">🗑️</button></td>
+                    <td><button class="btn btn-text" onclick="editRecord('${r.id}')">✏️</button><button class="btn btn-text" style="color:#007bff;" onclick="openFollowupFromRecord('${r.id}')">📋</button><button class="btn btn-text" style="color:var(--danger)" onclick="deleteRecord('${r.id}')">🗑️</button></td>
                 </tr>`);
             });
         });
@@ -1260,6 +1260,7 @@
                 <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
                 <td>
                     <button class="btn btn-text" onclick="editRecord('${r.id}')">编辑</button>
+                    <button class="btn btn-text" style="color:#007bff;" onclick="openFollowupFromRecord('${r.id}')">跟进</button>
                     <button class="btn btn-text" style="color:var(--primary)" onclick="generateReportFromRecord('${r.id}')">📝报告</button>
                     <button class="btn btn-text" style="color:var(--danger)" onclick="deleteRecord('${r.id}')">删除</button>
                 </td>
@@ -1410,6 +1411,52 @@
         const modal = document.getElementById('followupModal');
         modal.classList.remove('show');
         modal.style.display = 'none';
+    };
+
+    // 从记录行直接打开跟进弹窗（自动填充信息）
+    window.openFollowupFromRecord = function(id) {
+        const record = records.find(r => r.id === id);
+        if (!record) return;
+        const modal = document.getElementById('followupModal');
+        const title = document.getElementById('followupModalTitle');
+        title.textContent = '新增跟进任务';
+        document.getElementById('editFollowupId').value = '';
+        document.getElementById('followupAnalysisTime').value = record.analysisTime || new Date().toISOString().slice(0, 16);
+        document.getElementById('followupWorkOrderNo').value = record.workOrderNo || '';
+        document.getElementById('followupAirframeNo').value = record.airframeNo || '';
+        document.getElementById('followupReporter').value = record.feedbackPerson || '';
+        document.getElementById('followupAnalyst').value = record.analyst || '';
+        document.getElementById('followupProblemType').value = record.problemType || '';
+        document.getElementById('followupIsWarranty').value = record.auditResult || '';
+        document.getElementById('followupStatus').value = '待跟进';
+        document.getElementById('followupNotes').value = '';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.classList.add('show');
+    };
+
+    // 从问题解决记录打开跟进弹窗
+    window.openFollowupFromSolution = function(id) {
+        const solution = solutionRecords.find(r => r.id === id);
+        if (!solution) return;
+        const modal = document.getElementById('followupModal');
+        const title = document.getElementById('followupModalTitle');
+        title.textContent = '新增跟进任务';
+        document.getElementById('editFollowupId').value = '';
+        document.getElementById('followupAnalysisTime').value = solution.faultTime || new Date().toISOString().slice(0, 16);
+        document.getElementById('followupWorkOrderNo').value = '';
+        document.getElementById('followupAirframeNo').value = solution.droneNo || '';
+        document.getElementById('followupReporter').value = '';
+        document.getElementById('followupAnalyst').value = '';
+        document.getElementById('followupProblemType').value = '';
+        document.getElementById('followupIsWarranty').value = '';
+        document.getElementById('followupStatus').value = '待跟进';
+        document.getElementById('followupNotes').value = solution.faultDesc || '';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.classList.add('show');
     };
 
     window.saveFollowup = function() {
@@ -1760,6 +1807,7 @@
                 <td><span class="warranty-badge ${statusClass}">${esc(r.status) || '—'}</span></td>
                 <td>
                     <button class="btn btn-text" onclick="viewSolutionDetail('${r.id}')">查看</button>
+                    <button class="btn btn-text" onclick="openFollowupFromSolution('${r.id}')" style="color:#007bff;">跟进</button>
                     <button class="btn btn-text" onclick="editSolution('${r.id}')">编辑</button>
                     <button class="btn btn-text" onclick="deleteSolution('${r.id}')" style="color:#dc3545;">删除</button>
                 </td>
