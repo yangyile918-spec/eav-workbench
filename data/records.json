@@ -84,5 +84,159 @@
     "initialAnalysis": "FPV:无\n大屏数据：无人机自主飞行，作业速度由9.4m/s降至2.6m/s,后相对高度降低，飞机坠落。\n初步分析：故障区域地区显示为树丛，疑似碰撞树木，需上传雷达日志进一步分析。",
     "problemType": "设置问题——参数设置问题\nSetting Error—Parameter Configuration Error",
     "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx7543407m7g",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "J160",
+    "airframeNo": "A0767",
+    "model": "178450492869694 -- 3385361",
+    "flightBatch": "云南省",
+    "region": "FPV：飞机上方有多层电线，仿地向下时与下方电线发生碰撞导致炸机。\n大屏数据：未设置地块内有电线，AI记忆电线不全，多层电线，仿地向下时与下方电线发生碰撞导致炸。",
+    "feedbackPerson": "设置问题——撞电线\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx754347t9vx",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "J160",
+    "airframeNo": "A3062",
+    "model": "178451202491276 -- 3538529",
+    "flightBatch": "云南省",
+    "region": "FPV:飞机航线与电线夹角过小，与电线发生配置导致炸机。\n无人机日志：未设置地块内有电线，自主飞行进入地块时，航线与电线夹角过小，与电线发生配置导致炸机。",
+    "feedbackPerson": "设置问题——撞电线\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx75434u39m5",
+    "analysisTime": "2026-07-22",
+    "workOrderNo": "J160",
+    "airframeNo": "A0756",
+    "model": "178466187438063 -- 3556246",
+    "flightBatch": "四川省",
+    "region": "FPV：飞机航线与电线夹角过小，仿地下降时与电线发生碰撞导致炸机。",
+    "feedbackPerson": "设置问题——撞电线\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx75434bevs6",
+    "analysisTime": "2026-07-22",
+    "workOrderNo": "J160",
+    "airframeNo": "A0190",
+    "model": "178469071111946 -- 3557034",
+    "flightBatch": "海南省",
+    "region": "大屏数据：飞机自主飞行升高时，与障碍物发生碰撞导致炸机。\n雷达日志：飞机异常抖动，上下跳动。\n无人机自主模式，IMU加速度计振动太大，3个IMU偏离，姿态均异常最后炸机。\n后台播报：飞机炸机、飞控导航速度测量异常。",
+    "feedbackPerson": "跟进",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx754341ajo2",
+    "analysisTime": "2026-07-22",
+    "workOrderNo": "J160",
+    "airframeNo": "A0463",
+    "model": "178470374344625 -- 3557397",
+    "flightBatch": "四川省",
+    "region": "FPV：飞机起飞时，姿态向右后倾斜，向右旋转炸机。\n大屏数据：手动控制，向后飞行，右横滚，锁桨未到位导致炸机。",
+    "feedbackPerson": "操作问题——操作失误\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx75434u1x42",
+    "analysisTime": "2026-07-22",
+    "workOrderNo": "J150",
+    "airframeNo": "90818",
+    "model": "178470725593067 -- 3377588",
+    "flightBatch": "福建省",
+    "region": "FPV：飞机起飞向左倾斜坠落炸机。\n大屏数据：电池电压异常下降，从51.9V瞬间下降到39.7V，仿地高度从3m上升到3.3V。",
+    "feedbackPerson": "跟进",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx754343f0te",
+    "analysisTime": "2026-07-22",
+    "workOrderNo": "J160",
+    "airframeNo": "A0309",
+    "model": "178472235402333 -- 3486199",
+    "flightBatch": "广西壮族自治区",
+    "region": "大屏数据：飞机起飞前故障播报，右后机臂未卡紧，起飞时，右后电机转速异常下降，期望值拉满。",
+    "feedbackPerson": "跟进",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx75434fhupw",
+    "analysisTime": "2026-07-23",
+    "workOrderNo": "J150",
+    "airframeNo": "90147",
+    "model": "178476101233136 -- 3469253",
+    "flightBatch": "广东省",
+    "region": "FPV：飞机起飞时，右侧有异物飞出，机身向右后倾斜炸机。\n大屏数据：飞机起飞前播报，右后机臂未卡紧，起飞时，右侧有异物飞出，机身向右后倾斜炸机。",
+    "feedbackPerson": "操作问题——卡扣未卡紧\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx75434728ww",
+    "analysisTime": "2026-07-23",
+    "workOrderNo": "J160",
+    "airframeNo": "A0162",
+    "model": "178476651089796 -- 3213010",
+    "flightBatch": "海南省",
+    "region": "FPV：视频卡顿。\n大屏数据：飞机自主进入地块时，电池电压异常下降，升高时，从53.2V瞬间下降到51.6V，四个电机电压同步下降，四个电机转速几乎同时下降，向下坠落炸机。\n现场：飞机负极尾插和电池接口烧熔。\n累计作业面积：260.55亩，飞行总时长：12.04小时。",
+    "feedbackPerson": "动力问他——尾插烧熔\n质量整改",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx75434lpmqy",
+    "analysisTime": "2026-07-23",
+    "workOrderNo": "J160",
+    "airframeNo": "A0589",
+    "model": "178476956486225 -- 3357981",
+    "flightBatch": "四川省",
+    "region": "大屏数据：飞机手动控制，向下飞行时，右前转速异常下降，期望值上升，向下坠落炸机。",
+    "feedbackPerson": "跟进",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx754345el3d",
+    "analysisTime": "2026-07-23",
+    "workOrderNo": "J160",
+    "airframeNo": "A1349",
+    "model": "178477265353557 -- 3516104",
+    "flightBatch": "海南省",
+    "region": "FPV：飞机起飞右侧产生振动，向右侧倾斜坠落炸机。\n现场：飞机起飞时，右侧卷起水管发生碰撞导致炸机。",
+    "feedbackPerson": "设置问题——起飞点障碍物\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx75434xo8jh",
+    "analysisTime": "2026-07-23",
+    "workOrderNo": "J160",
+    "airframeNo": "A0695",
+    "model": "178477309177966 -- 3376290",
+    "flightBatch": "云南省",
+    "region": "FPV：飞机自主飞行，仿地下降时，下方有电线，发生碰撞导致炸机。\n大屏数据：飞机仿地下降时，右后与电线发生碰撞导致炸机。",
+    "feedbackPerson": "设置问题——撞电线\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx754340tdyd",
+    "analysisTime": "2026-07-23",
+    "workOrderNo": "J150",
+    "airframeNo": "90204",
+    "model": "178477367784836 -- 3388933",
+    "flightBatch": "云南省",
+    "region": "FPV：飞机航线与电线夹角过小，前进时与电线发生碰撞导致炸机。\n大屏数据：未设置地块内有电线，飞机航线与电线夹角过小，前进时与电线发生碰撞导致炸机。",
+    "feedbackPerson": "设置问题——撞电线\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrx75434igrph",
+    "analysisTime": "2026-07-23",
+    "workOrderNo": "J150",
+    "airframeNo": "90780",
+    "model": "178477496212216 -- 3558024",
+    "flightBatch": "广东省",
+    "region": "FPV：飞机作业时，前方有电线，刹停时，惯性与电线发生碰撞导致炸机。",
+    "feedbackPerson": "设置问题——撞电线\n不符合质保",
+    "analyst": "杨怡乐"
   }
 ]
