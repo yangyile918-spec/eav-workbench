@@ -40,7 +40,7 @@
     "feedbackPerson": "",
     "analyst": "杨怡乐",
     "problemType": "疑似操作问题——手动碰撞Suspected operational issue – Manual collision",
-    "auditResult": "非质保",
+    "auditResult": "安心",
     "tracker": "",
     "reviewer": "13838169824",
     "problemDescription": "",
@@ -48,7 +48,8 @@
     "initialAnalysis": "FPV:无，无人机自主喷洒作业后切手动控制，作业高度下降坠机。\n大屏数据：飞机手动控制，作业速度逐渐下降，作业高度跟随，后提速救机失败。\n暂定分析：需上传无人机、雷达日志进一步分析。",
     "followUp": "",
     "finalConclusion": "",
-    "region": "美国Missouri"
+    "region": "美国Missouri",
+    "customAudit": "安心"
   },
   {
     "id": "mrx4ugbwc8i80",
