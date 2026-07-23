@@ -180,12 +180,5 @@
     "followUp": "已更换电机，测试正常",
     "finalConclusion": "电机质量问题",
     "region": "山东"
-  },
-  {
-    "id": "test-1784262198943",
-    "analysisTime": "2026-07-17T14:30",
-    "workOrderNo": "TEST-001",
-    "airframeNo": "TESTFRAME001",
-    "analyst": "测试员"
   }
 ]
