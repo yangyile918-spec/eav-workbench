@@ -507,10 +507,18 @@
                     r.feedbackPerson = '';
                     migrated = true;
                 }
+                // 自动推导机型：如果 model 为空但有 airframeNo，根据机架号后5位首字符推导
+                if (!r.model && r.airframeNo) {
+                    const detected = detectModelFromAirframe(r.airframeNo);
+                    if (detected) {
+                        r.model = detected;
+                        migrated = true;
+                    }
+                }
             });
             if (migrated) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-                console.log('[数据迁移] 已修复列错位的记录');
+                console.log('[数据迁移] 已修复列错位/补充机型');
             }
         } catch(e) { records = []; }
     }
@@ -913,6 +921,10 @@
             finalConclusion: document.getElementById('finalConclusion').value.trim(),
             region: document.getElementById('region').value.trim()
         };
+        // 自动推导机型：如果 model 为空但有 airframeNo
+        if (!record.model && record.airframeNo) {
+            record.model = detectModelFromAirframe(record.airframeNo);
+        }
         if (!record.analysisTime) { alert('请填写分析时间'); return; }
 
         if (editingId) {
@@ -2543,6 +2555,25 @@ ${r.remark || '—'}
     // 列顺序：时间 | 机型 | 机架号 | 架次 | 省份 | 初步结论 | 问题定性
     // 兼容：纯中文 / 中英双语 / 纯英文（表头自动识别）
     // ============================================================
+    // 根据机架号自动推导机型
+    // 规则：机架号后5位的首字符 -> 机型
+    // 8 -> J100, 9 -> J150, 5 -> J70, A -> J160, B -> J110
+    function detectModelFromAirframe(airframeNo) {
+        if (!airframeNo) return '';
+        // 提取后5位
+        const last5 = airframeNo.replace(/\s+/g, '').slice(-5);
+        if (last5.length < 5) return '';
+        const firstChar = last5[0].toUpperCase();
+        const modelMap = {
+            '8': 'J100',
+            '9': 'J150',
+            '5': 'J70',
+            'A': 'J160',
+            'B': 'J110'
+        };
+        return modelMap[firstChar] || '';
+    }
+
     function parseSmartText(text) {
         const lines = text.split('\n').filter(l => l.trim());
         if (lines.length < 1) return [];
@@ -2581,11 +2612,11 @@ ${r.remark || '—'}
             // 智能推断表头：根据内容特征匹配已知格式
             // 炸机分析表（7列）：日期 | 机型 | 机架号 | 架次 | 省份 | 初步结论 | 问题定性
             // 日常工作录入（10列）：日期 | 工单编号 | 机架号 | 机型 | 架次-地块 | 省份 | 反馈人 | 分析人 | 问题定性 | 是否质保
-            // 判断依据：检查第一行第2列是否为机型代码（Jxx格式），第3列是否为纯数字机架号
+            // 判断依据：检查第一行第2列是否为机型代码（Jxx格式或JMZK/JMZJ/EAVUAV前缀），第3列是否为纯数字机架号
             const firstRowCols = lines[dataStartIndex].split(/\t+/).map(c => c.trim());
             const isCrashAnalysisFormat = (
                 firstRowCols.length >= 5 &&
-                /^J\d{2,3}$/i.test(firstRowCols[1]) &&  // 第2列是机型如 J70/J150
+                (/^J\d{2,3}$/i.test(firstRowCols[1]) || /^(JMZK|JMZJ|EAVUAV)/i.test(firstRowCols[1])) &&  // 第2列是机型如 J70/J150 或 JMZK...
                 /^\d{4,6}$/.test(firstRowCols[2])         // 第3列是机架号如 59963
             );
 
@@ -2761,6 +2792,10 @@ ${r.remark || '—'}
                 if (dateMatch) {
                     record.analysisTime = dateMatch[1] + '-' + String(dateMatch[2]).padStart(2,'0') + '-' + String(dateMatch[3]).padStart(2,'0');
                 }
+            }
+            // 自动推导机型：如果 model 为空但有 airframeNo，根据机架号后5位首字符推导
+            if (!record.model && record.airframeNo) {
+                record.model = detectModelFromAirframe(record.airframeNo);
             }
             if (record.analysisTime || record.workOrderNo || record.airframeNo) {
                 records.push(record);
