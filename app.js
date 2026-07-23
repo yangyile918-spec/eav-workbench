@@ -734,6 +734,32 @@
         document.getElementById('btnAddRecord').addEventListener('click', clearForm);
         document.getElementById('btnSave').addEventListener('click', saveRecord);
         document.getElementById('btnClear').addEventListener('click', clearForm);
+        
+        // 机架号输入时自动匹配机型
+        const airframeInput = document.getElementById('airframeNo');
+        const modelInput = document.getElementById('model');
+        if (airframeInput && modelInput) {
+            airframeInput.addEventListener('input', function() {
+                const airframeNo = this.value.trim();
+                if (airframeNo && !modelInput.value.trim()) {
+                    const detected = detectModelFromAirframe(airframeNo);
+                    if (detected) {
+                        modelInput.value = detected;
+                        modelInput.style.borderColor = '#00d2ff';
+                        setTimeout(() => { modelInput.style.borderColor = ''; }, 1500);
+                    }
+                }
+            });
+            airframeInput.addEventListener('blur', function() {
+                const airframeNo = this.value.trim();
+                if (airframeNo && !modelInput.value.trim()) {
+                    const detected = detectModelFromAirframe(airframeNo);
+                    if (detected) {
+                        modelInput.value = detected;
+                    }
+                }
+            });
+        }
         document.getElementById('btnSmartEntry').addEventListener('click', () => {
             document.getElementById('smartEntryModal').classList.add('show');
         });
