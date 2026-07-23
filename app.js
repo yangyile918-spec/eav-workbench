@@ -1376,11 +1376,11 @@
             document.getElementById('followupNotes').value = '';
         }
         
-        modal.classList.add('active');
+        modal.classList.add('show');
     };
 
     window.closeFollowupModal = function() {
-        document.getElementById('followupModal').classList.remove('active');
+        document.getElementById('followupModal').classList.remove('show');
     };
 
     window.saveFollowup = function() {
