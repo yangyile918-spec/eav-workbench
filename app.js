@@ -502,6 +502,8 @@
             const data = localStorage.getItem(CUSTOM_AUDIT_KEY);
             customAuditTypes = data ? JSON.parse(data) : [];
         } catch(e) { customAuditTypes = []; }
+        // 加载后刷新表单下拉框
+        refreshAuditDropdowns();
     }
 
     // 保存自定义定责类型
@@ -509,12 +511,57 @@
         if (!type || customAuditTypes.includes(type)) return;
         customAuditTypes.push(type);
         localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
+        // 保存后刷新表单下拉框
+        refreshAuditDropdowns();
     }
 
     // 删除自定义定责类型
     function removeCustomAuditType(type) {
         customAuditTypes = customAuditTypes.filter(t => t !== type);
         localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
+        refreshAuditDropdowns();
+    }
+
+    // 刷新表单录入区域的"是否质保"下拉框（包含自定义定责类型）
+    function refreshAuditDropdowns() {
+        // 表单录入区域的下拉框
+        const auditSelect = document.getElementById('auditResult');
+        if (auditSelect) {
+            const currentVal = auditSelect.value;
+            // 保留前三个固定选项，清除其余
+            while (auditSelect.options.length > 3) {
+                auditSelect.remove(3);
+            }
+            // 添加自定义类型
+            customAuditTypes.forEach(t => {
+                if (t !== '质保' && t !== '非质保') {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    auditSelect.appendChild(opt);
+                }
+            });
+            // 恢复之前的选择
+            auditSelect.value = currentVal;
+        }
+
+        // 跟进任务模态框的下拉框
+        const followupSelect = document.getElementById('followupIsWarranty');
+        if (followupSelect) {
+            const currentVal = followupSelect.value;
+            while (followupSelect.options.length > 3) {
+                followupSelect.remove(3);
+            }
+            customAuditTypes.forEach(t => {
+                if (t !== '质保' && t !== '非质保') {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    followupSelect.appendChild(opt);
+                }
+            });
+            followupSelect.value = currentVal;
+        }
     }
 
     function loadRecords() {
