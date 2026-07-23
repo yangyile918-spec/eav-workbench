@@ -832,6 +832,26 @@
                 }
             });
         }
+
+        // 表单区域"新增定责类型"输入框
+        const customAuditInput = document.getElementById('customAuditInput');
+        const auditSelect = document.getElementById('auditResult');
+        if (customAuditInput && auditSelect) {
+            const applyCustomAudit = () => {
+                const val = customAuditInput.value.trim();
+                if (!val) return;
+                saveCustomAuditType(val);
+                auditSelect.value = val;
+                customAuditInput.value = '';
+                // 视觉反馈
+                customAuditInput.style.borderColor = '#00d2ff';
+                setTimeout(() => { customAuditInput.style.borderColor = ''; }, 1500);
+            };
+            customAuditInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); applyCustomAudit(); }
+            });
+            customAuditInput.addEventListener('blur', applyCustomAudit);
+        }
         document.getElementById('btnSmartEntry').addEventListener('click', () => {
             document.getElementById('smartEntryModal').classList.add('show');
         });
@@ -1023,6 +1043,8 @@
          'followUp','finalConclusion','region'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('problemType').value = '';
         document.getElementById('auditResult').value = '';
+        const customAuditInput = document.getElementById('customAuditInput');
+        if (customAuditInput) customAuditInput.value = '';
         document.getElementById('analysisTime').value = formatDateTimeLocal(new Date());
         // 自动填充分析人为当前登录用户
         const session = getSession();
