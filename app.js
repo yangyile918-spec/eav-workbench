@@ -1376,11 +1376,16 @@
             document.getElementById('followupNotes').value = '';
         }
         
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
         modal.classList.add('show');
     };
 
     window.closeFollowupModal = function() {
-        document.getElementById('followupModal').classList.remove('show');
+        const modal = document.getElementById('followupModal');
+        modal.classList.remove('show');
+        modal.style.display = 'none';
     };
 
     window.saveFollowup = function() {
@@ -3562,6 +3567,9 @@
         
         // 确保弹窗居中显示
         const modal = document.getElementById('settingsModal');
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
         modal.style.display = 'flex';
         modal.style.alignItems = 'center';
         modal.style.justifyContent = 'center';
