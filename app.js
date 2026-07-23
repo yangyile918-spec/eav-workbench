@@ -872,8 +872,12 @@
     }
     function formatTimeOnly(s) {
         if (!s) return '—';
-        const d = new Date(s);
-        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        // 只提取日期部分 YYYY-MM-DD，不显示具体时间
+        const match = String(s).match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+        if (match) {
+            return `${match[1]}-${match[2].padStart(2,'0')}-${match[3].padStart(2,'0')}`;
+        }
+        return String(s).substring(0, 10);
     }
     function getWeekStart(d) {
         const r = new Date(d);
