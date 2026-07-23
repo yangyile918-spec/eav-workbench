@@ -911,7 +911,9 @@
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
     function formatDateTimeLocal(d) {
-        return formatDateLocal(d) + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        // 转换为北京时间 (UTC+8)
+        const beijingTime = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+        return formatDateLocal(beijingTime) + 'T' + String(beijingTime.getHours()).padStart(2,'0') + ':' + String(beijingTime.getMinutes()).padStart(2,'0');
     }
     function formatDateTime(s) {
         if (!s) return '—';
@@ -1015,6 +1017,20 @@
         switchPage('entry');
     };
 
+    // 切换质保状态（点击表格中的质保徽章）
+    window.toggleAuditResult = function(id) {
+        const r = records.find(x => x.id === id);
+        if (!r) return;
+        // 循环切换：未判定 → 质保 → 非质保 → 未判定
+        const cycle = ['', '质保', '非质保'];
+        const currentIdx = cycle.indexOf(r.auditResult || '');
+        const nextIdx = (currentIdx + 1) % cycle.length;
+        r.auditResult = cycle[nextIdx];
+        saveRecords();
+        renderTodayTable();
+        updateDashboard();
+    };
+
     window.deleteRecord = function(id) {
         if (!confirm('确定删除此记录？可前往回收站恢复')) return;
         const idx = records.findIndex(r => r.id === id);
@@ -1088,7 +1104,7 @@
                     <td>${esc(r.model)}</td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
-                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
+                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}" style="cursor:pointer;" onclick="toggleAuditResult('${r.id}')" title="点击切换质保状态">${esc(r.auditResult||'未判定')}</span></td>
                     <td title="${esc(r.initialAnalysis||'')}">${esc((r.initialAnalysis||'—').substring(0, 20))}${(r.initialAnalysis||'').length > 20 ? '…' : ''}</td>
                     <td>
                         <button class="btn btn-text" style="color:var(--success)" onclick="restoreRecord('${r.id}')">↩ 恢复</button>
@@ -1156,7 +1172,7 @@
                     <td>${esc(r.model)}</td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
-                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
+                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}" style="cursor:pointer;" onclick="toggleAuditResult('${r.id}')" title="点击切换质保状态">${esc(r.auditResult||'未判定')}</span></td>
                     <td title="${esc(r.initialAnalysis||'')}">${esc((r.initialAnalysis||'—').substring(0, 25))}${(r.initialAnalysis||'').length > 25 ? '…' : ''}</td>
                     <td title="${esc(r.finalConclusion||'')}">${esc((r.finalConclusion||'—').substring(0, 25))}${(r.finalConclusion||'').length > 25 ? '…' : ''}</td>
                     <td><button class="btn btn-text" onclick="editRecord('${r.id}')">✏️</button><button class="btn btn-text" style="color:#007bff;" onclick="openFollowupFromRecord('${r.id}')">📋</button><button class="btn btn-text" style="color:var(--danger)" onclick="deleteRecord('${r.id}')">🗑️</button></td>
@@ -1351,7 +1367,7 @@
                 <td>${isFollowup ? '<span class="followup-badge">跟进</span>' : esc(r.feedbackPerson)}</td>
                 <td>${esc(r.analyst)}</td>
                 <td>${esc(r.problemType)}</td>
-                <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
+                <td><span class="audit-badge audit-${r.auditResult||'未判定'}" style="cursor:pointer;" onclick="toggleAuditResult('${r.id}')" title="点击切换质保状态">${esc(r.auditResult||'未判定')}</span></td>
                 <td>
                     <button class="btn btn-text" onclick="editRecord('${r.id}')">编辑</button>
                     <button class="btn btn-text" style="color:#007bff;" onclick="openFollowupFromRecord('${r.id}')">跟进</button>
@@ -2980,7 +2996,7 @@ ${r.remark || '—'}
                     <td>${esc(r.model)}</td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
-                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
+                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}" style="cursor:pointer;" onclick="toggleAuditResult('${r.id}')" title="点击切换质保状态">${esc(r.auditResult||'未判定')}</span></td>
                     <td class="text-ellipsis" title="${esc(r.initialAnalysis)}">${esc(r.initialAnalysis||'—')}</td>
                     <td class="text-ellipsis" title="${esc(r.finalConclusion)}">${esc(r.finalConclusion||'—')}</td>
                 </tr>
