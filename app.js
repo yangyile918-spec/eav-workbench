@@ -5,6 +5,7 @@
     const STORAGE_KEY = 'droneWorkbenchRecords';
     const TRASH_KEY = 'droneWorkbenchTrash';
     const CLOUD_CONFIG_KEY = 'droneWorkbenchCloudConfig';
+    const CUSTOM_AUDIT_KEY = 'droneWorkbenchCustomAudits';
     const FINISHED_STATUS = ['完结待签字', '待评价', '已评价'];
 
     // 默认云同步配置（Token 分段拼接，避免 GitHub secret 检测）
@@ -166,6 +167,7 @@
                 showApp();
                 // 登录后初始化数据
                 loadRecords();
+                loadCustomAudits();
                 loadTrash();
                 bindEvents();
                 setDefaultDates();
@@ -356,6 +358,7 @@
 
         // 已登录，初始化业务
         loadRecords();
+        loadCustomAudits();
         loadTrash();
         loadFollowupRecords();
         bindEvents();
@@ -491,6 +494,28 @@
 
     // ========== 存储 ==========
     let cloudSyncTimer = null;
+    let customAuditTypes = [];
+
+    // 加载自定义定责类型
+    function loadCustomAudits() {
+        try {
+            const data = localStorage.getItem(CUSTOM_AUDIT_KEY);
+            customAuditTypes = data ? JSON.parse(data) : [];
+        } catch(e) { customAuditTypes = []; }
+    }
+
+    // 保存自定义定责类型
+    function saveCustomAuditType(type) {
+        if (!type || customAuditTypes.includes(type)) return;
+        customAuditTypes.push(type);
+        localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
+    }
+
+    // 删除自定义定责类型
+    function removeCustomAuditType(type) {
+        customAuditTypes = customAuditTypes.filter(t => t !== type);
+        localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
+    }
 
     function loadRecords() {
         try {
@@ -1017,11 +1042,33 @@
         switchPage('entry');
     };
 
+    // 生成质保下拉框 HTML（包含自定义定责类型）
+    function generateAuditSelect(r) {
+        let options = `<option value="" ${!r.auditResult ? 'selected' : ''}>未判定</option>`;
+        options += `<option value="质保" ${r.auditResult === '质保' ? 'selected' : ''}>质保</option>`;
+        options += `<option value="非质保" ${r.auditResult === '非质保' ? 'selected' : ''}>非质保</option>`;
+        // 添加自定义定责类型
+        customAuditTypes.forEach(t => {
+            if (t !== '质保' && t !== '非质保') {
+                options += `<option value="${esc(t)}" ${r.auditResult === t ? 'selected' : ''}>${esc(t)}</option>`;
+            }
+        });
+        // 如果当前记录的定责不在列表中，也添加为选项
+        if (r.customAudit && !customAuditTypes.includes(r.customAudit)) {
+            options += `<option value="${esc(r.customAudit)}" selected>${esc(r.customAudit)}</option>`;
+        }
+        return `<select class="audit-select" onchange="updateAuditResult('${r.id}', this.value)" style="padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:12px; cursor:pointer;">${options}</select>`;
+    }
+
     // 更新质保状态（下拉选择）
     window.updateAuditResult = function(id, value) {
         const r = records.find(x => x.id === id);
         if (!r) return;
         r.auditResult = value;
+        if (value && value !== '质保' && value !== '非质保') {
+            saveCustomAuditType(value);
+            r.customAudit = value;
+        }
         saveRecords();
         renderTodayTable();
         updateDashboard();
@@ -1033,6 +1080,7 @@
         if (!r) return;
         r.customAudit = value.trim();
         if (value.trim()) {
+            saveCustomAuditType(value.trim());
             r.auditResult = value.trim();
         }
         saveRecords();
@@ -1114,13 +1162,8 @@
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
                     <td>
-                    <select class="audit-select" onchange="updateAuditResult('${r.id}', this.value)" style="padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:12px; cursor:pointer;">
-                        <option value="" ${!r.auditResult ? 'selected' : ''}>未判定</option>
-                        <option value="质保" ${r.auditResult === '质保' ? 'selected' : ''}>质保</option>
-                        <option value="非质保" ${r.auditResult === '非质保' ? 'selected' : ''}>非质保</option>
-                        ${r.customAudit ? `<option value="${esc(r.customAudit)}" selected>${esc(r.customAudit)}</option>` : ''}
-                    </select>
-                    <input type="text" class="custom-audit-input" placeholder="自定义定责" value="${esc(r.customAudit || '')}" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
+                    ${generateAuditSelect(r)}
+                    <input type="text" class="custom-audit-input" placeholder="新增定责" value="" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
                 </td>
                     <td title="${esc(r.initialAnalysis||'')}">${esc((r.initialAnalysis||'—').substring(0, 20))}${(r.initialAnalysis||'').length > 20 ? '…' : ''}</td>
                     <td>
@@ -1190,13 +1233,8 @@
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
                     <td>
-                    <select class="audit-select" onchange="updateAuditResult('${r.id}', this.value)" style="padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:12px; cursor:pointer;">
-                        <option value="" ${!r.auditResult ? 'selected' : ''}>未判定</option>
-                        <option value="质保" ${r.auditResult === '质保' ? 'selected' : ''}>质保</option>
-                        <option value="非质保" ${r.auditResult === '非质保' ? 'selected' : ''}>非质保</option>
-                        ${r.customAudit ? `<option value="${esc(r.customAudit)}" selected>${esc(r.customAudit)}</option>` : ''}
-                    </select>
-                    <input type="text" class="custom-audit-input" placeholder="自定义定责" value="${esc(r.customAudit || '')}" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
+                    ${generateAuditSelect(r)}
+                    <input type="text" class="custom-audit-input" placeholder="新增定责" value="" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
                 </td>
                     <td title="${esc(r.initialAnalysis||'')}">${esc((r.initialAnalysis||'—').substring(0, 25))}${(r.initialAnalysis||'').length > 25 ? '…' : ''}</td>
                     <td title="${esc(r.finalConclusion||'')}">${esc((r.finalConclusion||'—').substring(0, 25))}${(r.finalConclusion||'').length > 25 ? '…' : ''}</td>
@@ -1393,13 +1431,8 @@
                 <td>${esc(r.analyst)}</td>
                 <td>${esc(r.problemType)}</td>
                 <td>
-                    <select class="audit-select" onchange="updateAuditResult('${r.id}', this.value)" style="padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:12px; cursor:pointer;">
-                        <option value="" ${!r.auditResult ? 'selected' : ''}>未判定</option>
-                        <option value="质保" ${r.auditResult === '质保' ? 'selected' : ''}>质保</option>
-                        <option value="非质保" ${r.auditResult === '非质保' ? 'selected' : ''}>非质保</option>
-                        ${r.customAudit ? `<option value="${esc(r.customAudit)}" selected>${esc(r.customAudit)}</option>` : ''}
-                    </select>
-                    <input type="text" class="custom-audit-input" placeholder="自定义定责" value="${esc(r.customAudit || '')}" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
+                    ${generateAuditSelect(r)}
+                    <input type="text" class="custom-audit-input" placeholder="新增定责" value="" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
                 </td>
                 <td>
                     <button class="btn btn-text" onclick="editRecord('${r.id}')">编辑</button>
@@ -3030,13 +3063,8 @@ ${r.remark || '—'}
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
                     <td>
-                    <select class="audit-select" onchange="updateAuditResult('${r.id}', this.value)" style="padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:12px; cursor:pointer;">
-                        <option value="" ${!r.auditResult ? 'selected' : ''}>未判定</option>
-                        <option value="质保" ${r.auditResult === '质保' ? 'selected' : ''}>质保</option>
-                        <option value="非质保" ${r.auditResult === '非质保' ? 'selected' : ''}>非质保</option>
-                        ${r.customAudit ? `<option value="${esc(r.customAudit)}" selected>${esc(r.customAudit)}</option>` : ''}
-                    </select>
-                    <input type="text" class="custom-audit-input" placeholder="自定义定责" value="${esc(r.customAudit || '')}" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
+                    ${generateAuditSelect(r)}
+                    <input type="text" class="custom-audit-input" placeholder="新增定责" value="" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
                 </td>
                     <td class="text-ellipsis" title="${esc(r.initialAnalysis)}">${esc(r.initialAnalysis||'—')}</td>
                     <td class="text-ellipsis" title="${esc(r.finalConclusion)}">${esc(r.finalConclusion||'—')}</td>
