@@ -1280,13 +1280,21 @@
             updateTodaySelectedCount();
             return;
         }
-        tbody.innerHTML = recentRecords.sort((a,b) => new Date(b.analysisTime) - new Date(a.analysisTime)).map(r => `
+        tbody.innerHTML = recentRecords.sort((a,b) => new Date(b.analysisTime) - new Date(a.analysisTime)).map(r => {
+            // 识别反馈人中的"跟进"标记
+            const isFollowup = r.feedbackPerson && (r.feedbackPerson.includes('跟进') || r.feedbackPerson.toLowerCase().includes('follow'));
+            // 如果标记为跟进，自动创建跟进任务
+            if (isFollowup && !followupRecords.find(f => f.sourceRecordId === r.id)) {
+                createFollowupFromRecord(r);
+            }
+            return `
             <tr>
                 <td><input type="checkbox" class="today-row-checkbox" data-id="${r.id}" onchange="updateTodaySelectedCount()" style="cursor:pointer;"></td>
                 <td>${formatDateTime(r.analysisTime)}</td>
                 <td>${esc(r.workOrderNo)}</td>
+                <td><span class="model-badge">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
-                <td>${esc(r.feedbackPerson)}</td>
+                <td>${isFollowup ? '<span class="followup-badge">跟进</span>' : esc(r.feedbackPerson)}</td>
                 <td>${esc(r.analyst)}</td>
                 <td>${esc(r.problemType)}</td>
                 <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
@@ -1297,7 +1305,8 @@
                     <button class="btn btn-text" style="color:var(--danger)" onclick="deleteRecord('${r.id}')">删除</button>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
         // 重置全选状态
         const selectAll = document.getElementById('todaySelectAll');
         const headerSelectAll = document.getElementById('todayHeaderSelectAll');
@@ -1398,6 +1407,45 @@
     function generateFollowupId() {
         return 'fu' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
     }
+
+    // 从记录自动创建跟进任务
+    function createFollowupFromRecord(record) {
+        const followup = {
+            id: generateFollowupId(),
+            sourceRecordId: record.id, // 关联原始记录ID
+            analysisTime: record.analysisTime,
+            workOrderNo: record.workOrderNo,
+            airframeNo: record.airframeNo,
+            model: record.model,
+            reporter: record.feedbackPerson,
+            analyst: record.analyst,
+            problemType: record.problemType,
+            isWarranty: record.auditResult === '质保' ? '质保' : (record.auditResult === '非质保' ? '非质保' : ''),
+            status: '待跟进',
+            notes: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        followupRecords.push(followup);
+        saveFollowupRecords();
+        console.log('[跟进] 自动创建跟进任务:', followup.workOrderNo);
+    }
+
+    window.openFollowupFromRecord = function(recordId) {
+        const record = records.find(r => r.id === recordId);
+        if (!record) { alert('记录不存在'); return; }
+        
+        // 检查是否已有跟进任务
+        let followup = followupRecords.find(f => f.sourceRecordId === recordId);
+        if (!followup) {
+            // 自动创建
+            createFollowupFromRecord(record);
+            followup = followupRecords.find(f => f.sourceRecordId === recordId);
+        }
+        
+        // 打开编辑弹窗
+        openFollowupModal(followup.id);
+    };
 
     window.openFollowupModal = function(id) {
         const modal = document.getElementById('followupModal');
@@ -1561,7 +1609,7 @@
         count.textContent = filtered.length;
         
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📋</div>暂无跟进任务</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-state-icon">📋</div>暂无跟进任务</td></tr>';
             return;
         }
         
@@ -1576,6 +1624,7 @@
             rows.push(`<tr>
                 <td>${formatDateTime(r.analysisTime)}</td>
                 <td>${esc(r.workOrderNo)}</td>
+                <td><span class="model-badge">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
                 <td>${esc(r.reporter)}</td>
                 <td>${esc(r.analyst)}</td>
