@@ -1205,11 +1205,18 @@
 
         const tbody = document.querySelector('#todayTable tbody');
         if (recentRecords.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
+            // 重置全选状态
+            const selectAll = document.getElementById('todaySelectAll');
+            const headerSelectAll = document.getElementById('todayHeaderSelectAll');
+            if (selectAll) selectAll.checked = false;
+            if (headerSelectAll) headerSelectAll.checked = false;
+            updateTodaySelectedCount();
             return;
         }
         tbody.innerHTML = recentRecords.sort((a,b) => new Date(b.analysisTime) - new Date(a.analysisTime)).map(r => `
             <tr>
+                <td><input type="checkbox" class="today-row-checkbox" data-id="${r.id}" onchange="updateTodaySelectedCount()" style="cursor:pointer;"></td>
                 <td>${formatDateTime(r.analysisTime)}</td>
                 <td>${esc(r.workOrderNo)}</td>
                 <td>${esc(r.airframeNo)}</td>
@@ -1224,7 +1231,85 @@
                 </td>
             </tr>
         `).join('');
+        // 重置全选状态
+        const selectAll = document.getElementById('todaySelectAll');
+        const headerSelectAll = document.getElementById('todayHeaderSelectAll');
+        if (selectAll) selectAll.checked = false;
+        if (headerSelectAll) headerSelectAll.checked = false;
+        updateTodaySelectedCount();
     }
+
+    // ========== 最近记录批量删除功能 ==========
+    window.toggleTodaySelectAll = function(checked) {
+        const checkboxes = document.querySelectorAll('.today-row-checkbox');
+        checkboxes.forEach(cb => cb.checked = checked);
+        const selectAll = document.getElementById('todaySelectAll');
+        const headerSelectAll = document.getElementById('todayHeaderSelectAll');
+        if (selectAll) selectAll.checked = checked;
+        if (headerSelectAll) headerSelectAll.checked = checked;
+        updateTodaySelectedCount();
+    };
+
+    window.updateTodaySelectedCount = function() {
+        const checkboxes = document.querySelectorAll('.today-row-checkbox');
+        const checked = document.querySelectorAll('.today-row-checkbox:checked');
+        const count = checked.length;
+        const countEl = document.getElementById('todaySelectedCount');
+        const btn = document.getElementById('todayBatchDeleteBtn');
+        if (countEl) countEl.textContent = `已选 ${count} 条`;
+        if (btn) {
+            btn.disabled = count === 0;
+            btn.style.opacity = count === 0 ? '0.5' : '1';
+        }
+        // 同步全选框状态
+        const allCount = checkboxes.length;
+        const selectAll = document.getElementById('todaySelectAll');
+        const headerSelectAll = document.getElementById('todayHeaderSelectAll');
+        if (selectAll) selectAll.checked = count === allCount && allCount > 0;
+        if (headerSelectAll) headerSelectAll.checked = count === allCount && allCount > 0;
+    };
+
+    window.batchDeleteTodaySelected = function() {
+        const checked = document.querySelectorAll('.today-row-checkbox:checked');
+        if (checked.length === 0) {
+            alert('请先选择要删除的记录');
+            return;
+        }
+        if (!confirm(`确定删除选中的 ${checked.length} 条记录？删除后可在回收站恢复。`)) return;
+        
+        const idsToDelete = Array.from(checked).map(cb => cb.dataset.id);
+        let deletedCount = 0;
+        
+        idsToDelete.forEach(id => {
+            const idx = records.findIndex(r => r.id === id);
+            if (idx !== -1) {
+                const removed = records.splice(idx, 1)[0];
+                removed._deletedAt = new Date().toISOString();
+                trashRecords.push(removed);
+                deletedCount++;
+            }
+        });
+        
+        saveRecords(false, false);
+        saveTrash();
+        renderTodayTable();
+        renderHistoryPage();
+        updateDashboard();
+        
+        // 立即同步到云端
+        const cfg = getCloudConfig();
+        if (cfg && cfg.enabled) {
+            pushToCloud().then(success => {
+                if (success) {
+                    alert(`✅ 成功删除 ${deletedCount} 条记录，已同步到云端`);
+                } else {
+                    alert(`⚠️ 已删除 ${deletedCount} 条记录，但云同步失败。请检查网络连接后重试。`);
+                }
+            });
+        } else {
+            alert(`✅ 成功删除 ${deletedCount} 条记录`);
+        }
+    };
 
     // ========== 智能录入 ==========
     let smartParsedRows = [];
