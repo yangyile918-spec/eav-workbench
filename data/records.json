@@ -11,26 +11,6 @@
     "analyst": "杨怡乐"
   },
   {
-    "id": "mruf8z9ks6cmt",
-    "analysisTime": "2026-07-21T16:59",
-    "workOrderNo": "",
-    "airframeNo": "96376",
-    "model": "J150",
-    "flightBatch": "178454833294864 -- 50244000",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "疑似雷达问题——识别过近Suspected Radar Issue – Overly Short Detection Distance",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "",
-    "faultCondition": "",
-    "initialAnalysis": "FPV:无人机自主高速作业，作业高度下降坠机。\n大屏数据：飞机故障作业速度为13.8m/s，仿地高度从3.3m降到0m。四路电机速度同步下滑。\n初步分析：疑似前雷达故障，导致飞机无法仿地，需要视觉日志进行核实确认。\nFPV: During high-speed autonomous operation, the working altitude dropped and the aircraft crashed.\nDashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude dropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is required for verification.",
-    "followUp": "",
-    "finalConclusion": "",
-    "region": "美国 Missouri"
-  },
-  {
     "id": "mrufrnwf1hpwr",
     "analysisTime": "2026-07-20",
     "model": "J150",
@@ -39,17 +19,6 @@
     "region": "美国\nKansas Milan",
     "initialAnalysis": "FPV：无人机起飞过程中，右脚架变形。\n初步分析：脚架没有解锁，导致起飞时崩裂。\nFPV: During takeoff, the right landing gear deformed.\nPreliminary Analysis: The landing gear was not unlocked, causing it to break during takeoff.",
     "problemType": "操作问题——操作失误\nThe crash is attributed to operator error.",
-    "analyst": "杨怡乐"
-  },
-  {
-    "id": "mrufrnwftzcmy",
-    "analysisTime": "2026-07-21",
-    "model": "J100",
-    "airframeNo": "86294",
-    "flightBatch": "2026-07-21 02:55:36--03:00:36",
-    "region": "美国\nKentucky",
-    "initialAnalysis": "大屏数据：飞机起飞时，大屏故障同时播报左后机臂未卡紧和炸机。",
-    "problemType": "疑似操作问题——机臂未卡紧\nSuspected operational error – Unlocked loose arm frame",
     "analyst": "杨怡乐"
   },
   {
@@ -73,26 +42,6 @@
     "initialAnalysis": "FPV:无人机自主高速作业，向左偏离航线炸机。\n大屏数据：飞机进出作业速度为12.2m/s,作业高度由3.6米m降至1.9m，左前桨叶动力短时丢失。倾倒炸机。",
     "problemType": "疑似动力问题——左前异常\nPower Issue – Front-Left Abnormality",
     "analyst": "杨怡乐"
-  },
-  {
-    "id": "mrwxi361v68pv",
-    "analysisTime": "2026-07-23T11:05",
-    "workOrderNo": "",
-    "airframeNo": "",
-    "model": "",
-    "flightBatch": "",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "",
-    "faultCondition": "",
-    "initialAnalysis": "",
-    "followUp": "",
-    "finalConclusion": "",
-    "region": ""
   },
   {
     "id": "mroitz5qas8t1",
