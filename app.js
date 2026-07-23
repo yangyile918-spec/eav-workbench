@@ -1271,7 +1271,7 @@
 
         const tbody = document.querySelector('#todayTable tbody');
         if (recentRecords.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
             // 重置全选状态
             const selectAll = document.getElementById('todaySelectAll');
             const headerSelectAll = document.getElementById('todayHeaderSelectAll');
@@ -1294,6 +1294,7 @@
                 <td><span class="model-badge">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
                 <td>${esc(r.flightBatch)}</td>
+                <td>${esc(r.region)}</td>
                 <td>${isFollowup ? '<span class="followup-badge">跟进</span>' : esc(r.feedbackPerson)}</td>
                 <td>${esc(r.analyst)}</td>
                 <td>${esc(r.problemType)}</td>
@@ -1609,7 +1610,7 @@
         count.textContent = filtered.length;
         
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><div class="empty-state-icon">📋</div>暂无跟进任务</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">📋</div>暂无跟进任务</td></tr>';
             return;
         }
         
@@ -1626,6 +1627,7 @@
                 <td><span class="model-badge">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
                 <td>${esc(r.flightBatch)}</td>
+                <td>${esc(r.region)}</td>
                 <td>${esc(r.reporter)}</td>
                 <td>${esc(r.analyst)}</td>
                 <td>${esc(r.problemType)}</td>
@@ -2675,6 +2677,7 @@ ${r.remark || '—'}
 
             const DEFAULT_HEADERS_7 = ['分析时间','机型','机架号','架次','省份','初步结论','问题定性'];
             const DEFAULT_HEADERS_9 = ['分析时间','机型','机架号','地块','反馈人','分析人','问题定性','是否质保','备注'];
+            const DEFAULT_HEADERS_10_NEW = ['分析时间','机型','机架号','地块','省区','反馈人','分析人','问题定性','是否质保','备注'];
             const DEFAULT_HEADERS_10 = ['分析时间','工单编号','机架号','机型','架次-地块','省份','反馈人','分析人','问题定性','是否质保'];
 
             // 备用检测：7列数据，最后一列包含问题定性关键词 → 炸机分析表
@@ -2693,8 +2696,11 @@ ${r.remark || '—'}
                 headers = DEFAULT_HEADERS_7.slice();
                 expectedCols = 7;  // 强制使用7列，即使第一行只有5个Tab
             } else if (expectedCols === 9) {
-                // 9列数据：没有"省份"列
+                // 9列数据：没有"省区"列
                 headers = DEFAULT_HEADERS_9.slice();
+            } else if (expectedCols === 10) {
+                // 10列数据：包含"省区"列
+                headers = DEFAULT_HEADERS_10_NEW.slice();
             } else {
                 headers = DEFAULT_HEADERS_10.slice(0, expectedCols);
             }
@@ -2803,6 +2809,8 @@ ${r.remark || '—'}
             '机型': 'model', '型号': 'model', 'Model': 'model',
             // 架次/地块（支持多种格式）
             '架次': 'flightBatch', '架次-地块': 'flightBatch', '地块': 'flightBatch', 'Flight ID': 'flightBatch',
+            // 省区
+            '省区': 'region', '省份': 'region', '区域': 'region', 'Region': 'region',
             // 人员
             '反馈人': 'feedbackPerson', '分析人': 'analyst', '处理人': 'analyst',
             // 问题定性（炸机分析表）
@@ -2819,8 +2827,6 @@ ${r.remark || '—'}
             '跟进情况': 'followUp', '异常跟进': 'followUp',
             // 最终结论
             '最终结论': 'finalConclusion', '结论': 'finalConclusion',
-            // 省份/区域
-            '省份': 'region', '区域': 'region', 'Region': 'region',
             // 英文表头兼容
             'time': 'analysisTime', 'date': 'analysisTime',
             'model': 'model', 'airframe': 'airframeNo', 'sn': 'airframeNo',
