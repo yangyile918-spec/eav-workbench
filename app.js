@@ -2674,6 +2674,7 @@ ${r.remark || '—'}
             );
 
             const DEFAULT_HEADERS_7 = ['分析时间','机型','机架号','架次','省份','初步结论','问题定性'];
+            const DEFAULT_HEADERS_9 = ['分析时间','工单编号','机架号','架次','反馈人','分析人','问题定性','是否质保','备注'];
             const DEFAULT_HEADERS_10 = ['分析时间','工单编号','机架号','机型','架次-地块','省份','反馈人','分析人','问题定性','是否质保'];
 
             // 备用检测：7列数据，最后一列包含问题定性关键词 → 炸机分析表
@@ -2691,6 +2692,9 @@ ${r.remark || '—'}
             if (isCrashAnalysisFormat || isCrashByContent) {
                 headers = DEFAULT_HEADERS_7.slice();
                 expectedCols = 7;  // 强制使用7列，即使第一行只有5个Tab
+            } else if (expectedCols === 9) {
+                // 9列数据：没有"省份"列
+                headers = DEFAULT_HEADERS_9.slice();
             } else {
                 headers = DEFAULT_HEADERS_10.slice(0, expectedCols);
             }
