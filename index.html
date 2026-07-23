@@ -643,10 +643,19 @@
                         <input type="text" id="historyFilterAnalyst" placeholder="分析人" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100px;" oninput="renderHistoryPage()">
                         <input type="text" id="historyFilterType" placeholder="问题定性" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100px;" oninput="renderHistoryPage()">
                         <button class="btn btn-sm btn-secondary" onclick="document.getElementById('historyFilterDate').value='';document.getElementById('historyFilterModel').value='';document.getElementById('historyFilterAnalyst').value='';document.getElementById('historyFilterType').value='';renderHistoryPage()">清空筛选</button>
+                        <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
+                            <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" style="cursor:pointer;">
+                                全选
+                            </label>
+                            <span id="selectedCount" style="font-size:13px;color:#666;">已选 0 条</span>
+                            <button class="btn btn-sm btn-danger" onclick="batchDeleteSelected()" id="batchDeleteBtn" disabled style="opacity:0.5;">️ 批量删除</button>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table" id="historyTable">
                             <colgroup>
+                                <col style="width:40px">
                                 <col style="width:72px">
                                 <col style="width:160px">
                                 <col style="width:150px">
@@ -660,6 +669,7 @@
                             </colgroup>
                             <thead>
                                 <tr>
+                                    <th><input type="checkbox" id="headerSelectAll" onchange="toggleSelectAll(this.checked)" style="cursor:pointer;"></th>
                                     <th>时间</th>
                                     <th>工单编号</th>
                                     <th>机架号</th>
@@ -792,6 +802,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=32"></script>
+    <script src="app.js?v=33"></script>
 </body>
 </html>
