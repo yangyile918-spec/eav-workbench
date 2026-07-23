@@ -268,10 +268,19 @@
                 <div class="card">
                     <div class="card-header">
                         <h2>📋 最近记录 <span id="todayCount" class="badge">0 条</span></h2>
+                        <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+                            <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+                                <input type="checkbox" id="todaySelectAll" onchange="toggleTodaySelectAll(this.checked)" style="cursor:pointer;">
+                                全选
+                            </label>
+                            <span id="todaySelectedCount" style="font-size:13px;color:#666;">已选 0 条</span>
+                            <button class="btn btn-sm btn-danger" onclick="batchDeleteTodaySelected()" id="todayBatchDeleteBtn" disabled style="opacity:0.5;">⚠️ 批量删除</button>
+                        </div>
                     </div>
                     <table class="data-table" id="todayTable">
                         <thead>
                             <tr>
+                                <th style="width:40px;"><input type="checkbox" id="todayHeaderSelectAll" onchange="toggleTodaySelectAll(this.checked)" style="cursor:pointer;"></th>
                                 <th>时间</th>
                                 <th>工单编号</th>
                                 <th>机架号</th>
@@ -802,6 +811,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=33"></script>
+    <script src="app.js?v=34"></script>
 </body>
 </html>
