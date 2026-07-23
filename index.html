@@ -111,6 +111,10 @@
                     <span class="nav-icon"></span>
                     <span>跟进任务</span>
                 </a>
+                <a href="#" class="nav-item" data-page="solution">
+                    <span class="nav-icon">🔧</span>
+                    <span>问题解决</span>
+                </a>
                 <a href="#" class="nav-item" data-page="trash">
                     <span class="nav-icon">🗑️</span>
                     <span>回收站</span>
@@ -341,11 +345,23 @@
                             <div class="smart-tabs">
                                 <button class="smart-tab active" data-tab="text">📝 粘贴文本</button>
                                 <button class="smart-tab" data-tab="image">📸 图片识别</button>
+                                <button class="smart-tab" data-tab="feedback">📋 反馈模板</button>
                             </div>
                             <!-- 文本粘贴区 -->
                             <div class="smart-tab-content" id="smartTabText">
                                 <p class="hint">粘贴表格数据（支持从Excel/网页复制），系统将自动识别字段并导入。</p>
                                 <textarea id="smartEntryText" rows="10" placeholder="在此粘贴表格数据..."></textarea>
+                            </div>
+                            <!-- 反馈模板区 -->
+                            <div class="smart-tab-content" id="smartTabFeedback" style="display:none">
+                                <p class="hint">粘贴反馈模板文本，系统将自动解析并录入到问题解决页面。</p>
+                                <textarea id="feedbackTemplateText" rows="10" placeholder="无人机编号：80873
+地块编号：3535565
+故障时间：7.12日，上午7.12到9.00
+故障现象：无人机自主作业返航时掉树上了。
+需求，查询炸机原因
+无人机日志，图传日志，APP日志，FPV日志均已上传。飞控日志已传完"></textarea>
+                                <div id="feedbackTemplatePreview" class="preview-area"></div>
                             </div>
                             <!-- 图片OCR区 -->
                             <div class="smart-tab-content" id="smartTabImage" style="display:none">
@@ -752,7 +768,55 @@
                 </div>
             </section>
 
-            <!-- ========== 页面8：回收站 ========== -->
+            <!-- ========== 页面8：问题解决 ========== -->
+            <section class="page" id="page-solution">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🔧 问题解决</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-info btn-sm" id="btnFeedbackTemplate">📋 反馈模板录入</button>
+                            <button class="btn btn-primary btn-sm" onclick="openSolutionModal()">➕ 新建问题</button>
+                        </div>
+                    </div>
+                    <div class="filter-row" style="display:flex;gap:10px;padding:12px 16px;flex-wrap:wrap;align-items:center;background:#f8f9fa;border-bottom:1px solid #e0e0e0;">
+                        <input type="date" id="solutionFilterDate" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;" onchange="renderSolutionPage()">
+                        <input type="text" id="solutionFilterDrone" placeholder="无人机编号" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:120px;" oninput="renderSolutionPage()">
+                        <input type="text" id="solutionFilterStatus" placeholder="解决状态" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100px;" oninput="renderSolutionPage()">
+                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('solutionFilterDate').value='';document.getElementById('solutionFilterDrone').value='';document.getElementById('solutionFilterStatus').value='';renderSolutionPage()">清空筛选</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="solutionTable">
+                            <colgroup>
+                                <col style="width:100px">
+                                <col style="width:100px">
+                                <col style="width:100px">
+                                <col style="width:120px">
+                                <col>
+                                <col style="width:80px">
+                                <col style="width:80px">
+                                <col style="width:160px">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>故障时间</th>
+                                    <th>无人机编号</th>
+                                    <th>地块编号</th>
+                                    <th>故障现象</th>
+                                    <th>需求描述</th>
+                                    <th>日志状态</th>
+                                    <th>解决状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🔧</div>暂无问题解决记录</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 页面9：回收站 ========== -->
             <section class="page" id="page-trash">
                 <div class="card">
                     <div class="card-header">
@@ -893,6 +957,96 @@
         </div>
     </div>
 
+    <!-- 问题解决编辑弹窗 -->
+    <div class="modal" id="solutionModal">
+        <div class="modal-content" style="max-width:700px;">
+            <div class="modal-header">
+                <h3 id="solutionModalTitle">新建问题</h3>
+                <button class="modal-close" onclick="closeSolutionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editSolutionId">
+                <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>无人机编号 <span style="color:red">*</span></label>
+                        <input type="text" id="solutionDroneNo" placeholder="请输入无人机编号">
+                    </div>
+                    <div class="form-group">
+                        <label>地块编号</label>
+                        <input type="text" id="solutionFieldNo" placeholder="请输入地块编号">
+                    </div>
+                </div>
+                <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>故障时间 <span style="color:red">*</span></label>
+                        <input type="datetime-local" id="solutionFaultTime">
+                    </div>
+                    <div class="form-group">
+                        <label>故障时间段</label>
+                        <input type="text" id="solutionFaultPeriod" placeholder="如：上午7:12到9:00">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>故障现象 <span style="color:red">*</span></label>
+                    <textarea id="solutionFaultDesc" rows="3" placeholder="请描述故障现象"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>需求描述</label>
+                    <textarea id="solutionRequirement" rows="2" placeholder="请输入需求，如：查询炸机原因"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>日志上传状态</label>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px;">
+                        <label style="display:flex;align-items:center;gap:4px;font-weight:normal;"><input type="checkbox" id="logDrone" checked> 无人机日志</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-weight:normal;"><input type="checkbox" id="logVideo" checked> 图传日志</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-weight:normal;"><input type="checkbox" id="logApp" checked> APP日志</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-weight:normal;"><input type="checkbox" id="logFpv" checked> FPV日志</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-weight:normal;"><input type="checkbox" id="logFlight" checked> 飞控日志</label>
+                        <label style="display:flex;align-items:center;gap:4px;font-weight:normal;"><input type="checkbox" id="logOther"> 其他</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>解决状态</label>
+                    <select id="solutionStatus">
+                        <option value="待分析">待分析</option>
+                        <option value="分析中">分析中</option>
+                        <option value="已解决">已解决</option>
+                        <option value="无法解决">无法解决</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>分析过程 / 解决方案</label>
+                    <textarea id="solutionAnalysis" rows="4" placeholder="记录分析过程、根因定位、解决方案等"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea id="solutionRemark" rows="2" placeholder="其他备注信息"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSolutionModal()">取消</button>
+                <button class="btn btn-primary" id="btnSaveSolution">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 问题详情弹窗 -->
+    <div class="modal" id="solutionDetailModal">
+        <div class="modal-content" style="max-width:800px;">
+            <div class="modal-header">
+                <h3>🔧 问题详情</h3>
+                <button class="modal-close" onclick="closeSolutionDetail()">&times;</button>
+            </div>
+            <div class="modal-body" id="solutionDetailContent">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSolutionDetail()">关闭</button>
+                <button class="btn btn-info" id="btnEditSolution">编辑</button>
+                <button class="btn btn-primary" id="btnExportSolution">导出报告</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 用户编辑弹窗 -->
     <div class="modal" id="userModal">
         <div class="modal-content" style="max-width:420px;">
@@ -930,6 +1084,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=37"></script>
+    <script src="app.js?v=38"></script>
 </body>
 </html>
