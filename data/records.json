@@ -12,14 +12,23 @@
   },
   {
     "id": "mrx4ugbwb7ldk",
-    "analysisTime": "2026-07-23",
-    "model": "J150",
+    "analysisTime": "2026-07-23T14:32",
+    "workOrderNo": "",
     "airframeNo": "95363",
+    "model": "J150",
     "flightBatch": "178473873523587 -- 50246579",
-    "region": "美国\nIowa",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "机臂断裂Arm Fracture",
+    "auditResult": "质保",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
     "initialAnalysis": "FPV:无人机准备起飞状态，机臂断裂。\n大屏数据：飞机飞行速度攀升发生故障后，各高度及速度归零。",
-    "problemType": "机臂断裂\nArm Fracture",
-    "analyst": "杨怡乐"
+    "followUp": "",
+    "finalConclusion": "",
+    "region": "美国Iowa"
   },
   {
     "id": "mrx4ugbwl9fp2",
