@@ -1026,7 +1026,15 @@
         });
 
         const rows = [];
-        Object.keys(groups).forEach(dateKey => {
+        // 按日期倒序排列（最新的日期在上面）- 从已排序的数组中提取日期键
+        const dateKeys = [];
+        sorted.forEach(r => {
+            const dateKey = formatDateShort(r.analysisTime);
+            if (!dateKeys.includes(dateKey)) {
+                dateKeys.push(dateKey);
+            }
+        });
+        dateKeys.forEach(dateKey => {
             rows.push(`<tr class="date-group-header"><td colspan="11">📅 ${dateKey}</td></tr>`);
             groups[dateKey].forEach(r => {
                 rows.push(`<tr>
