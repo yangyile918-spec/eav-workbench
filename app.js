@@ -699,6 +699,29 @@
         initSmartTabs();
         initOCRUpload();
 
+        // 反馈模板
+        document.getElementById('feedbackTemplateText').addEventListener('input', handleFeedbackTemplateInput);
+        document.getElementById('feedbackTemplateText').addEventListener('paste', handleFeedbackTemplateInput);
+        document.getElementById('btnFeedbackTemplate').addEventListener('click', () => {
+            document.getElementById('smartEntryModal').classList.add('show');
+            // 切换到反馈模板标签
+            document.querySelectorAll('.smart-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('[data-tab="feedback"]').classList.add('active');
+            document.getElementById('smartTabText').style.display = 'none';
+            document.getElementById('smartTabImage').style.display = 'none';
+            document.getElementById('smartTabFeedback').style.display = '';
+        });
+        // 在智能录入弹窗的确认按钮中检测当前标签
+        document.getElementById('smartEntryConfirm').addEventListener('click', () => {
+            const feedbackTab = document.getElementById('smartTabFeedback');
+            if (feedbackTab && feedbackTab.style.display !== 'none') {
+                confirmFeedbackEntry();
+            }
+        });
+
+        // 问题解决
+        document.getElementById('btnSaveSolution').addEventListener('click', saveSolutionRecord);
+
         // 日报
         document.getElementById('dailyDate').addEventListener('change', generateDailyReport);
         document.getElementById('btnGenerateDaily').addEventListener('click', generateDailyReport);
@@ -762,7 +785,7 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(`page-${page}`).classList.add('active');
 
-        const titles = { entry:'日常工作录入', daily:'日报预览 / 导出', weekly:'周报自动生成', report:'定责分析报告', dashboard:'数据统计看板', trash:'回收站', history:'历史数据', followup:'跟进任务', users:'用户管理' };
+        const titles = { entry:'日常工作录入', daily:'日报预览 / 导出', weekly:'周报自动生成', report:'定责分析报告', dashboard:'数据统计看板', trash:'回收站', history:'历史数据', followup:'跟进任务', solution:'问题解决', users:'用户管理' };
         document.getElementById('pageTitle').textContent = titles[page] || '';
 
         if (page === 'daily') generateDailyReport();
@@ -770,6 +793,7 @@
         if (page === 'trash') renderTrashPage();
         if (page === 'history') renderHistoryPage();
         if (page === 'followup') renderFollowupPage();
+        if (page === 'solution') renderSolutionPage();
         if (page === 'users') renderUsersTable();
         if (page === 'report') {
             updateReportPreview();
@@ -1517,6 +1541,429 @@
         }, 100);
     }
 
+    // ========== 反馈模板解析 ==========
+    function parseFeedbackTemplate(text) {
+        const result = {
+            droneNo: '',
+            fieldNo: '',
+            faultTime: '',
+            faultPeriod: '',
+            faultDesc: '',
+            requirement: '',
+            logs: { drone: false, video: false, app: false, fpv: false, flight: false, other: false }
+        };
+
+        const lines = text.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const trimmed = line.trim();
+            // 无人机编号
+            if (/无人机编号|飞机编号|机架号|SN/i.test(trimmed)) {
+                const m = trimmed.match(/[：:]\s*(.+)/);
+                if (m) result.droneNo = m[1].trim();
+            }
+            // 地块编号
+            if (/地块编号|地块|架次/i.test(trimmed)) {
+                const m = trimmed.match(/[：:]\s*(.+)/);
+                if (m) result.fieldNo = m[1].trim();
+            }
+            // 故障时间
+            if (/故障时间|时间/i.test(trimmed)) {
+                const m = trimmed.match(/[：:]\s*(.+)/);
+                if (m) {
+                    const timeStr = m[1].trim();
+                    result.faultPeriod = timeStr;
+                    // 尝试解析日期：7.12日 → 2026-07-12
+                    const dateMatch = timeStr.match(/(\d{1,2})[.\/\-](\d{1,2})[日号]?/);
+                    if (dateMatch) {
+                        const month = dateMatch[1].padStart(2, '0');
+                        const day = dateMatch[2].padStart(2, '0');
+                        const year = new Date().getFullYear();
+                        result.faultTime = `${year}-${month}-${day}`;
+                    }
+                    // 尝试解析时间段：上午7.12到9.00
+                    const periodMatch = timeStr.match(/(上午|下午)?\s*(\d{1,2})[.:：](\d{2})\s*[到至\-~]\s*(\d{1,2})[.:：](\d{2})/);
+                    if (periodMatch) {
+                        result.faultPeriod = timeStr;
+                    }
+                }
+            }
+            // 故障现象
+            if (/故障现象|故障描述|问题描述|现象/i.test(trimmed)) {
+                const m = trimmed.match(/[：:]\s*(.+)/);
+                if (m) result.faultDesc = m[1].trim();
+            }
+            // 需求
+            if (/需求|查询|分析|原因/i.test(trimmed)) {
+                const m = trimmed.match(/[：:，,]\s*(.+)/);
+                if (m) result.requirement = m[1].trim();
+                else if (/查询|分析|原因/.test(trimmed)) result.requirement = trimmed;
+            }
+            // 日志状态
+            if (/日志|已上传|已传/i.test(trimmed)) {
+                if (/无人机.*日志|飞控日志/i.test(trimmed)) result.logs.drone = true;
+                if (/图传.*日志|图传/i.test(trimmed)) result.logs.video = true;
+                if (/APP.*日志|APP/i.test(trimmed)) result.logs.app = true;
+                if (/FPV.*日志|FPV/i.test(trimmed)) result.logs.fpv = true;
+                if (/飞控.*日志|飞控/i.test(trimmed)) result.logs.flight = true;
+            }
+        }
+        return result;
+    }
+
+    // 反馈模板实时预览
+    function handleFeedbackTemplateInput(e) {
+        setTimeout(() => {
+            const text = e.target.value;
+            const preview = document.getElementById('feedbackTemplatePreview');
+            if (!text.trim()) {
+                preview.innerHTML = '<p class="hint">请输入反馈模板文本</p>';
+                return;
+            }
+            const parsed = parseFeedbackTemplate(text);
+            const logStatus = [];
+            if (parsed.logs.drone) logStatus.push('无人机日志');
+            if (parsed.logs.video) logStatus.push('图传日志');
+            if (parsed.logs.app) logStatus.push('APP日志');
+            if (parsed.logs.fpv) logStatus.push('FPV日志');
+            if (parsed.logs.flight) logStatus.push('飞控日志');
+            if (parsed.logs.other) logStatus.push('其他');
+
+            preview.innerHTML = `<p class="hint">✅ 解析结果预览</p>
+                <table class="data-table mini">
+                    <tr><th style="width:120px">无人机编号</th><td>${esc(parsed.droneNo) || '—'}</td></tr>
+                    <tr><th>地块编号</th><td>${esc(parsed.fieldNo) || '—'}</td></tr>
+                    <tr><th>故障时间</th><td>${esc(parsed.faultTime) || '—'} ${esc(parsed.faultPeriod) || ''}</td></tr>
+                    <tr><th>故障现象</th><td>${esc(parsed.faultDesc) || '—'}</td></tr>
+                    <tr><th>需求描述</th><td>${esc(parsed.requirement) || '—'}</td></tr>
+                    <tr><th>日志状态</th><td>${logStatus.length > 0 ? logStatus.join('、') : '—'}</td></tr>
+                </table>`;
+        }, 100);
+    }
+
+    // 确认反馈模板录入
+    function confirmFeedbackEntry() {
+        const textarea = document.getElementById('feedbackTemplateText');
+        if (!textarea || !textarea.value.trim()) {
+            alert('⚠️ 请输入反馈模板文本');
+            return;
+        }
+        const parsed = parseFeedbackTemplate(textarea.value);
+        if (!parsed.droneNo && !parsed.faultDesc) {
+            alert('⚠️ 未能识别到有效信息，请检查格式');
+            return;
+        }
+        // 创建问题解决记录
+        const solution = {
+            id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+            droneNo: parsed.droneNo,
+            fieldNo: parsed.fieldNo,
+            faultTime: parsed.faultTime ? parsed.faultTime + 'T00:00' : '',
+            faultPeriod: parsed.faultPeriod,
+            faultDesc: parsed.faultDesc,
+            requirement: parsed.requirement,
+            logs: parsed.logs,
+            status: '待分析',
+            analysis: '',
+            remark: '',
+            createTime: new Date().toISOString()
+        };
+        // 保存到 solutionRecords
+        if (typeof solutionRecords === 'undefined') window.solutionRecords = [];
+        solutionRecords.push(solution);
+        localStorage.setItem('droneWorkbenchSolutions', JSON.stringify(solutionRecords));
+        // 同步到日常工作记录
+        const record = {
+            id: solution.id,
+            analysisTime: solution.faultTime || new Date().toISOString().slice(0, 16),
+            workOrderNo: '',
+            airframeNo: parsed.droneNo,
+            model: '',
+            flightBatch: parsed.fieldNo,
+            feedbackPerson: '',
+            analyst: '',
+            problemType: '',
+            auditResult: '',
+            tracker: '',
+            reviewer: '',
+            problemDescription: parsed.requirement,
+            faultCondition: parsed.faultDesc,
+            initialAnalysis: '',
+            followUp: '日志上传状态：' + Object.entries(parsed.logs).filter(([k, v]) => v).map(([k]) => k).join('、'),
+            finalConclusion: '',
+            region: ''
+        };
+        records.push(record);
+        saveRecords();
+        renderTodayTable();
+        // 关闭弹窗，切换到问题解决页面
+        document.getElementById('smartEntryModal').classList.remove('show');
+        switchPage('solution');
+        renderSolutionPage();
+        alert('✅ 已录入到问题解决页面');
+    }
+
+    // ========== 问题解决页面 ==========
+    let solutionRecords = [];
+    function loadSolutions() {
+        try {
+            const raw = localStorage.getItem('droneWorkbenchSolutions');
+            solutionRecords = raw ? JSON.parse(raw) : [];
+        } catch (e) { solutionRecords = []; }
+    }
+    function saveSolutions() {
+        localStorage.setItem('droneWorkbenchSolutions', JSON.stringify(solutionRecords));
+    }
+
+    function renderSolutionPage() {
+        loadSolutions();
+        const tbody = document.querySelector('#solutionTable tbody');
+        if (!tbody) return;
+
+        // 筛选
+        const filterDate = document.getElementById('solutionFilterDate')?.value || '';
+        const filterDrone = document.getElementById('solutionFilterDrone')?.value.trim() || '';
+        const filterStatus = document.getElementById('solutionFilterStatus')?.value.trim() || '';
+
+        let filtered = solutionRecords.filter(r => {
+            if (filterDate && r.faultTime && !r.faultTime.startsWith(filterDate)) return false;
+            if (filterDrone && !r.droneNo.includes(filterDrone)) return false;
+            if (filterStatus && r.status !== filterStatus) return false;
+            return true;
+        });
+
+        // 按时间倒序
+        filtered.sort((a, b) => (b.faultTime || '').localeCompare(a.faultTime || ''));
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🔧</div>暂无问题解决记录</td></tr>';
+            return;
+        }
+
+        const rows = filtered.map(r => {
+            const logStatus = [];
+            if (r.logs) {
+                if (r.logs.drone) logStatus.push('🛩️');
+                if (r.logs.video) logStatus.push('📡');
+                if (r.logs.app) logStatus.push('📱');
+                if (r.logs.fpv) logStatus.push('🎥');
+                if (r.logs.flight) logStatus.push('🎮');
+            }
+            const statusClass = r.status === '已解决' ? 'warranty-yes' : (r.status === '待分析' ? 'warranty-no' : '');
+            const faultTimeDisplay = r.faultTime ? new Date(r.faultTime).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }) : '—';
+            return `<tr>
+                <td>${faultTimeDisplay}</td>
+                <td><strong>${esc(r.droneNo) || '—'}</strong></td>
+                <td>${esc(r.fieldNo) || '—'}</td>
+                <td title="${esc(r.faultDesc)}">${esc(r.faultDesc ? r.faultDesc.substring(0, 20) + (r.faultDesc.length > 20 ? '...' : '') : '—')}</td>
+                <td title="${esc(r.requirement)}">${esc(r.requirement ? r.requirement.substring(0, 20) + (r.requirement.length > 20 ? '...' : '') : '—')}</td>
+                <td>${logStatus.join(' ') || '—'}</td>
+                <td><span class="warranty-badge ${statusClass}">${esc(r.status) || '—'}</span></td>
+                <td>
+                    <button class="btn btn-text" onclick="viewSolutionDetail('${r.id}')">查看</button>
+                    <button class="btn btn-text" onclick="editSolution('${r.id}')">编辑</button>
+                    <button class="btn btn-text" onclick="deleteSolution('${r.id}')" style="color:#dc3545;">删除</button>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = rows.join('');
+    }
+
+    window.openSolutionModal = function() {
+        document.getElementById('solutionModalTitle').textContent = '新建问题';
+        document.getElementById('editSolutionId').value = '';
+        document.getElementById('solutionDroneNo').value = '';
+        document.getElementById('solutionFieldNo').value = '';
+        document.getElementById('solutionFaultTime').value = '';
+        document.getElementById('solutionFaultPeriod').value = '';
+        document.getElementById('solutionFaultDesc').value = '';
+        document.getElementById('solutionRequirement').value = '';
+        document.getElementById('solutionStatus').value = '待分析';
+        document.getElementById('solutionAnalysis').value = '';
+        document.getElementById('solutionRemark').value = '';
+        document.getElementById('logDrone').checked = true;
+        document.getElementById('logVideo').checked = true;
+        document.getElementById('logApp').checked = true;
+        document.getElementById('logFpv').checked = true;
+        document.getElementById('logFlight').checked = true;
+        document.getElementById('logOther').checked = false;
+        document.getElementById('solutionModal').classList.add('show');
+    };
+
+    window.closeSolutionModal = function() {
+        document.getElementById('solutionModal').classList.remove('show');
+    };
+
+    window.editSolution = function(id) {
+        const r = solutionRecords.find(x => x.id === id);
+        if (!r) return;
+        document.getElementById('solutionModalTitle').textContent = '编辑问题';
+        document.getElementById('editSolutionId').value = r.id;
+        document.getElementById('solutionDroneNo').value = r.droneNo || '';
+        document.getElementById('solutionFieldNo').value = r.fieldNo || '';
+        document.getElementById('solutionFaultTime').value = r.faultTime || '';
+        document.getElementById('solutionFaultPeriod').value = r.faultPeriod || '';
+        document.getElementById('solutionFaultDesc').value = r.faultDesc || '';
+        document.getElementById('solutionRequirement').value = r.requirement || '';
+        document.getElementById('solutionStatus').value = r.status || '待分析';
+        document.getElementById('solutionAnalysis').value = r.analysis || '';
+        document.getElementById('solutionRemark').value = r.remark || '';
+        if (r.logs) {
+            document.getElementById('logDrone').checked = !!r.logs.drone;
+            document.getElementById('logVideo').checked = !!r.logs.video;
+            document.getElementById('logApp').checked = !!r.logs.app;
+            document.getElementById('logFpv').checked = !!r.logs.fpv;
+            document.getElementById('logFlight').checked = !!r.logs.flight;
+            document.getElementById('logOther').checked = !!r.logs.other;
+        }
+        document.getElementById('solutionModal').classList.add('show');
+    };
+
+    window.deleteSolution = function(id) {
+        if (!confirm('确定删除此问题记录？')) return;
+        solutionRecords = solutionRecords.filter(r => r.id !== id);
+        saveSolutions();
+        renderSolutionPage();
+    };
+
+    window.viewSolutionDetail = function(id) {
+        const r = solutionRecords.find(x => x.id === id);
+        if (!r) return;
+        const logStatus = [];
+        if (r.logs) {
+            if (r.logs.drone) logStatus.push('✅ 无人机日志');
+            if (r.logs.video) logStatus.push('✅ 图传日志');
+            if (r.logs.app) logStatus.push('✅ APP日志');
+            if (r.logs.fpv) logStatus.push('✅ FPV日志');
+            if (r.logs.flight) logStatus.push('✅ 飞控日志');
+            if (r.logs.other) logStatus.push('✅ 其他日志');
+        }
+        const content = document.getElementById('solutionDetailContent');
+        content.innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <div><strong>无人机编号：</strong>${esc(r.droneNo) || '—'}</div>
+                <div><strong>地块编号：</strong>${esc(r.fieldNo) || '—'}</div>
+                <div><strong>故障时间：</strong>${r.faultTime ? new Date(r.faultTime).toLocaleDateString('zh-CN') : '—'} ${esc(r.faultPeriod) || ''}</div>
+                <div><strong>解决状态：</strong><span class="warranty-badge ${r.status === '已解决' ? 'warranty-yes' : ''}">${esc(r.status)}</span></div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>故障现象：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">${esc(r.faultDesc) || '—'}</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>需求描述：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">${esc(r.requirement) || '—'}</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>日志上传状态：</strong>
+                <div style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">
+                    ${logStatus.length > 0 ? logStatus.join(' &nbsp; ') : '—'}
+                </div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>分析过程 / 解决方案：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;white-space:pre-wrap;">${esc(r.analysis) || '—'}</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>备注：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">${esc(r.remark) || '—'}</p>
+            </div>
+            <div style="color:#999;font-size:12px;">
+                创建时间：${r.createTime ? new Date(r.createTime).toLocaleString('zh-CN') : '—'}
+            </div>
+        `;
+        document.getElementById('btnEditSolution').onclick = () => { closeSolutionDetail(); editSolution(id); };
+        document.getElementById('btnExportSolution').onclick = () => exportSolutionReport(id);
+        document.getElementById('solutionDetailModal').classList.add('show');
+    };
+
+    window.closeSolutionDetail = function() {
+        document.getElementById('solutionDetailModal').classList.remove('show');
+    };
+
+    function exportSolutionReport(id) {
+        const r = solutionRecords.find(x => x.id === id);
+        if (!r) return;
+        const logStatus = [];
+        if (r.logs) {
+            if (r.logs.drone) logStatus.push('无人机日志');
+            if (r.logs.video) logStatus.push('图传日志');
+            if (r.logs.app) logStatus.push('APP日志');
+            if (r.logs.fpv) logStatus.push('FPV日志');
+            if (r.logs.flight) logStatus.push('飞控日志');
+            if (r.logs.other) logStatus.push('其他日志');
+        }
+        const text = `问题解决报告
+==================
+无人机编号：${r.droneNo || '—'}
+地块编号：${r.fieldNo || '—'}
+故障时间：${r.faultTime ? new Date(r.faultTime).toLocaleDateString('zh-CN') : '—'} ${r.faultPeriod || ''}
+解决状态：${r.status}
+
+故障现象：
+${r.faultDesc || '—'}
+
+需求描述：
+${r.requirement || '—'}
+
+日志上传状态：
+${logStatus.length > 0 ? logStatus.join('、') : '—'}
+
+分析过程 / 解决方案：
+${r.analysis || '—'}
+
+备注：
+${r.remark || '—'}
+
+创建时间：${r.createTime ? new Date(r.createTime).toLocaleString('zh-CN') : '—'}
+`;
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `问题解决报告_${r.droneNo || '未知'}_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '')}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // 保存问题解决记录
+    function saveSolutionRecord() {
+        const editId = document.getElementById('editSolutionId').value;
+        const record = {
+            id: editId || Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+            droneNo: document.getElementById('solutionDroneNo').value.trim(),
+            fieldNo: document.getElementById('solutionFieldNo').value.trim(),
+            faultTime: document.getElementById('solutionFaultTime').value,
+            faultPeriod: document.getElementById('solutionFaultPeriod').value.trim(),
+            faultDesc: document.getElementById('solutionFaultDesc').value.trim(),
+            requirement: document.getElementById('solutionRequirement').value.trim(),
+            logs: {
+                drone: document.getElementById('logDrone').checked,
+                video: document.getElementById('logVideo').checked,
+                app: document.getElementById('logApp').checked,
+                fpv: document.getElementById('logFpv').checked,
+                flight: document.getElementById('logFlight').checked,
+                other: document.getElementById('logOther').checked
+            },
+            status: document.getElementById('solutionStatus').value,
+            analysis: document.getElementById('solutionAnalysis').value.trim(),
+            remark: document.getElementById('solutionRemark').value.trim(),
+            createTime: editId ? (solutionRecords.find(r => r.id === editId)?.createTime || new Date().toISOString()) : new Date().toISOString()
+        };
+        if (!record.droneNo) { alert('请填写无人机编号'); return; }
+        if (!record.faultDesc) { alert('请填写故障现象'); return; }
+
+        if (editId) {
+            const idx = solutionRecords.findIndex(r => r.id === editId);
+            if (idx >= 0) solutionRecords[idx] = record;
+        } else {
+            solutionRecords.push(record);
+        }
+        saveSolutions();
+        closeSolutionModal();
+        renderSolutionPage();
+        alert('✅ 保存成功');
+    }
+
     // ========== 图片OCR识别 ==========
     let ocrWorker = null;
     let ocrImageFile = null;
@@ -1530,6 +1977,7 @@
                 const target = tab.dataset.tab;
                 document.getElementById('smartTabText').style.display = target === 'text' ? '' : 'none';
                 document.getElementById('smartTabImage').style.display = target === 'image' ? '' : 'none';
+                document.getElementById('smartTabFeedback').style.display = target === 'feedback' ? '' : 'none';
             });
         });
     }
