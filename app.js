@@ -357,6 +357,7 @@
         // 已登录，初始化业务
         loadRecords();
         loadTrash();
+        loadFollowupRecords();
         bindEvents();
         setDefaultDates();
         updateCurrentDate();
@@ -761,13 +762,14 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(`page-${page}`).classList.add('active');
 
-        const titles = { entry:'日常工作录入', daily:'日报预览 / 导出', weekly:'周报自动生成', report:'定责分析报告', dashboard:'数据统计看板', trash:'回收站', history:'历史数据', users:'用户管理' };
+        const titles = { entry:'日常工作录入', daily:'日报预览 / 导出', weekly:'周报自动生成', report:'定责分析报告', dashboard:'数据统计看板', trash:'回收站', history:'历史数据', followup:'跟进任务', users:'用户管理' };
         document.getElementById('pageTitle').textContent = titles[page] || '';
 
         if (page === 'daily') generateDailyReport();
         if (page === 'dashboard') updateDashboard();
         if (page === 'trash') renderTrashPage();
         if (page === 'history') renderHistoryPage();
+        if (page === 'followup') renderFollowupPage();
         if (page === 'users') renderUsersTable();
         if (page === 'report') {
             updateReportPreview();
@@ -1318,6 +1320,177 @@
             alert(`✅ 成功删除 ${deletedCount} 条记录`);
         }
     };
+
+    // ========== 跟进任务 ==========
+    let followupRecords = [];
+    const FOLLOWUP_KEY = 'droneWorkbenchFollowupRecords';
+
+    function loadFollowupRecords() {
+        try {
+            const saved = localStorage.getItem(FOLLOWUP_KEY);
+            followupRecords = saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            followupRecords = [];
+        }
+    }
+
+    function saveFollowupRecords() {
+        localStorage.setItem(FOLLOWUP_KEY, JSON.stringify(followupRecords));
+    }
+
+    function generateFollowupId() {
+        return 'fu' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    window.openFollowupModal = function(id) {
+        const modal = document.getElementById('followupModal');
+        const title = document.getElementById('followupModalTitle');
+        
+        if (id) {
+            // 编辑模式
+            const record = followupRecords.find(r => r.id === id);
+            if (!record) return;
+            title.textContent = '编辑跟进任务';
+            document.getElementById('editFollowupId').value = id;
+            document.getElementById('followupAnalysisTime').value = record.analysisTime || '';
+            document.getElementById('followupWorkOrderNo').value = record.workOrderNo || '';
+            document.getElementById('followupAirframeNo').value = record.airframeNo || '';
+            document.getElementById('followupReporter').value = record.reporter || '';
+            document.getElementById('followupAnalyst').value = record.analyst || '';
+            document.getElementById('followupProblemType').value = record.problemType || '';
+            document.getElementById('followupIsWarranty').value = record.isWarranty || '';
+            document.getElementById('followupStatus').value = record.status || '待跟进';
+            document.getElementById('followupNotes').value = record.notes || '';
+        } else {
+            // 新增模式
+            title.textContent = '新增跟进任务';
+            document.getElementById('editFollowupId').value = '';
+            document.getElementById('followupAnalysisTime').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('followupWorkOrderNo').value = '';
+            document.getElementById('followupAirframeNo').value = '';
+            document.getElementById('followupReporter').value = '';
+            document.getElementById('followupAnalyst').value = '';
+            document.getElementById('followupProblemType').value = '';
+            document.getElementById('followupIsWarranty').value = '';
+            document.getElementById('followupStatus').value = '待跟进';
+            document.getElementById('followupNotes').value = '';
+        }
+        
+        modal.classList.add('active');
+    };
+
+    window.closeFollowupModal = function() {
+        document.getElementById('followupModal').classList.remove('active');
+    };
+
+    window.saveFollowup = function() {
+        const id = document.getElementById('editFollowupId').value;
+        const analysisTime = document.getElementById('followupAnalysisTime').value;
+        const workOrderNo = document.getElementById('followupWorkOrderNo').value.trim();
+        
+        if (!analysisTime || !workOrderNo) {
+            alert('请填写分析时间和工单编号');
+            return;
+        }
+        
+        const record = {
+            id: id || generateFollowupId(),
+            analysisTime: analysisTime,
+            workOrderNo: workOrderNo,
+            airframeNo: document.getElementById('followupAirframeNo').value.trim(),
+            reporter: document.getElementById('followupReporter').value.trim(),
+            analyst: document.getElementById('followupAnalyst').value.trim(),
+            problemType: document.getElementById('followupProblemType').value.trim(),
+            isWarranty: document.getElementById('followupIsWarranty').value,
+            status: document.getElementById('followupStatus').value,
+            notes: document.getElementById('followupNotes').value.trim(),
+            createdAt: id ? (followupRecords.find(r => r.id === id)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        if (id) {
+            // 更新
+            const idx = followupRecords.findIndex(r => r.id === id);
+            if (idx !== -1) {
+                followupRecords[idx] = record;
+            }
+        } else {
+            // 新增
+            followupRecords.push(record);
+        }
+        
+        saveFollowupRecords();
+        closeFollowupModal();
+        renderFollowupPage();
+        alert(id ? '✅ 跟进任务已更新' : '✅ 跟进任务已添加');
+    };
+
+    window.deleteFollowup = function(id) {
+        if (!confirm('确定删除这条跟进任务？')) return;
+        followupRecords = followupRecords.filter(r => r.id !== id);
+        saveFollowupRecords();
+        renderFollowupPage();
+        alert('✅ 跟进任务已删除');
+    };
+
+    window.renderFollowupPage = function() {
+        const tbody = document.querySelector('#followupTable tbody');
+        const count = document.getElementById('followupCount');
+        if (!tbody) return;
+        
+        // 获取筛选条件
+        const filterDate = (document.getElementById('followupFilterDate') || {}).value || '';
+        const filterWorkOrder = (document.getElementById('followupFilterWorkOrder') || {}).value || '';
+        const filterAnalyst = (document.getElementById('followupFilterAnalyst') || {}).value || '';
+        const filterStatus = (document.getElementById('followupFilterStatus') || {}).value || '';
+        
+        let filtered = [...followupRecords];
+        if (filterDate) filtered = filtered.filter(r => r.analysisTime && r.analysisTime.startsWith(filterDate));
+        if (filterWorkOrder) filtered = filtered.filter(r => r.workOrderNo && r.workOrderNo.includes(filterWorkOrder));
+        if (filterAnalyst) filtered = filtered.filter(r => r.analyst && r.analyst.includes(filterAnalyst));
+        if (filterStatus) filtered = filtered.filter(r => r.status && r.status.includes(filterStatus));
+        
+        count.textContent = filtered.length;
+        
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📋</div>暂无跟进任务</td></tr>';
+            return;
+        }
+        
+        // 按时间倒序排列
+        const sorted = filtered.sort((a, b) => new Date(b.analysisTime) - new Date(a.analysisTime));
+        
+        const rows = [];
+        sorted.forEach(r => {
+            const statusClass = r.status === '已完成' ? 'status-completed' : 
+                               r.status === '跟进中' ? 'status-progress' : 
+                               r.status === '已关闭' ? 'status-closed' : 'status-pending';
+            rows.push(`<tr>
+                <td>${formatDateTime(r.analysisTime)}</td>
+                <td>${esc(r.workOrderNo)}</td>
+                <td>${esc(r.airframeNo)}</td>
+                <td>${esc(r.reporter)}</td>
+                <td>${esc(r.analyst)}</td>
+                <td>${esc(r.problemType)}</td>
+                <td><span class="warranty-badge ${r.isWarranty === '质保' ? 'warranty-yes' : 'warranty-no'}">${esc(r.isWarranty || '—')}</span></td>
+                <td>
+                    <button class="btn btn-text" onclick="openFollowupModal('${r.id}')">编辑</button>
+                    <button class="btn btn-text" onclick="deleteFollowup('${r.id}')" style="color:#dc3545;">删除</button>
+                </td>
+            </tr>`);
+        });
+        
+        tbody.innerHTML = rows.join('');
+    };
+
+    function formatDateTime(s) {
+        if (!s) return '—';
+        const d = new Date(s);
+        return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    // 保存按钮事件
+    document.getElementById('btnSaveFollowup').addEventListener('click', saveFollowup);
 
     // ========== 智能录入 ==========
     let smartParsedRows = [];
