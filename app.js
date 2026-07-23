@@ -502,6 +502,8 @@
             const data = localStorage.getItem(CUSTOM_AUDIT_KEY);
             customAuditTypes = data ? JSON.parse(data) : [];
         } catch(e) { customAuditTypes = []; }
+        // 清理无效的定责类型（如账号、手机号）
+        cleanInvalidAuditTypes();
         // 加载后刷新表单下拉框
         refreshAuditDropdowns();
     }
@@ -509,6 +511,8 @@
     // 保存自定义定责类型
     function saveCustomAuditType(type) {
         if (!type || customAuditTypes.includes(type)) return;
+        // 防止账号/手机号被误保存为定责类型
+        if (/^\d{10,}$/.test(type)) return; // 纯数字且长度>=10，可能是账号
         customAuditTypes.push(type);
         localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
         // 保存后刷新表单下拉框
@@ -520,6 +524,18 @@
         customAuditTypes = customAuditTypes.filter(t => t !== type);
         localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
         refreshAuditDropdowns();
+    }
+
+    // 清理无效的定责类型（如账号、手机号）
+    function cleanInvalidAuditTypes() {
+        const before = customAuditTypes.length;
+        customAuditTypes = customAuditTypes.filter(t => {
+            // 过滤掉纯数字且长度>=10的（可能是账号/手机号）
+            return !/^\d{10,}$/.test(t);
+        });
+        if (customAuditTypes.length !== before) {
+            localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
+        }
     }
 
     // 刷新表单录入区域的"是否质保"下拉框（包含自定义定责类型）
