@@ -2664,12 +2664,15 @@ ${r.remark || '—'}
     // 兼容：纯中文 / 中英双语 / 纯英文（表头自动识别）
     // ============================================================
     // 根据机架号自动推导机型
-    // 规则：机架号后5位的首字符 -> 机型
+    // 规则：机架号格式为 前缀(JMZK/JMZJ/EAVUAV等) + 后5位
+    // 后5位的首字符 -> 机型
     // 8 -> J100, 9 -> J150, 5 -> J70, A -> J160, B -> J110
     function detectModelFromAirframe(airframeNo) {
         if (!airframeNo) return '';
+        // 去掉分隔符（空格、横杠、下划线等），保留字母和数字
+        const cleaned = airframeNo.replace(/[\s\-_]/g, '');
         // 提取后5位
-        const last5 = airframeNo.replace(/\s+/g, '').slice(-5);
+        const last5 = cleaned.slice(-5);
         if (last5.length < 5) return '';
         const firstChar = last5[0].toUpperCase();
         const modelMap = {
