@@ -516,6 +516,32 @@
                     }
                 }
             });
+            // 数据迁移 v47：修复10列数据解析错误导致的字段错位
+            // 特征：model 字段存的是地块编号（长数字+破折号），flightBatch 存的是省区，feedbackPerson 存的是问题定性
+            const FLIGHT_BATCH_PATTERN = /^\d{10,}\s*[—\-]\s*\d+$/;
+            const PROVINCE_PATTERN = /^(广东|海南|四川|云南|福建|湖南|湖北|河南|河北|山东|山西|陕西|甘肃|青海|台湾|广西|贵州|安徽|江苏|浙江|江西|黑龙江|吉林|辽宁|内蒙古|新疆|西藏|宁夏|北京|天津|上海|重庆|香港|澳门)省?$/;
+            const PROBLEM_DESC_PATTERN = /^(FPV|大屏数据|飞控数据|电池数据|雷达数据|BMS|电调|电机|遥控器|图传|GPS|RTK)/;
+            let migratedV47 = false;
+            records.forEach(r => {
+                // 检测：model 字段是地块编号格式
+                if (r.model && FLIGHT_BATCH_PATTERN.test(r.model)) {
+                    const correctFlightBatch = r.model; // 地块编号应该在 flightBatch
+                    const correctRegion = r.flightBatch || ''; // 省区应该在 region
+                    const correctProblemType = r.feedbackPerson || ''; // 问题定性应该在 problemType
+                    
+                    r.model = ''; // 清空错误的机型
+                    r.flightBatch = correctFlightBatch; // 修正地块
+                    r.region = correctRegion; // 修正省区
+                    r.problemType = correctProblemType; // 修正问题定性
+                    r.feedbackPerson = ''; // 清空错误的反馈人
+                    migratedV47 = true;
+                    console.log('[数据迁移 v47] 修复记录:', r.airframeNo);
+                }
+            });
+            if (migratedV47) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                console.log('[数据迁移 v47] 已修复字段错位');
+            }
             if (migrated) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
                 console.log('[数据迁移] 已修复列错位/补充机型');
