@@ -67,26 +67,6 @@
     "region": ""
   },
   {
-    "id": "mropdgi1bst7f",
-    "analysisTime": "2026-07-17T16:55",
-    "workOrderNo": "",
-    "airframeNo": "",
-    "model": "",
-    "flightBatch": "",
-    "feedbackPerson": "",
-    "analyst": "",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "",
-    "faultCondition": "",
-    "initialAnalysis": "",
-    "followUp": "",
-    "finalConclusion": "",
-    "region": ""
-  },
-  {
     "id": "mruaij98yt9tl",
     "analysisTime": "Iowa",
     "workOrderNo": "FPV:一直在升高，视频未记录到故障画面。"
