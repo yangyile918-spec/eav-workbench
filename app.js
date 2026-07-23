@@ -616,10 +616,10 @@
                 const cloudRecords = JSON.parse(content);
                 console.log('[pullFromCloud] cloudRecords:', Array.isArray(cloudRecords) ? 'array, length=' + cloudRecords.length : 'not array');
                 if (Array.isArray(cloudRecords)) {
-                    // Merge: cloud records + local records (by id, cloud wins)
+                    // Merge: local records + cloud records (by id, LOCAL wins to preserve deletions)
                     const merged = new Map();
-                    records.forEach(r => merged.set(r.id, r));
-                    cloudRecords.forEach(r => merged.set(r.id, r));
+                    cloudRecords.forEach(r => merged.set(r.id, r));  // 先放云端数据
+                    records.forEach(r => merged.set(r.id, r));       // 本地数据覆盖云端（本地优先）
                     records = Array.from(merged.values());
                     console.log('[pullFromCloud] merged records:', records.length);
                     saveRecords(true, true); // save locally without re-syncing
@@ -911,11 +911,20 @@
         const removed = records.splice(idx, 1)[0];
         removed._deletedAt = new Date().toISOString();
         trashRecords.push(removed);
-        saveRecords();
+        saveRecords(false, false); // 保存到本地并触发云同步
         saveTrash();
         renderTodayTable();
         renderHistoryPage();
         updateDashboard();
+        // 立即同步到云端（不等待 2 秒延迟），确保删除操作同步
+        const cfg = getCloudConfig();
+        if (cfg && cfg.enabled) {
+            pushToCloud().then(success => {
+                if (!success) {
+                    alert('⚠️ 云同步失败，删除的记录可能在下次登录时恢复。请检查网络连接后重试。');
+                }
+            });
+        }
     };
 
     window.restoreRecord = function(id) {
