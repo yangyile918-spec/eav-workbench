@@ -220,11 +220,14 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="auditResult">是否质保</label>
-                                <select id="auditResult">
-                                    <option value="">请选择</option>
-                                    <option value="质保">质保</option>
-                                    <option value="非质保">非质保</option>
-                                </select>
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    <select id="auditResult" style="flex:1;">
+                                        <option value="">请选择</option>
+                                        <option value="质保">质保</option>
+                                        <option value="非质保">非质保</option>
+                                    </select>
+                                    <input type="text" id="customAuditInput" placeholder="新增定责类型" style="width:120px; font-size:13px;" title="输入新的定责类型，按回车添加">
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="tracker">追踪人</label>
@@ -1090,7 +1093,7 @@
         </div>
     </div>
 
-    <script src="app.js?v=55"></script>
+    <script src="app.js?v=56"></script>
 </function>
 </body>
 </html>
