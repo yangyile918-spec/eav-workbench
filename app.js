@@ -1291,9 +1291,9 @@
             <tr>
                 <td><input type="checkbox" class="today-row-checkbox" data-id="${r.id}" onchange="updateTodaySelectedCount()" style="cursor:pointer;"></td>
                 <td>${formatDateTime(r.analysisTime)}</td>
-                <td>${esc(r.workOrderNo)}</td>
                 <td><span class="model-badge">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
+                <td>${esc(r.flightBatch)}</td>
                 <td>${isFollowup ? '<span class="followup-badge">跟进</span>' : esc(r.feedbackPerson)}</td>
                 <td>${esc(r.analyst)}</td>
                 <td>${esc(r.problemType)}</td>
@@ -1623,9 +1623,9 @@
                                r.status === '已关闭' ? 'status-closed' : 'status-pending';
             rows.push(`<tr>
                 <td>${formatDateTime(r.analysisTime)}</td>
-                <td>${esc(r.workOrderNo)}</td>
                 <td><span class="model-badge">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
+                <td>${esc(r.flightBatch)}</td>
                 <td>${esc(r.reporter)}</td>
                 <td>${esc(r.analyst)}</td>
                 <td>${esc(r.problemType)}</td>
@@ -2674,7 +2674,7 @@ ${r.remark || '—'}
             );
 
             const DEFAULT_HEADERS_7 = ['分析时间','机型','机架号','架次','省份','初步结论','问题定性'];
-            const DEFAULT_HEADERS_9 = ['分析时间','工单编号','机架号','架次','反馈人','分析人','问题定性','是否质保','备注'];
+            const DEFAULT_HEADERS_9 = ['分析时间','机型','机架号','地块','反馈人','分析人','问题定性','是否质保','备注'];
             const DEFAULT_HEADERS_10 = ['分析时间','工单编号','机架号','机型','架次-地块','省份','反馈人','分析人','问题定性','是否质保'];
 
             // 备用检测：7列数据，最后一列包含问题定性关键词 → 炸机分析表
@@ -2801,8 +2801,8 @@ ${r.remark || '—'}
             '机架号': 'airframeNo', '飞机号': 'airframeNo', 'Airframe SN': 'airframeNo', 'SN': 'airframeNo',
             // 机型
             '机型': 'model', '型号': 'model', 'Model': 'model',
-            // 架次（支持多种格式）
-            '架次': 'flightBatch', '架次-地块': 'flightBatch', 'Flight ID': 'flightBatch',
+            // 架次/地块（支持多种格式）
+            '架次': 'flightBatch', '架次-地块': 'flightBatch', '地块': 'flightBatch', 'Flight ID': 'flightBatch',
             // 人员
             '反馈人': 'feedbackPerson', '分析人': 'analyst', '处理人': 'analyst',
             // 问题定性（炸机分析表）
