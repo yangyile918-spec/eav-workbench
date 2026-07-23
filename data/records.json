@@ -59,7 +59,8 @@
     "region": "美国\nNorth Dakota",
     "initialAnalysis": "FPV:无人机起飞后喷洒作业，机身左右摇晃，作业高度下降坠机。\n大屏数据：飞机电池电压异常， 电池电压从53.3V瞬间下降到48.7V，向下坠落炸机。\n初步分析：飞机电池电压起飞后异常下降，需检查尾插和电池接口状态。",
     "problemType": "疑似动力问题——电池电压异常\nSuspected Power System Issue – Abnormal Battery Voltage",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "质保"
   },
   {
     "id": "mrx4ugbwtl3tg",
@@ -70,7 +71,8 @@
     "region": "美国\nIllinois",
     "initialAnalysis": "FPV:无人机自主飞行，视频卡顿，未记录到故障时间点。\n大屏数据：飞机后台故障播报无路径，作业高度由3.9m降至0，相对高度未发生变化后，向下坠落炸机。\n初步分析：故障区域地图显示为树丛，需上传无人机、雷达日志进一步确定。",
     "problemType": "疑似雷达问题——距离过近 \nRadar Issue – Excessively Close Distance",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "非质保"
   },
   {
     "id": "mrx4ugbw0mzcc",
