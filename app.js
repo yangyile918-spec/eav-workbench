@@ -496,6 +496,22 @@
         try {
             const data = localStorage.getItem(STORAGE_KEY);
             records = data ? JSON.parse(data) : [];
+            // 数据迁移：修复7列炸机分析表导入导致的列错位问题
+            // 当 feedbackPerson 包含问题定性关键词但 problemType 为空时，说明数据错位
+            const PROBLEM_KW = /操作问题|动力问题|质量问题|故障|断裂|烧|炸|裂纹|变形|损坏|不符合质保|手动碰撞|卡扣|尾插|机臂|信号|失联|雷达|避障|喷洒|播撒|GPS|RTK|航线|偏航|翻机|坠机|失控|问题/i;
+            let migrated = false;
+            records.forEach(r => {
+                if (r.feedbackPerson && PROBLEM_KW.test(r.feedbackPerson) && !r.problemType) {
+                    // feedbackPerson 里存的是问题定性内容，需要修正
+                    r.problemType = r.feedbackPerson;
+                    r.feedbackPerson = '';
+                    migrated = true;
+                }
+            });
+            if (migrated) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                console.log('[数据迁移] 已修复列错位的记录');
+            }
         } catch(e) { records = []; }
     }
     function loadTrash() {
@@ -2576,7 +2592,19 @@ ${r.remark || '—'}
             const DEFAULT_HEADERS_7 = ['分析时间','机型','机架号','架次','省份','初步结论','问题定性'];
             const DEFAULT_HEADERS_10 = ['分析时间','工单编号','机架号','机型','架次-地块','省份','反馈人','分析人','问题定性','是否质保'];
 
-            if (isCrashAnalysisFormat) {
+            // 备用检测：7列数据，最后一列包含问题定性关键词 → 炸机分析表
+            const PROBLEM_TYPE_KEYWORDS = /操作问题|动力|问题|故障|断裂|烧|炸|裂纹|变形|损坏|质量问题|不符合质保|质保|手动碰撞|卡扣|尾插|机臂|信号|失联|雷达|避障|喷洒|播撒|GPS|RTK|航线|偏航|翻机|坠机|失控/i;
+            let isCrashByContent = false;
+            if (!isCrashAnalysisFormat && expectedCols === 7 && firstRowCols.length >= 7) {
+                const lastCol = firstRowCols[firstRowCols.length - 1] || '';
+                const secondLastCol = firstRowCols[firstRowCols.length - 2] || '';
+                // 最后一列或倒数第二列包含问题定性/初步结论关键词
+                if (PROBLEM_TYPE_KEYWORDS.test(lastCol) || PROBLEM_TYPE_KEYWORDS.test(secondLastCol)) {
+                    isCrashByContent = true;
+                }
+            }
+
+            if (isCrashAnalysisFormat || isCrashByContent) {
                 headers = DEFAULT_HEADERS_7.slice();
                 expectedCols = 7;  // 强制使用7列，即使第一行只有5个Tab
             } else {
