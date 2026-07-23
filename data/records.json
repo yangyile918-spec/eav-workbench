@@ -1,22 +1,5 @@
 [
   {
-    "id": "mruaij98yaob0",
-    "analysisTime": "初步分析：疑似因为气压计异常引起高度错误，导致雷达建图异常后进行防地升高，自主模式下升高到100米切手动，但手动数据未进行回传，可能是在下降的过程中没电坠落。需要上传雷达日志 无人机日志跟飞控日志核实确认最终原因。"
-  },
-  {
-    "id": "mruaij98fe7e4",
-    "analysisTime": "FPV:The height of the uav was rising,The FPV did not record the faulty shot."
-  },
-  {
-    "id": "mruaij98a2qzy",
-    "analysisTime": "Data Dashboard:Abnormal relative altitude displayed, with remote control signal loss alert on main screen."
-  },
-  {
-    "id": "mruaij98q46hy",
-    "analysisTime": "Preliminary analysis: Abnormal barometer readings caused altitude errors, resulting in faulty radar mapping and automatic terrain avoidance climb. The aircraft switched to manual mode after ascending to 100 m, yet manual flight data failed to transmit. The unit likely crashed due to power depletion during descent. Upload radar, drone and flight controller logs to confirm the root cause.",
-    "workOrderNo": "疑似主控问题——气压计异常"
-  },
-  {
     "id": "mruaij980ycgt",
     "analysisTime": "Suspected main controller issue – abnormal barometer readings"
   },
