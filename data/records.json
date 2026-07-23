@@ -187,25 +187,5 @@
     "workOrderNo": "TEST-001",
     "airframeNo": "TESTFRAME001",
     "analyst": "测试员"
-  },
-  {
-    "id": "mrookju4rah60",
-    "analysisTime": "2026-07-17T16:33",
-    "workOrderNo": "",
-    "airframeNo": "",
-    "model": "",
-    "flightBatch": "",
-    "feedbackPerson": "",
-    "analyst": "",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "",
-    "faultCondition": "",
-    "initialAnalysis": "",
-    "followUp": "",
-    "finalConclusion": "",
-    "region": ""
   }
 ]
