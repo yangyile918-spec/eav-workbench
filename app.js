@@ -1741,9 +1741,10 @@
 
         for (let line of lines) {
             // 检测是否是结构化数据行（包含日期、机架号等特征）
-            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line);
-            // 支持多种机架号格式：JMZK/JMZJ/EAVUAV/JMZ 或纯数字（如 95109）
-            const hasFrame = /(JMZK|JMZJ|EAVUAV|JMZ|J\d{6,}|\d{5,})/i.test(line);
+            // 支持日期格式：2026-07-23 / 2026/07/23 / 2026年7月23日
+            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line) || /\d{4}年\d{1,2}月\d{1,2}日/.test(line);
+            // 支持多种机架号格式：JMZK/JMZJ/EAVUAV/JMZ 或纯数字（如 95109）或字母+数字（如 A0162）
+            const hasFrame = /(JMZK|JMZJ|EAVUAV|JMZ|J\d{6,}|\d{5,}|[A-Z]\d{3,5})/i.test(line);
             // 支持更多机型
             const hasModel = /\b(J50|J70|J100|J150|J160|E50|E100|J25|J50pro|E50pro|E100pro)\b/i.test(line);
 
@@ -2098,9 +2099,11 @@
             const colCount = tabCount + 1;
 
             // 检测是否是新记录的开始：包含日期+机型/机架号
-            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line);
+            // 支持日期格式：2026-07-23 / 2026/07/23 / 2026年7月23日
+            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line) || /\d{4}年\d{1,2}月\d{1,2}日/.test(line);
             const hasModel = /\b(J\d{2,3}|E\d{2,3})\b/i.test(line);
-            const hasFrame = /\b\d{5,6}\b/.test(line);
+            // 支持机架号格式：纯数字(90147) 或 字母+数字(A0162, A0589)
+            const hasFrame = /\b\d{5,6}\b/.test(line) || /\b[A-Z]\d{3,5}\b/i.test(line);
             const isNewRecord = hasDate && (hasModel || hasFrame);
 
             if (isNewRecord || colCount >= expectedCols) {
@@ -2143,13 +2146,19 @@
                     if (j < finalCols.length) row[h] = finalCols[j] || '';
                 });
             }
-            // 日期格式标准化：2026/7/20 → 2026-07-20
+            // 日期格式标准化：2026/7/20 → 2026-07-20，2026年7月23日 → 2026-07-23
             if (row['分析时间'] || row['时间'] || row['日期']) {
                 const dateKey = row['分析时间'] ? '分析时间' : (row['时间'] ? '时间' : '日期');
                 const dateVal = row[dateKey];
+                // YYYY/MM/DD → YYYY-MM-DD
                 const dateMatch = dateVal.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
                 if (dateMatch) {
                     row[dateKey] = dateMatch[1] + '-' + String(dateMatch[2]).padStart(2,'0') + '-' + String(dateMatch[3]).padStart(2,'0');
+                }
+                // YYYY年MM月DD日 → YYYY-MM-DD
+                const cnDateMatch = dateVal.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+                if (cnDateMatch) {
+                    row[dateKey] = cnDateMatch[1] + '-' + String(cnDateMatch[2]).padStart(2,'0') + '-' + String(cnDateMatch[3]).padStart(2,'0');
                 }
             }
             rows.push(row);
