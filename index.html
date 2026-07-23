@@ -104,8 +104,12 @@
                     <span>数据统计看板</span>
                 </a>
                 <a href="#" class="nav-item" data-page="history">
-                    <span class="nav-icon">📂</span>
+                    <span class="nav-icon"></span>
                     <span>历史数据</span>
+                </a>
+                <a href="#" class="nav-item" data-page="followup">
+                    <span class="nav-icon"></span>
+                    <span>跟进任务</span>
                 </a>
                 <a href="#" class="nav-item" data-page="trash">
                     <span class="nav-icon">🗑️</span>
@@ -699,7 +703,56 @@
                 </div>
             </section>
 
-            <!-- ========== 页面7：回收站 ========== -->
+            <!-- ========== 页面7：跟进任务 ========== -->
+            <section class="page" id="page-followup">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📋 跟进任务</h2>
+                        <div class="header-actions">
+                            <span style="font-size:14px;color:#666;">共 <strong id="followupCount">0</strong> 条记录</span>
+                            <button class="btn btn-primary btn-sm" onclick="openFollowupModal()">➕ 新增跟进</button>
+                        </div>
+                    </div>
+                    <div class="filter-row" style="display:flex;gap:10px;padding:12px 16px;flex-wrap:wrap;align-items:center;background:#f8f9fa;border-bottom:1px solid #e0e0e0;">
+                        <input type="date" id="followupFilterDate" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;" onchange="renderFollowupPage()">
+                        <input type="text" id="followupFilterWorkOrder" placeholder="工单编号" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:120px;" oninput="renderFollowupPage()">
+                        <input type="text" id="followupFilterAnalyst" placeholder="分析人" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100px;" oninput="renderFollowupPage()">
+                        <input type="text" id="followupFilterStatus" placeholder="跟进状态" style="padding:6px 10px;border:1px solid #ccc;border-radius:4px;font-size:13px;width:100px;" oninput="renderFollowupPage()">
+                        <button class="btn btn-sm btn-secondary" onclick="document.getElementById('followupFilterDate').value='';document.getElementById('followupFilterWorkOrder').value='';document.getElementById('followupFilterAnalyst').value='';document.getElementById('followupFilterStatus').value='';renderFollowupPage()">清空筛选</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="followupTable">
+                            <colgroup>
+                                <col style="width:100px">
+                                <col style="width:140px">
+                                <col style="width:120px">
+                                <col style="width:80px">
+                                <col style="width:80px">
+                                <col>
+                                <col style="width:80px">
+                                <col style="width:180px">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>时间</th>
+                                    <th>工单编号</th>
+                                    <th>机架号</th>
+                                    <th>反馈人</th>
+                                    <th>分析人</th>
+                                    <th>问题定性</th>
+                                    <th>是否质保</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📋</div>暂无跟进任务</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 页面8：回收站 ========== -->
             <section class="page" id="page-trash">
                 <div class="card">
                     <div class="card-header">
@@ -774,6 +827,72 @@
         </main>
     </div>
 
+    <!-- 跟进任务编辑弹窗 -->
+    <div class="modal" id="followupModal">
+        <div class="modal-content" style="max-width:600px;">
+            <div class="modal-header">
+                <h3 id="followupModalTitle">新增跟进任务</h3>
+                <button class="modal-close" onclick="closeFollowupModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editFollowupId">
+                <div class="form-group">
+                    <label>分析时间 <span style="color:red">*</span></label>
+                    <input type="datetime-local" id="followupAnalysisTime">
+                </div>
+                <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>工单编号 <span style="color:red">*</span></label>
+                        <input type="text" id="followupWorkOrderNo" placeholder="请输入工单编号">
+                    </div>
+                    <div class="form-group">
+                        <label>机架号</label>
+                        <input type="text" id="followupAirframeNo" placeholder="请输入机架号">
+                    </div>
+                </div>
+                <div class="form-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div class="form-group">
+                        <label>反馈人</label>
+                        <input type="text" id="followupReporter" placeholder="请输入反馈人">
+                    </div>
+                    <div class="form-group">
+                        <label>分析人</label>
+                        <input type="text" id="followupAnalyst" placeholder="请输入分析人">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>问题定性</label>
+                    <input type="text" id="followupProblemType" placeholder="请输入问题定性">
+                </div>
+                <div class="form-group">
+                    <label>是否质保</label>
+                    <select id="followupIsWarranty">
+                        <option value="">请选择</option>
+                        <option value="质保">质保</option>
+                        <option value="非质保">非质保</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>跟进状态</label>
+                    <select id="followupStatus">
+                        <option value="待跟进">待跟进</option>
+                        <option value="跟进中">跟进中</option>
+                        <option value="已完成">已完成</option>
+                        <option value="已关闭">已关闭</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>跟进记录</label>
+                    <textarea id="followupNotes" rows="3" placeholder="请记录跟进情况"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeFollowupModal()">取消</button>
+                <button class="btn btn-primary" id="btnSaveFollowup">保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 用户编辑弹窗 -->
     <div class="modal" id="userModal">
         <div class="modal-content" style="max-width:420px;">
@@ -811,6 +930,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=35"></script>
+    <script src="app.js?v=36"></script>
 </body>
 </html>
