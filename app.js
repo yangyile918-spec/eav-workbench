@@ -994,7 +994,7 @@
         if (!tbody) return;
         count.textContent = records.length;
         if (records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">📂</div>暂无历史数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">📂</div>暂无历史数据</td></tr>';
             return;
         }
         // 获取筛选条件
@@ -1012,7 +1012,7 @@
         count.textContent = filtered.length + ' / ' + records.length;
 
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">🔍</div>无匹配记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">🔍</div>无匹配记录</td></tr>';
             return;
         }
 
@@ -1027,9 +1027,10 @@
 
         const rows = [];
         Object.keys(groups).forEach(dateKey => {
-            rows.push(`<tr class="date-group-header"><td colspan="10">📅 ${dateKey}</td></tr>`);
+            rows.push(`<tr class="date-group-header"><td colspan="11">📅 ${dateKey}</td></tr>`);
             groups[dateKey].forEach(r => {
                 rows.push(`<tr>
+                    <td><input type="checkbox" class="row-checkbox" data-id="${r.id}" onchange="updateSelectedCount()" style="cursor:pointer;"></td>
                     <td>${formatTimeOnly(r.analysisTime)}</td>
                     <td>${esc(r.workOrderNo)}</td>
                     <td>${esc(r.airframeNo)}</td>
@@ -1044,6 +1045,85 @@
             });
         });
         tbody.innerHTML = rows.join('');
+        
+        // 重置全选状态
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const headerSelectAll = document.getElementById('headerSelectAll');
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        if (headerSelectAll) headerSelectAll.checked = false;
+        updateSelectedCount();
+    };
+
+    // ========== 批量删除功能 ==========
+    window.toggleSelectAll = function(checked) {
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        checkboxes.forEach(cb => cb.checked = checked);
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const headerSelectAll = document.getElementById('headerSelectAll');
+        if (selectAllCheckbox) selectAllCheckbox.checked = checked;
+        if (headerSelectAll) headerSelectAll.checked = checked;
+        updateSelectedCount();
+    };
+
+    window.updateSelectedCount = function() {
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        const count = checked.length;
+        const countEl = document.getElementById('selectedCount');
+        const btn = document.getElementById('batchDeleteBtn');
+        if (countEl) countEl.textContent = `已选 ${count} 条`;
+        if (btn) {
+            btn.disabled = count === 0;
+            btn.style.opacity = count === 0 ? '0.5' : '1';
+        }
+        // 同步全选框状态
+        const allCount = checkboxes.length;
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const headerSelectAll = document.getElementById('headerSelectAll');
+        if (selectAllCheckbox) selectAllCheckbox.checked = count === allCount && allCount > 0;
+        if (headerSelectAll) headerSelectAll.checked = count === allCount && allCount > 0;
+    };
+
+    window.batchDeleteSelected = function() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        if (checked.length === 0) {
+            alert('请先选择要删除的记录');
+            return;
+        }
+        if (!confirm(`确定删除选中的 ${checked.length} 条记录？删除后可在回收站恢复。`)) return;
+        
+        const idsToDelete = Array.from(checked).map(cb => cb.dataset.id);
+        let deletedCount = 0;
+        
+        idsToDelete.forEach(id => {
+            const idx = records.findIndex(r => r.id === id);
+            if (idx !== -1) {
+                const removed = records.splice(idx, 1)[0];
+                removed._deletedAt = new Date().toISOString();
+                trashRecords.push(removed);
+                deletedCount++;
+            }
+        });
+        
+        saveRecords(false, false);
+        saveTrash();
+        renderHistoryPage();
+        renderTodayTable();
+        updateDashboard();
+        
+        // 立即同步到云端
+        const cfg = getCloudConfig();
+        if (cfg && cfg.enabled) {
+            pushToCloud().then(success => {
+                if (success) {
+                    alert(`✅ 成功删除 ${deletedCount} 条记录，已同步到云端`);
+                } else {
+                    alert(`⚠️ 已删除 ${deletedCount} 条记录，但云同步失败。请检查网络连接后重试。`);
+                }
+            });
+        } else {
+            alert(`✅ 成功删除 ${deletedCount} 条记录`);
+        }
     };
 
     // ========== 从日常记录一键生成定责报告 ==========
