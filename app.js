@@ -1495,45 +1495,7 @@
             });
         });
         tbody.innerHTML = rows.join('');
-
-        // 重置全选和批量删除按钮状态
-        const selectAll = document.getElementById('solutionSelectAll');
-        if (selectAll) selectAll.checked = false;
-        document.getElementById('btnBatchDeleteSolution').style.display = 'none';
-        document.getElementById('solutionSelectedCount').textContent = '';
     }
-
-    // 问题解决 - 全选/取消全选
-    window.toggleSelectAllSolution = function(checked) {
-        document.querySelectorAll('.solution-checkbox').forEach(cb => cb.checked = checked);
-        updateSolutionBatchDeleteBtn();
-    };
-
-    // 问题解决 - 更新批量删除按钮状态
-    window.updateSolutionBatchDeleteBtn = function() {
-        const checked = document.querySelectorAll('.solution-checkbox:checked');
-        const btn = document.getElementById('btnBatchDeleteSolution');
-        const count = document.getElementById('solutionSelectedCount');
-        if (checked.length > 0) {
-            btn.style.display = 'inline-block';
-            count.textContent = `已选 ${checked.length} 条`;
-        } else {
-            btn.style.display = 'none';
-            count.textContent = '';
-        }
-    };
-
-    // 问题解决 - 批量删除
-    window.batchDeleteSolution = function() {
-        const checked = document.querySelectorAll('.solution-checkbox:checked');
-        if (checked.length === 0) return;
-        if (!confirm(`确定删除选中的 ${checked.length} 条记录？此操作不可撤销。`)) return;
-        const ids = new Set();
-        checked.forEach(cb => ids.add(cb.value));
-        solutionRecords = solutionRecords.filter(r => !ids.has(r.id));
-        saveSolutions();
-        renderSolutionPage();
-    };;
 
     window.renderHistoryPage = function() {
         const tbody = document.querySelector('#historyTable tbody');
@@ -2146,45 +2108,7 @@
         });
         
         tbody.innerHTML = rows.join('');
-
-        // 重置全选和批量删除按钮状态
-        const selectAll = document.getElementById('solutionSelectAll');
-        if (selectAll) selectAll.checked = false;
-        document.getElementById('btnBatchDeleteSolution').style.display = 'none';
-        document.getElementById('solutionSelectedCount').textContent = '';
     }
-
-    // 问题解决 - 全选/取消全选
-    window.toggleSelectAllSolution = function(checked) {
-        document.querySelectorAll('.solution-checkbox').forEach(cb => cb.checked = checked);
-        updateSolutionBatchDeleteBtn();
-    };
-
-    // 问题解决 - 更新批量删除按钮状态
-    window.updateSolutionBatchDeleteBtn = function() {
-        const checked = document.querySelectorAll('.solution-checkbox:checked');
-        const btn = document.getElementById('btnBatchDeleteSolution');
-        const count = document.getElementById('solutionSelectedCount');
-        if (checked.length > 0) {
-            btn.style.display = 'inline-block';
-            count.textContent = `已选 ${checked.length} 条`;
-        } else {
-            btn.style.display = 'none';
-            count.textContent = '';
-        }
-    };
-
-    // 问题解决 - 批量删除
-    window.batchDeleteSolution = function() {
-        const checked = document.querySelectorAll('.solution-checkbox:checked');
-        if (checked.length === 0) return;
-        if (!confirm(`确定删除选中的 ${checked.length} 条记录？此操作不可撤销。`)) return;
-        const ids = new Set();
-        checked.forEach(cb => ids.add(cb.value));
-        solutionRecords = solutionRecords.filter(r => !ids.has(r.id));
-        saveSolutions();
-        renderSolutionPage();
-    };;
 
     function formatDateTime(s) {
         if (!s) return '—';
