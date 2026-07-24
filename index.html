@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>极目售后分析组工作台</title>
-    <link rel="stylesheet" href="style.css?v=36">
+    <link rel="stylesheet" href="style.css?v=37">
     <style>
         .summary-card {
             background: linear-gradient(135deg, #f8f9ff 0%, #e8ecf8 100%) !important;
@@ -1045,6 +1045,29 @@
                     <label>需求描述</label>
                     <textarea id="solutionRequirement" rows="2" placeholder="描述需求"></textarea>
                 </div>
+                <div class="form-group" style="margin-top:8px;">
+                    <label>故障时段</label>
+                    <input type="text" id="solutionFaultPeriod" placeholder="如：上午、下午、夜间">
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                    <label>日志情况</label>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;">
+                        <label style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="logDrone" checked> 无人机日志</label>
+                        <label style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="logVideo" checked> 图传日志</label>
+                        <label style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="logApp" checked> APP日志</label>
+                        <label style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="logFpv" checked> FPV日志</label>
+                        <label style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="logFlight" checked> 飞控日志</label>
+                        <label style="font-size:12px;font-weight:400;display:flex;align-items:center;gap:4px;"><input type="checkbox" id="logOther"> 其他日志</label>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                    <label>分析结果</label>
+                    <textarea id="solutionAnalysis" rows="2" placeholder="分析结果"></textarea>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
+                    <label>备注</label>
+                    <textarea id="solutionRemark" rows="2" placeholder="备注"></textarea>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" onclick="closeSolutionModal()">取消</button>
@@ -1071,6 +1094,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=69"></script>
+    <script src="app.js?v=70"></script>
 </body>
 </html>

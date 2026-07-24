@@ -1106,6 +1106,10 @@
             window.openSolutionModal();
         });
         document.getElementById('btnSaveSolution').addEventListener('click', saveSolutionRecord);
+        // 问题解决筛选事件
+        document.getElementById('solutionFilterDate').addEventListener('change', renderSolutionPage);
+        document.getElementById('solutionFilterDrone').addEventListener('input', renderSolutionPage);
+        document.getElementById('solutionFilterStatus').addEventListener('change', renderSolutionPage);
 
         // 日报
         document.getElementById('dailyDate').addEventListener('change', generateDailyReport);
