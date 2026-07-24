@@ -252,15 +252,23 @@
   },
   {
     "id": "mrx754345el3d",
-    "analysisTime": "2026-07-23",
+    "analysisTime": "2026-07-24 11:49",
     "workOrderNo": "J160",
     "airframeNo": "A1349",
     "model": "J160",
     "flightBatch": "178477265353557 -- 3516104",
-    "region": "海南省",
     "feedbackPerson": "",
     "analyst": "杨怡乐",
-    "problemType": "FPV：飞机起飞右侧产生振动，向右侧倾斜坠落炸机。\n现场：飞机起飞时，右侧卷起水管发生碰撞导致炸机。"
+    "problemType": "设置问题——起飞点障碍物",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
+    "initialAnalysis": "FPV：飞机起飞右侧产生振动，向右侧倾斜坠落炸机。现场：飞机起飞时，右侧卷起水管发生碰撞导致炸机。",
+    "followUp": "",
+    "finalConclusion": "",
+    "region": "海南省"
   },
   {
     "id": "mrx75434xo8jh",
