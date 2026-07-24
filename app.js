@@ -390,6 +390,8 @@
         }
         // 自动实时同步：每30秒从云端拉取最新数据
         startAutoSync();
+        // 初始化拖拽选择功能
+        initDragSelect();
     }
 
     // ========== 自动实时同步 ==========
@@ -421,10 +423,10 @@
                         const localStr = JSON.stringify(records.map(r => r.id).sort());
                         const cloudStr = JSON.stringify(cloudRecords.map(r => r.id).sort());
                         if (localStr !== cloudStr || records.length !== cloudRecords.length) {
-                            // 合并：云端优先
+                            // 合并：本地优先（与 pullFromCloud 保持一致，防止已删除记录被云端缓存拉回）
                             const merged = new Map();
-                            records.forEach(r => merged.set(r.id, r));
                             cloudRecords.forEach(r => merged.set(r.id, r));
+                            records.forEach(r => merged.set(r.id, r));
                             records = Array.from(merged.values());
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
                             renderTodayTable();
@@ -466,9 +468,10 @@
                             const content = await resp.text();
                             const cloudRecords = JSON.parse(content);
                             if (Array.isArray(cloudRecords)) {
+                                // 合并：本地优先（防止已删除记录被云端缓存拉回）
                                 const merged = new Map();
-                                records.forEach(r => merged.set(r.id, r));
                                 cloudRecords.forEach(r => merged.set(r.id, r));
+                                records.forEach(r => merged.set(r.id, r));
                                 const newRecords = Array.from(merged.values());
                                 if (newRecords.length !== records.length) {
                                     records = newRecords;
@@ -5254,6 +5257,96 @@ ${r.remark || '—'}
                 <p>填写左侧信息后，报告将在此处实时预览</p>
             </div>
         `;
+    }
+
+    // ========== 拖拽选择表格行 ==========
+    function initDragSelect() {
+        let isDragging = false;
+        let dragStartIndex = -1;
+        let dragTable = null;
+
+        function getRowIndex(tr) {
+            const tbody = tr.parentElement;
+            return Array.from(tbody.children).indexOf(tr);
+        }
+
+        function getTbody(table) {
+            return table.querySelector('tbody');
+        }
+
+        function handleMouseDown(e) {
+            // 只在按住 Shift 或 Alt 键时启用拖拽选择，或者普通点击行（非按钮/输入框区域）
+            if (e.target.closest('button, input, select, a, .btn, .btn-text')) return;
+            const tr = e.target.closest('tr');
+            if (!tr) return;
+            const tbody = tr.parentElement;
+            if (!tbody || tbody.tagName !== 'TBODY') return;
+            const table = tbody.closest('table');
+            if (!table) return;
+
+            // 普通点击也支持拖拽选择（不需要按键）
+            isDragging = true;
+            dragStartIndex = getRowIndex(tr);
+            dragTable = table;
+
+            // 清除其他表格的选择
+            document.querySelectorAll('.drag-selected').forEach(el => el.classList.remove('drag-selected'));
+        }
+
+        function handleMouseOver(e) {
+            if (!isDragging || !dragTable) return;
+            const tr = e.target.closest('tr');
+            if (!tr) return;
+            const tbody = tr.parentElement;
+            if (tbody !== dragTable.querySelector('tbody')) return;
+
+            const currentIndex = getRowIndex(tr);
+            const start = Math.min(dragStartIndex, currentIndex);
+            const end = Math.max(dragStartIndex, currentIndex);
+            const rows = tbody.querySelectorAll('tr');
+
+            // 清除当前表格的选择
+            rows.forEach(r => r.classList.remove('drag-selected'));
+            // 选中范围内的行
+            for (let i = start; i <= end; i++) {
+                if (rows[i]) rows[i].classList.add('drag-selected');
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (!isDragging) return;
+            isDragging = false;
+
+            // 将拖拽选择的行对应的 checkbox 勾选
+            const selected = document.querySelectorAll('.drag-selected');
+            if (selected.length > 0) {
+                selected.forEach(tr => {
+                    const cb = tr.querySelector('input[type="checkbox"]');
+                    if (cb) cb.checked = true;
+                });
+                // 触发 count 更新
+                if (dragTable && dragTable.id === 'todayTable') {
+                    if (window.updateTodaySelectedCount) window.updateTodaySelectedCount();
+                } else {
+                    if (window.updateSelectedCount) window.updateSelectedCount();
+                }
+            }
+            // 清除拖拽高亮（保留 checkbox 选中状态）
+            document.querySelectorAll('.drag-selected').forEach(el => el.classList.remove('drag-selected'));
+            dragTable = null;
+        }
+
+        // 绑定到所有表格
+        document.querySelectorAll('#todayTable, #historyTable').forEach(table => {
+            table.addEventListener('mousedown', handleMouseDown);
+            table.addEventListener('mouseover', handleMouseOver);
+        });
+        document.addEventListener('mouseup', handleMouseUp);
+
+        // 防止拖拽时选中文本
+        document.querySelectorAll('#todayTable, #historyTable').forEach(table => {
+            table.addEventListener('selectstart', e => e.preventDefault());
+        });
     }
 
     // ========== 暴露函数到全局 ==========
