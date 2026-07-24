@@ -103,6 +103,14 @@
                     <span class="nav-icon">📈</span>
                     <span>数据统计看板</span>
                 </a>
+                <a href="#" class="nav-item" data-page="followup">
+                    <span class="nav-icon">📋</span>
+                    <span>跟进任务</span>
+                </a>
+                <a href="#" class="nav-item" data-page="solution">
+                    <span class="nav-icon">🔧</span>
+                    <span>问题解决</span>
+                </a>
                 <a href="#" class="nav-item" data-page="history">
                     <span class="nav-icon">📂</span>
                     <span>历史数据</span>
@@ -155,6 +163,7 @@
                         <h2>故障分析记录填报</h2>
                         <div class="header-actions">
                             <button class="btn btn-info" id="btnSmartEntry">📋 智能录入</button>
+                            <button class="btn btn-secondary" id="btnFeedbackTemplate">📝 反馈模板</button>
                             <button class="btn btn-primary" id="btnAddRecord">➕ 新增记录</button>
                         </div>
                     </div>
@@ -212,11 +221,14 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="auditResult">是否质保</label>
-                                <select id="auditResult">
-                                    <option value="">请选择</option>
-                                    <option value="质保">质保</option>
-                                    <option value="非质保">非质保</option>
-                                </select>
+                                <div style="display:flex;gap:6px;">
+                                    <select id="auditResult" style="flex:1;">
+                                        <option value="">请选择</option>
+                                        <option value="质保">质保</option>
+                                        <option value="非质保">非质保</option>
+                                    </select>
+                                    <input type="text" id="customAuditInput" placeholder="自定义定责" style="width:100px;font-size:12px;" title="输入后回车保存">
+                                </div>
                             </div>
                             <div class="form-group">
                                 <label for="tracker">追踪人</label>
@@ -328,6 +340,7 @@
                             <div class="smart-tabs">
                                 <button class="smart-tab active" data-tab="text">📝 粘贴文本</button>
                                 <button class="smart-tab" data-tab="image">📸 图片识别</button>
+                                <button class="smart-tab" data-tab="feedback">📋 反馈模板</button>
                             </div>
                             <!-- 文本粘贴区 -->
                             <div class="smart-tab-content" id="smartTabText">
@@ -352,6 +365,14 @@
                                         <div class="ocr-progress-bar" id="ocrProgressBar"></div>
                                         <span class="ocr-progress-text" id="ocrProgressText">识别中...</span>
                                     </div>
+                                </div>
+                            </div>
+                            <!-- 反馈模板区 -->
+                            <div class="smart-tab-content" id="smartTabFeedback" style="display:none">
+                                <p class="hint">粘贴反馈模板文本，系统将自动解析并录入到问题解决页面。</p>
+                                <textarea id="feedbackTemplateText" rows="8" placeholder="地块编号：535565&#10;故障时间：7.12日，上午7.12~7.00&#10;故障现象：无人机自主作业返航时掉树上了&#10;需求描述：需要现场处理"></textarea>
+                                <div id="feedbackTemplatePreview" style="margin-top:12px;">
+                                    <p class="hint">请输入反馈模板文本</p>
                                 </div>
                             </div>
                             <!-- 解析预览 -->
@@ -680,6 +701,126 @@
                 </div>
             </section>
 
+            <!-- ========== 跟进任务页面 ========== -->
+            <section class="page" id="page-followup">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>📋 跟进任务</h2>
+                        <div class="header-actions">
+                            <span style="font-size:14px;color:#666;">共 <strong id="followupCount">0</strong> 条</span>
+                            <button class="btn btn-primary btn-sm" onclick="openFollowupModal()">➕ 新增</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:end;">
+                        <div class="form-group" style="margin:0;min-width:130px;">
+                            <label style="font-size:12px;">日期</label>
+                            <input type="date" id="followupFilterDate" style="font-size:12px;padding:4px 8px;">
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:120px;">
+                            <label style="font-size:12px;">工单编号</label>
+                            <input type="text" id="followupFilterWorkOrder" placeholder="搜索工单" style="font-size:12px;padding:4px 8px;">
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:100px;">
+                            <label style="font-size:12px;">分析人</label>
+                            <input type="text" id="followupFilterAnalyst" placeholder="搜索分析人" style="font-size:12px;padding:4px 8px;">
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:100px;">
+                            <label style="font-size:12px;">状态</label>
+                            <select id="followupFilterStatus" style="font-size:12px;padding:4px 8px;">
+                                <option value="">全部</option>
+                                <option value="待跟进">待跟进</option>
+                                <option value="跟进中">跟进中</option>
+                                <option value="已完成">已完成</option>
+                                <option value="已关闭">已关闭</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="followupTable">
+                            <colgroup>
+                                <col style="width:130px">
+                                <col style="width:80px">
+                                <col style="width:90px">
+                                <col style="width:90px">
+                                <col style="width:70px">
+                                <col style="width:70px">
+                                <col style="width:70px">
+                                <col style="width:80px">
+                                <col style="width:70px">
+                                <col style="width:120px">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th>分析时间</th>
+                                    <th>机型</th>
+                                    <th>机架号</th>
+                                    <th>架次-地块</th>
+                                    <th>区域</th>
+                                    <th>反馈人</th>
+                                    <th>分析人</th>
+                                    <th>问题定性</th>
+                                    <th>质保</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="10" class="empty-state"><div class="empty-state-icon">📋</div>暂无跟进任务</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== 问题解决页面 ========== -->
+            <section class="page" id="page-solution">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>🔧 问题解决</h2>
+                        <div class="header-actions">
+                            <button class="btn btn-primary btn-sm" id="btnAddSolution">➕ 新建</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap;align-items:end;">
+                        <div class="form-group" style="margin:0;min-width:130px;">
+                            <label style="font-size:12px;">故障日期</label>
+                            <input type="date" id="solutionFilterDate" style="font-size:12px;padding:4px 8px;">
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:120px;">
+                            <label style="font-size:12px;">无人机编号</label>
+                            <input type="text" id="solutionFilterDrone" placeholder="搜索编号" style="font-size:12px;padding:4px 8px;">
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:100px;">
+                            <label style="font-size:12px;">状态</label>
+                            <select id="solutionFilterStatus" style="font-size:12px;padding:4px 8px;">
+                                <option value="">全部</option>
+                                <option value="待分析">待分析</option>
+                                <option value="分析中">分析中</option>
+                                <option value="已解决">已解决</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" id="solutionTable">
+                            <thead>
+                                <tr>
+                                    <th>故障时间</th>
+                                    <th>无人机编号</th>
+                                    <th>地块编号</th>
+                                    <th>故障现象</th>
+                                    <th>需求描述</th>
+                                    <th>日志</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🔧</div>暂无问题解决记录</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <!-- ========== 页面7：回收站 ========== -->
             <section class="page" id="page-trash">
                 <div class="card">
@@ -792,6 +933,139 @@
         </div>
     </div>
 
-    <script src="app.js?v=31"></script>
+    <!-- 跟进任务弹窗 -->
+    <div class="modal" id="followupModal">
+        <div class="modal-content" style="max-width:650px;">
+            <div class="modal-header">
+                <h3 id="followupModalTitle">跟进任务</h3>
+                <button class="modal-close" onclick="closeFollowupModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editFollowupId">
+                <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;">
+                    <div class="form-group">
+                        <label>分析时间</label>
+                        <input type="datetime-local" id="followupAnalysisTime">
+                    </div>
+                    <div class="form-group">
+                        <label>机型</label>
+                        <input type="text" id="followupModel" placeholder="如 J50pro">
+                    </div>
+                    <div class="form-group">
+                        <label>工单编号</label>
+                        <input type="text" id="followupWorkOrderNo" placeholder="工单编号">
+                    </div>
+                    <div class="form-group">
+                        <label>机架号</label>
+                        <input type="text" id="followupAirframeNo" placeholder="机架号">
+                    </div>
+                    <div class="form-group">
+                        <label>反馈人</label>
+                        <input type="text" id="followupReporter" placeholder="反馈人">
+                    </div>
+                    <div class="form-group">
+                        <label>分析人</label>
+                        <input type="text" id="followupAnalyst" placeholder="分析人">
+                    </div>
+                    <div class="form-group">
+                        <label>问题定性</label>
+                        <input type="text" id="followupProblemType" placeholder="问题定性">
+                    </div>
+                    <div class="form-group">
+                        <label>是否质保</label>
+                        <select id="followupIsWarranty">
+                            <option value="">请选择</option>
+                            <option value="质保">质保</option>
+                            <option value="非质保">非质保</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>跟进状态</label>
+                        <select id="followupStatus">
+                            <option value="待跟进">待跟进</option>
+                            <option value="跟进中">跟进中</option>
+                            <option value="已完成">已完成</option>
+                            <option value="已关闭">已关闭</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>备注</label>
+                    <textarea id="followupNotes" rows="2" placeholder="跟进备注"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeFollowupModal()">取消</button>
+                <button class="btn btn-primary" id="btnSaveFollowup">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 问题解决编辑弹窗 -->
+    <div class="modal" id="solutionModal">
+        <div class="modal-content" style="max-width:650px;">
+            <div class="modal-header">
+                <h3 id="solutionModalTitle">新建问题</h3>
+                <button class="modal-close" onclick="closeSolutionModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editSolutionId">
+                <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+                    <div class="form-group">
+                        <label>无人机编号 <span style="color:red">*</span></label>
+                        <input type="text" id="solutionDroneNo" placeholder="如 J160" required>
+                    </div>
+                    <div class="form-group">
+                        <label>地块编号</label>
+                        <input type="text" id="solutionFieldNo" placeholder="地块编号">
+                    </div>
+                    <div class="form-group">
+                        <label>故障时间</label>
+                        <input type="datetime-local" id="solutionFaultTime">
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select id="solutionStatus">
+                            <option value="待分析">待分析</option>
+                            <option value="分析中">分析中</option>
+                            <option value="已解决">已解决</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>故障现象</label>
+                    <textarea id="solutionFaultDesc" rows="2" placeholder="描述故障现象"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>需求描述</label>
+                    <textarea id="solutionRequirement" rows="2" placeholder="描述需求"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSolutionModal()">取消</button>
+                <button class="btn btn-primary" id="btnSaveSolution">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 问题解决详情弹窗 -->
+    <div class="modal" id="solutionDetailModal">
+        <div class="modal-content" style="max-width:700px;">
+            <div class="modal-header">
+                <h3>问题详情</h3>
+                <button class="modal-close" onclick="closeSolutionDetail()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="solutionDetailContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeSolutionDetail()">关闭</button>
+                <button class="btn btn-info" id="btnExportSolution">📄 导出报告</button>
+                <button class="btn btn-primary" id="btnEditSolution">✏️ 编辑</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js?v=66"></script>
 </body>
 </html>
