@@ -1643,6 +1643,43 @@
         }
     };
 
+    // 最近记录 - 一键清空所有记录
+    window.deleteAllTodayRecords = function() {
+        if (records.length === 0) {
+            alert('没有可删除的记录');
+            return;
+        }
+        if (!confirm(`⚠️ 确定清空全部 ${records.length} 条记录？\n删除后可在回收站恢复。`)) return;
+        if (!confirm(`再次确认：真的要清空所有 ${records.length} 条记录吗？`)) return;
+
+        // 全部移入回收站
+        records.forEach(r => {
+            r._deletedAt = new Date().toISOString();
+            trashRecords.push(r);
+        });
+        records = [];
+
+        saveRecords(false, false);
+        saveTrash();
+        renderTodayTable();
+        renderHistoryPage();
+        updateDashboard();
+
+        // 立即同步到云端
+        const cfg = getCloudConfig();
+        if (cfg && cfg.enabled) {
+            pushToCloud().then(success => {
+                if (success) {
+                    alert(`✅ 已清空所有记录，已同步到云端`);
+                } else {
+                    alert(`⚠️ 已清空所有记录，但云同步失败。请检查网络连接后重试。`);
+                }
+            });
+        } else {
+            alert(`✅ 已清空所有记录`);
+        }
+    };
+
     // ========== 从日常记录一键生成定责报告 ==========
     window.generateReportFromRecord = function(id) {
         const r = records.find(x => x.id === id);
@@ -1836,6 +1873,43 @@
             });
         } else {
             alert(`✅ 成功删除 ${deletedCount} 条记录`);
+        }
+    };
+
+    // 最近记录 - 一键清空所有记录
+    window.deleteAllTodayRecords = function() {
+        if (records.length === 0) {
+            alert('没有可删除的记录');
+            return;
+        }
+        if (!confirm(`⚠️ 确定清空全部 ${records.length} 条记录？\n删除后可在回收站恢复。`)) return;
+        if (!confirm(`再次确认：真的要清空所有 ${records.length} 条记录吗？`)) return;
+
+        // 全部移入回收站
+        records.forEach(r => {
+            r._deletedAt = new Date().toISOString();
+            trashRecords.push(r);
+        });
+        records = [];
+
+        saveRecords(false, false);
+        saveTrash();
+        renderTodayTable();
+        renderHistoryPage();
+        updateDashboard();
+
+        // 立即同步到云端
+        const cfg = getCloudConfig();
+        if (cfg && cfg.enabled) {
+            pushToCloud().then(success => {
+                if (success) {
+                    alert(`✅ 已清空所有记录，已同步到云端`);
+                } else {
+                    alert(`⚠️ 已清空所有记录，但云同步失败。请检查网络连接后重试。`);
+                }
+            });
+        } else {
+            alert(`✅ 已清空所有记录`);
         }
     };
 
