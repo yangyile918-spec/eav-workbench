@@ -1,9 +1,10 @@
 [
   {
     "id": "mryojyea3injv",
+    "model": "",
     "droneNo": "90074",
     "fieldNo": "",
-    "faultTime": "2026-22-55T00:00",
+    "faultTime": "",
     "faultPeriod": "7月23日22.55～23:10",
     "faultDesc": "无人机异常失去动力掉落炸机",
     "requirement": "请求分析原因",
@@ -15,7 +16,7 @@
       "flight": true,
       "other": false
     },
-    "status": "待分析",
+    "status": "分析中",
     "analysis": "",
     "solution": "",
     "remark": "",
