@@ -1654,7 +1654,7 @@
 
         const tbody = document.querySelector('#todayTable tbody');
         if (recentRecords.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
             // 重置全选状态
             const selectAll = document.getElementById('todaySelectAll');
             const headerSelectAll = document.getElementById('todayHeaderSelectAll');

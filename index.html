@@ -284,9 +284,12 @@
                     <table class="data-table" id="todayTable">
                         <thead>
                             <tr>
+                                <th style="width:24px;"><input type="checkbox" id="todayHeaderSelectAll" onchange="toggleSelectAllToday()" style="cursor:pointer;"></th>
                                 <th>时间</th>
-                                <th>工单编号</th>
+                                <th>机型</th>
                                 <th>机架号</th>
+                                <th>架次-地块</th>
+                                <th>省份/区域</th>
                                 <th>反馈人</th>
                                 <th>分析人</th>
                                 <th>问题定性</th>
@@ -668,6 +671,7 @@
                     <div class="table-responsive">
                         <table class="table" id="historyTable">
                             <colgroup>
+                                <col style="width:24px">
                                 <col style="width:72px">
                                 <col style="width:160px">
                                 <col style="width:150px">
@@ -681,6 +685,7 @@
                             </colgroup>
                             <thead>
                                 <tr>
+                                    <th style="width:24px;"><input type="checkbox" id="headerSelectAll" onchange="toggleSelectAll(this.checked)" style="cursor:pointer;"></th>
                                     <th>时间</th>
                                     <th>工单编号</th>
                                     <th>机架号</th>
@@ -694,7 +699,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td colspan="9" class="empty-state"><div class="empty-state-icon">📂</div>暂无历史数据</td></tr>
+                                <tr><td colspan="11" class="empty-state"><div class="empty-state-icon">📂</div>暂无历史数据</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1066,6 +1071,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=67"></script>
+    <script src="app.js?v=68"></script>
 </body>
 </html>
