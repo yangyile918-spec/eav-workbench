@@ -41,6 +41,17 @@
             padding: 0 5px !important;
             line-height: 1.3 !important;
         }
+        /* 拖拽选择行样式 */
+        .data-table tbody tr, .table tbody tr {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        .data-table tbody tr.drag-selected, .table tbody tr.drag-selected {
+            background-color: #e3f2fd !important;
+        }
+        .data-table tbody tr:hover, .table tbody tr:hover {
+            cursor: default;
+        }
     </style>
     <script src="chart.umd.min.js"></script>
     <script src="xlsx.full.min.js"></script>
@@ -1141,6 +1152,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=78"></script>
+    <script src="app.js?v=79"></script>
 </body>
 </html>
