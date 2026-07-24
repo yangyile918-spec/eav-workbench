@@ -232,15 +232,23 @@
   },
   {
     "id": "mrx75434lpmqy",
-    "analysisTime": "2026-07-23",
+    "analysisTime": "2026-07-24T11:36",
     "workOrderNo": "J160",
     "airframeNo": "A0589",
     "model": "J160",
     "flightBatch": "178476956486225 -- 3357981",
-    "region": "四川省",
     "feedbackPerson": "",
     "analyst": "杨怡乐",
-    "problemType": "大屏数据：飞机手动控制，向下飞行时，右前转速异常下降，期望值上升，向下坠落炸机。"
+    "problemType": "",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
+    "initialAnalysis": "大屏数据：飞机手动控制，向下飞行时，右前转速异常下降，期望值上升，向下坠落炸机。",
+    "followUp": "",
+    "finalConclusion": "",
+    "region": "四川省"
   },
   {
     "id": "mrx754345el3d",
