@@ -687,10 +687,11 @@
                     r.feedbackPerson = '';
                     migrated = true;
                 }
-                // 自动推导机型：如果 model 为空但有 airframeNo，根据机架号后5位首字符推导
-                if (!r.model && r.airframeNo) {
+                // 自动推导机型：只要有 airframeNo，就根据机架号后5位首字符推导（v81：始终覆盖）
+                if (r.airframeNo) {
                     const detected = detectModelFromAirframe(r.airframeNo);
-                    if (detected) {
+                    if (detected && r.model !== detected) {
+                        console.log('[机型自动匹配] 架号', r.airframeNo, ':', r.model || '(空)', '→', detected);
                         r.model = detected;
                         migrated = true;
                     }
