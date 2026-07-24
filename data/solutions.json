@@ -24,8 +24,9 @@
   },
   {
     "id": "mryokfujuxh3b",
+    "model": "",
     "droneNo": "80566",
-    "fieldNo": "无人机自主作业进入地块时遥控器上什么也没报就掉线来了",
+    "fieldNo": "",
     "faultTime": "2026-07-24T00:00",
     "faultPeriod": "7.24日，上午6点20到6点40",
     "faultDesc": "无人机自主作业进入地块时遥控器上什么也没报就掉线来了",
