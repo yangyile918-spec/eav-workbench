@@ -369,6 +369,8 @@
         generateWeeklyReport();
         updateDashboard();
         initReportPage();
+        // 预加载问题解决数据
+        loadSolutions();
         // Try cloud sync on startup
         const cfg = getCloudConfig();
         console.log('[init] cloud config:', cfg);
@@ -751,6 +753,39 @@
                 body: JSON.stringify(body)
             });
             if (resp.ok) {
+                // 同时也推送问题解决记录到云端
+                try {
+                    const solutionsUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/data/solutions.json`;
+                    loadSolutions();
+                    const solContent = btoa(unescape(encodeURIComponent(JSON.stringify(solutionRecords, null, 2))));
+                    let solSha = null;
+                    try {
+                        const solResp = await fetch(solutionsUrl, {
+                            headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                        });
+                        if (solResp.ok) {
+                            const solExisting = await solResp.json();
+                            solSha = solExisting.sha;
+                        }
+                    } catch(e) { /* 文件不存在，首次创建 */ }
+                    const solBody = {
+                        message: `auto-sync solutions: ${solutionRecords.length} records @ ${new Date().toLocaleString('zh-CN')}`,
+                        content: solContent,
+                        branch: cfg.branch || 'main'
+                    };
+                    if (solSha) solBody.sha = solSha;
+                    await fetch(solutionsUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${cfg.token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(solBody)
+                    });
+                } catch(e) {
+                    console.warn('Cloud sync solutions error:', e);
+                }
                 updateSyncStatus('synced', `已同步 ${records.length} 条`);
                 return true;
             } else {
@@ -843,10 +878,36 @@
                         console.warn('[pullFromCloud] 推送云端失败:', e);
                     });
                     
+                    // 同时拉取问题解决记录
+                    try {
+                        const solRawUrl = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch || 'main'}/data/solutions.json`;
+                        const solResp = await fetch(solRawUrl);
+                        if (solResp.ok) {
+                            const solContent = await solResp.text();
+                            const cloudSolutions = JSON.parse(solContent);
+                            if (Array.isArray(cloudSolutions) && cloudSolutions.length > 0) {
+                                // 合并：云端优先（本地可能为空），本地已有的保留
+                                const solMerged = new Map();
+                                solutionRecords.forEach(r => solMerged.set(r.id, r));
+                                cloudSolutions.forEach(r => {
+                                    if (!solMerged.has(r.id)) solMerged.set(r.id, r);
+                                });
+                                solutionRecords = Array.from(solMerged.values());
+                                saveSolutions();
+                                console.log('[pullFromCloud] loaded', cloudSolutions.length, 'solutions from cloud');
+                            }
+                        }
+                    } catch(e) {
+                        console.warn('[pullFromCloud] solutions sync error:', e);
+                    }
+                    
                     renderTodayTable();
                     generateDailyReport();
                     generateWeeklyReport();
                     updateDashboard();
+                    if (document.getElementById('page-solution')?.classList.contains('active')) {
+                        renderSolutionPage();
+                    }
                     updateSyncStatus('synced', `已加载 ${records.length} 条`);
                     console.log('[pullFromCloud] success, loaded', records.length, 'records');
                     return true;
@@ -2168,6 +2229,13 @@
     }
     function saveSolutions() {
         localStorage.setItem('droneWorkbenchSolutions', JSON.stringify(solutionRecords));
+        // 触发云同步（异步，不阻塞）
+        try {
+            const cfg = getCloudConfig();
+            if (cfg && cfg.enabled && cfg.token) {
+                pushToCloud();
+            }
+        } catch(e) { /* ignore */ }
     }
 
     function renderSolutionPage() {
