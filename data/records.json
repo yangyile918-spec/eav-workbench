@@ -124,7 +124,7 @@
     "analyst": "杨怡乐",
     "problemType": "",
     "customAudit": "13838169824",
-    "auditResult": "质保",
+    "auditResult": "",
     "initialAnalysis": "FPV:飞机航线与电线夹角过小，与电线发生配置导致炸机。\n无人机日志：未设置地块内有电线，自主飞行进入地块时，航线与电线夹角过小，与电线发生配置导致炸机。"
   },
   {
@@ -363,7 +363,9 @@
     "region": "美国\nKansas Milan",
     "initialAnalysis": "FPV：无人机起飞过程中，右脚架变形。\n初步分析：脚架没有解锁，导致起飞时崩裂。\nFPV: During takeoff, the right landing gear deformed.\nPreliminary Analysis: The landing gear was not unlocked, causing it to break during takeoff.",
     "problemType": "操作问题——操作失误\nThe crash is attributed to operator error.",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "",
+    "customAudit": "安心"
   },
   {
     "id": "mrufrnwftzcmy",
