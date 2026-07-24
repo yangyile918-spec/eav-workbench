@@ -5,6 +5,7 @@
     const STORAGE_KEY = 'droneWorkbenchRecords';
     const TRASH_KEY = 'droneWorkbenchTrash';
     const CLOUD_CONFIG_KEY = 'droneWorkbenchCloudConfig';
+    const CUSTOM_AUDIT_KEY = 'droneWorkbenchCustomAudits';
     const FINISHED_STATUS = ['完结待签字', '待评价', '已评价'];
 
     // 默认云同步配置（Token 分段拼接，避免 GitHub secret 检测）
@@ -166,6 +167,7 @@
                 showApp();
                 // 登录后初始化数据
                 loadRecords();
+                loadCustomAudits();
                 loadTrash();
                 bindEvents();
                 setDefaultDates();
@@ -356,7 +358,9 @@
 
         // 已登录，初始化业务
         loadRecords();
+        loadCustomAudits();
         loadTrash();
+        loadFollowupRecords();
         bindEvents();
         setDefaultDates();
         updateCurrentDate();
@@ -490,11 +494,174 @@
 
     // ========== 存储 ==========
     let cloudSyncTimer = null;
+    let customAuditTypes = [];
+
+    // 加载自定义定责类型
+    function loadCustomAudits() {
+        try {
+            const data = localStorage.getItem(CUSTOM_AUDIT_KEY);
+            customAuditTypes = data ? JSON.parse(data) : [];
+        } catch(e) { customAuditTypes = []; }
+        // 清理无效的定责类型（如账号、手机号）
+        cleanInvalidAuditTypes();
+        // 加载后刷新表单下拉框
+        refreshAuditDropdowns();
+    }
+
+    // 保存自定义定责类型
+    function saveCustomAuditType(type) {
+        if (!type || customAuditTypes.includes(type)) return;
+        // 防止账号/手机号被误保存为定责类型
+        if (/^\d{10,}$/.test(type)) return; // 纯数字且长度>=10，可能是账号
+        customAuditTypes.push(type);
+        localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
+        // 保存后刷新表单下拉框
+        refreshAuditDropdowns();
+    }
+
+    // 删除自定义定责类型
+    function removeCustomAuditType(type) {
+        customAuditTypes = customAuditTypes.filter(t => t !== type);
+        localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
+        refreshAuditDropdowns();
+    }
+
+    // 清理无效的定责类型（如账号、手机号）
+    function cleanInvalidAuditTypes() {
+        const before = customAuditTypes.length;
+        customAuditTypes = customAuditTypes.filter(t => {
+            // 过滤掉纯数字且长度>=10的（可能是账号/手机号）
+            return !/^\d{10,}$/.test(t);
+        });
+        if (customAuditTypes.length !== before) {
+            localStorage.setItem(CUSTOM_AUDIT_KEY, JSON.stringify(customAuditTypes));
+        }
+    }
+
+    // 刷新表单录入区域的"是否质保"下拉框（包含自定义定责类型）
+    function refreshAuditDropdowns() {
+        // 表单录入区域的下拉框
+        const auditSelect = document.getElementById('auditResult');
+        if (auditSelect) {
+            const currentVal = auditSelect.value;
+            // 保留前三个固定选项，清除其余
+            while (auditSelect.options.length > 3) {
+                auditSelect.remove(3);
+            }
+            // 添加自定义类型
+            customAuditTypes.forEach(t => {
+                if (t !== '质保' && t !== '非质保') {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    auditSelect.appendChild(opt);
+                }
+            });
+            // 恢复之前的选择
+            auditSelect.value = currentVal;
+        }
+
+        // 跟进任务模态框的下拉框
+        const followupSelect = document.getElementById('followupIsWarranty');
+        if (followupSelect) {
+            const currentVal = followupSelect.value;
+            while (followupSelect.options.length > 3) {
+                followupSelect.remove(3);
+            }
+            customAuditTypes.forEach(t => {
+                if (t !== '质保' && t !== '非质保') {
+                    const opt = document.createElement('option');
+                    opt.value = t;
+                    opt.textContent = t;
+                    followupSelect.appendChild(opt);
+                }
+            });
+            followupSelect.value = currentVal;
+        }
+    }
 
     function loadRecords() {
         try {
             const data = localStorage.getItem(STORAGE_KEY);
             records = data ? JSON.parse(data) : [];
+            // 数据迁移：修复7列炸机分析表导入导致的列错位问题
+            // 当 feedbackPerson 包含问题定性关键词但 problemType 为空时，说明数据错位
+            const PROBLEM_KW = /操作问题|动力问题|质量问题|故障|断裂|烧|炸|裂纹|变形|损坏|不符合质保|手动碰撞|卡扣|尾插|机臂|信号|失联|雷达|避障|喷洒|播撒|GPS|RTK|航线|偏航|翻机|坠机|失控|问题/i;
+            let migrated = false;
+            records.forEach(r => {
+                if (r.feedbackPerson && PROBLEM_KW.test(r.feedbackPerson) && !r.problemType) {
+                    // feedbackPerson 里存的是问题定性内容，需要修正
+                    r.problemType = r.feedbackPerson;
+                    r.feedbackPerson = '';
+                    migrated = true;
+                }
+                // 自动推导机型：如果 model 为空但有 airframeNo，根据机架号后5位首字符推导
+                if (!r.model && r.airframeNo) {
+                    const detected = detectModelFromAirframe(r.airframeNo);
+                    if (detected) {
+                        r.model = detected;
+                        migrated = true;
+                    }
+                }
+            });
+            // 数据迁移 v47：修复10列数据解析错误导致的字段错位
+            // 特征：model 字段存的是地块编号（长数字+破折号），flightBatch 存的是省区，feedbackPerson 存的是问题定性
+            const FLIGHT_BATCH_PATTERN = /^\d{10,}\s*[—\-–]+\s*\d+/;
+            const PROVINCE_PATTERN = /^(广东|海南|四川|云南|福建|湖南|湖北|河南|河北|山东|山西|陕西|甘肃|青海|台湾|广西|贵州|安徽|江苏|浙江|江西|黑龙江|吉林|辽宁|内蒙古|新疆|西藏|宁夏|北京|天津|上海|重庆|香港|澳门|美国)/;
+            let migratedV47 = false;
+            records.forEach(r => {
+                const modelIsFlightBatch = r.model && FLIGHT_BATCH_PATTERN.test(r.model);
+                const flightBatchIsRegion = r.flightBatch && PROVINCE_PATTERN.test(r.flightBatch);
+
+                if (modelIsFlightBatch || flightBatchIsRegion) {
+                    const correctFlightBatch = modelIsFlightBatch ? r.model : (r.flightBatch || '');
+                    const correctRegion = flightBatchIsRegion ? r.flightBatch : (r.region || '');
+                    const correctProblemType = r.feedbackPerson || '';
+                    
+                    r.model = '';
+                    r.flightBatch = correctFlightBatch;
+                    r.region = correctRegion;
+                    r.problemType = correctProblemType;
+                    r.feedbackPerson = '';
+                    migratedV47 = true;
+                    console.log('[数据迁移 v47] 修复记录:', r.airframeNo);
+                }
+            });
+            if (migratedV47) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                console.log('[数据迁移 v47] 已修复字段错位');
+            }
+
+            // 数据迁移 v57：修复问题定性与初步分析字段错位
+            // 特征：problemType 包含 FPV: 或长描述（>50字符），而 initialAnalysis 为空或较短
+            let migratedV57 = false;
+            let v57Checked = 0;
+            let v57Swapped = 0;
+            records.forEach(r => {
+                v57Checked++;
+                // 如果 problemType 包含 FPV 描述或过长，而 initialAnalysis 为空或也是 FPV 描述
+                if (r.problemType && (r.problemType.includes('FPV:') || r.problemType.length > 50)) {
+                    console.log('[v57 检测] 记录', r.airframeNo, '- problemType 长度:', r.problemType.length, '- initialAnalysis 长度:', (r.initialAnalysis||'').length);
+                    if (!r.initialAnalysis || r.initialAnalysis.length < r.problemType.length) {
+                        // 交换：problemType 的内容应该到 initialAnalysis
+                        const temp = r.problemType;
+                        r.problemType = r.initialAnalysis || '';
+                        r.initialAnalysis = temp;
+                        migratedV57 = true;
+                        v57Swapped++;
+                        console.log('[数据迁移 v57] 修复记录:', r.airframeNo);
+                    }
+                }
+            });
+            console.log('[v57 统计] 检查:', v57Checked, '条 - 交换:', v57Swapped, '条');
+            if (migratedV57) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                console.log('[数据迁移 v57] 已修复问题定性与初步分析错位');
+            }
+            if (migrated) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                console.log('[数据迁移] 已修复列错位/补充机型');
+            }
         } catch(e) { records = []; }
     }
     function loadTrash() {
@@ -599,6 +766,44 @@
         }
     }
 
+    // 对云端数据执行迁移（修复字段错位）
+    function migrateCloudRecords(records) {
+        const PROBLEM_KW = /操作问题 | 动力问题 | 质量问题 | 故障 | 断裂 | 烧 | 炸 | 裂纹 | 变形 | 损坏 | 不符合质保 | 手动碰撞 | 卡扣 | 尾插 | 机臂 | 信号 | 失联 | 雷达 | 避障 | 喷洒 | 播撒 | GPS|RTK|航线 | 偏航 | 翻机 | 坠机 | 失控 | 问题/i;
+        const FLIGHT_BATCH_PATTERN = /^\d{10,}\s*[—\-–]+\s*\d+/;
+        const PROVINCE_PATTERN = /^(广东 | 海南 | 四川 | 云南 | 福建 | 湖南 | 湖北 | 河南 | 河北 | 山东 | 山西 | 陕西 | 甘肃 | 青海 | 台湾 | 广西 | 贵州 | 安徽 | 江苏 | 浙江 | 江西 | 黑龙江 | 吉林 | 辽宁 | 内蒙古 | 新疆 | 西藏 | 宁夏 | 北京 | 天津 | 上海 | 重庆 | 香港 | 澳门 | 美国)/;
+
+        records.forEach(r => {
+            // 迁移 1：feedbackPerson 存的是问题定性
+            if (r.feedbackPerson && PROBLEM_KW.test(r.feedbackPerson) && !r.problemType) {
+                r.problemType = r.feedbackPerson;
+                r.feedbackPerson = '';
+            }
+
+            // 迁移 2：model 存的是地块编号，flightBatch 存的是省区
+            const modelIsFlightBatch = r.model && FLIGHT_BATCH_PATTERN.test(r.model);
+            const flightBatchIsRegion = r.flightBatch && PROVINCE_PATTERN.test(r.flightBatch);
+            if (modelIsFlightBatch || flightBatchIsRegion) {
+                const correctFlightBatch = modelIsFlightBatch ? r.model : (r.flightBatch || '');
+                const correctRegion = flightBatchIsRegion ? r.flightBatch : (r.region || '');
+                const correctProblemType = r.feedbackPerson || '';
+                r.model = '';
+                r.flightBatch = correctFlightBatch;
+                r.region = correctRegion;
+                r.problemType = correctProblemType;
+                r.feedbackPerson = '';
+            }
+
+            // 迁移 3：problemType 包含 FPV 描述（与 initialAnalysis 错位）
+            if (r.problemType && (r.problemType.includes('FPV:') || r.problemType.length > 50)) {
+                if (!r.initialAnalysis || r.initialAnalysis.length < r.problemType.length) {
+                    const temp = r.problemType;
+                    r.problemType = r.initialAnalysis || '';
+                    r.initialAnalysis = temp;
+                }
+            }
+        });
+    }
+
     async function pullFromCloud() {
         const cfg = getCloudConfig();
         console.log('[pullFromCloud] config:', cfg ? 'exists' : 'null');
@@ -616,13 +821,28 @@
                 const cloudRecords = JSON.parse(content);
                 console.log('[pullFromCloud] cloudRecords:', Array.isArray(cloudRecords) ? 'array, length=' + cloudRecords.length : 'not array');
                 if (Array.isArray(cloudRecords)) {
-                    // Merge: cloud records + local records (by id, cloud wins)
+                    // 对云端数据也执行数据迁移（修复字段错位）
+                    migrateCloudRecords(cloudRecords);
+                    
+                    // Merge: local records + cloud records (by id, LOCAL wins to preserve deletions)
                     const merged = new Map();
-                    records.forEach(r => merged.set(r.id, r));
-                    cloudRecords.forEach(r => merged.set(r.id, r));
+                    cloudRecords.forEach(r => merged.set(r.id, r));  // 先放云端数据
+                    records.forEach(r => merged.set(r.id, r));       // 本地数据覆盖云端（本地优先）
                     records = Array.from(merged.values());
                     console.log('[pullFromCloud] merged records:', records.length);
+                    
+                    // 合并后再跑一次迁移，确保最终数据正确
+                    migrateCloudRecords(records);
+                    
                     saveRecords(true, true); // save locally without re-syncing
+                    
+                    // 迁移后推送修正数据回云端
+                    pushToCloud().then(() => {
+                        console.log('[pullFromCloud] 已推送修正数据到云端');
+                    }).catch(e => {
+                        console.warn('[pullFromCloud] 推送云端失败:', e);
+                    });
+                    
                     renderTodayTable();
                     generateDailyReport();
                     generateWeeklyReport();
@@ -682,6 +902,52 @@
         document.getElementById('btnAddRecord').addEventListener('click', clearForm);
         document.getElementById('btnSave').addEventListener('click', saveRecord);
         document.getElementById('btnClear').addEventListener('click', clearForm);
+        
+        // 机架号输入时自动匹配机型
+        const airframeInput = document.getElementById('airframeNo');
+        const modelInput = document.getElementById('model');
+        if (airframeInput && modelInput) {
+            airframeInput.addEventListener('input', function() {
+                const airframeNo = this.value.trim();
+                if (airframeNo && !modelInput.value.trim()) {
+                    const detected = detectModelFromAirframe(airframeNo);
+                    if (detected) {
+                        modelInput.value = detected;
+                        modelInput.style.borderColor = '#00d2ff';
+                        setTimeout(() => { modelInput.style.borderColor = ''; }, 1500);
+                    }
+                }
+            });
+            airframeInput.addEventListener('blur', function() {
+                const airframeNo = this.value.trim();
+                if (airframeNo && !modelInput.value.trim()) {
+                    const detected = detectModelFromAirframe(airframeNo);
+                    if (detected) {
+                        modelInput.value = detected;
+                    }
+                }
+            });
+        }
+
+        // 表单区域"新增定责类型"输入框
+        const customAuditInput = document.getElementById('customAuditInput');
+        const auditSelect = document.getElementById('auditResult');
+        if (customAuditInput && auditSelect) {
+            const applyCustomAudit = () => {
+                const val = customAuditInput.value.trim();
+                if (!val) return;
+                saveCustomAuditType(val);
+                auditSelect.value = val;
+                customAuditInput.value = '';
+                // 视觉反馈
+                customAuditInput.style.borderColor = '#00d2ff';
+                setTimeout(() => { customAuditInput.style.borderColor = ''; }, 1500);
+            };
+            customAuditInput.addEventListener('keydown', e => {
+                if (e.key === 'Enter') { e.preventDefault(); applyCustomAudit(); }
+            });
+            customAuditInput.addEventListener('blur', applyCustomAudit);
+        }
         document.getElementById('btnSmartEntry').addEventListener('click', () => {
             document.getElementById('smartEntryModal').classList.add('show');
         });
@@ -697,6 +963,29 @@
         // 智能录入 - Tab切换 & OCR
         initSmartTabs();
         initOCRUpload();
+
+        // 反馈模板
+        document.getElementById('feedbackTemplateText').addEventListener('input', handleFeedbackTemplateInput);
+        document.getElementById('feedbackTemplateText').addEventListener('paste', handleFeedbackTemplateInput);
+        document.getElementById('btnFeedbackTemplate').addEventListener('click', () => {
+            document.getElementById('smartEntryModal').classList.add('show');
+            // 切换到反馈模板标签
+            document.querySelectorAll('.smart-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('[data-tab="feedback"]').classList.add('active');
+            document.getElementById('smartTabText').style.display = 'none';
+            document.getElementById('smartTabImage').style.display = 'none';
+            document.getElementById('smartTabFeedback').style.display = '';
+        });
+        // 在智能录入弹窗的确认按钮中检测当前标签
+        document.getElementById('smartEntryConfirm').addEventListener('click', () => {
+            const feedbackTab = document.getElementById('smartTabFeedback');
+            if (feedbackTab && feedbackTab.style.display !== 'none') {
+                confirmFeedbackEntry();
+            }
+        });
+
+        // 问题解决
+        document.getElementById('btnSaveSolution').addEventListener('click', saveSolutionRecord);
 
         // 日报
         document.getElementById('dailyDate').addEventListener('change', generateDailyReport);
@@ -761,13 +1050,15 @@
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.getElementById(`page-${page}`).classList.add('active');
 
-        const titles = { entry:'日常工作录入', daily:'日报预览 / 导出', weekly:'周报自动生成', report:'定责分析报告', dashboard:'数据统计看板', trash:'回收站', history:'历史数据', users:'用户管理' };
+        const titles = { entry:'日常工作录入', daily:'日报预览 / 导出', weekly:'周报自动生成', report:'定责分析报告', dashboard:'数据统计看板', trash:'回收站', history:'历史数据', followup:'跟进任务', solution:'问题解决', users:'用户管理' };
         document.getElementById('pageTitle').textContent = titles[page] || '';
 
         if (page === 'daily') generateDailyReport();
         if (page === 'dashboard') updateDashboard();
         if (page === 'trash') renderTrashPage();
         if (page === 'history') renderHistoryPage();
+        if (page === 'followup') renderFollowupPage();
+        if (page === 'solution') renderSolutionPage();
         if (page === 'users') renderUsersTable();
         if (page === 'report') {
             updateReportPreview();
@@ -808,7 +1099,9 @@
         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     }
     function formatDateTimeLocal(d) {
-        return formatDateLocal(d) + 'T' + String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+        // 转换为北京时间 (UTC+8)
+        const beijingTime = new Date(d.getTime() + 8 * 60 * 60 * 1000);
+        return formatDateLocal(beijingTime) + 'T' + String(beijingTime.getHours()).padStart(2,'0') + ':' + String(beijingTime.getMinutes()).padStart(2,'0');
     }
     function formatDateTime(s) {
         if (!s) return '—';
@@ -822,8 +1115,12 @@
     }
     function formatTimeOnly(s) {
         if (!s) return '—';
-        const d = new Date(s);
-        return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+        // 只提取日期部分 YYYY-MM-DD，不显示具体时间
+        const match = String(s).match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+        if (match) {
+            return `${match[1]}-${match[2].padStart(2,'0')}-${match[3].padStart(2,'0')}`;
+        }
+        return String(s).substring(0, 10);
     }
     function getWeekStart(d) {
         const r = new Date(d);
@@ -842,6 +1139,8 @@
          'followUp','finalConclusion','region'].forEach(id => document.getElementById(id).value = '');
         document.getElementById('problemType').value = '';
         document.getElementById('auditResult').value = '';
+        const customAuditInput = document.getElementById('customAuditInput');
+        if (customAuditInput) customAuditInput.value = '';
         document.getElementById('analysisTime').value = formatDateTimeLocal(new Date());
         // 自动填充分析人为当前登录用户
         const session = getSession();
@@ -853,7 +1152,7 @@
     function saveRecord() {
         const record = {
             id: editingId || Date.now().toString(36) + Math.random().toString(36).substr(2,5),
-            analysisTime: document.getElementById('analysisTime').value,
+            analysisTime: document.getElementById('analysisTime').value.replace('T', ' '),
             workOrderNo: document.getElementById('workOrderNo').value.trim(),
             airframeNo: document.getElementById('airframeNo').value.trim(),
             model: document.getElementById('model').value.trim(),
@@ -871,6 +1170,10 @@
             finalConclusion: document.getElementById('finalConclusion').value.trim(),
             region: document.getElementById('region').value.trim()
         };
+        // 自动推导机型：如果 model 为空但有 airframeNo
+        if (!record.model && record.airframeNo) {
+            record.model = detectModelFromAirframe(record.airframeNo);
+        }
         if (!record.analysisTime) { alert('请填写分析时间'); return; }
 
         if (editingId) {
@@ -891,17 +1194,85 @@
         if (!r) return;
         editingId = id;
         const session = getSession();
-        ['analysisTime','workOrderNo','airframeNo','model','flightBatch','feedbackPerson',
+        ['workOrderNo','airframeNo','model','flightBatch','feedbackPerson',
          'analyst','problemType','auditResult','tracker','reviewer','problemDescription',
          'faultCondition','initialAnalysis','followUp','finalConclusion','region'].forEach(k => {
             const el = document.getElementById(k);
             if (el) el.value = r[k] || '';
         });
+        // 分析时间：转换为 datetime-local 格式 (YYYY-MM-DDTHH:MM)
+        const timeEl = document.getElementById('analysisTime');
+        console.log('[editRecord] id:', id);
+        console.log('[editRecord] r.analysisTime:', JSON.stringify(r.analysisTime));
+        console.log('[editRecord] timeEl exists:', !!timeEl);
+        if (timeEl && r.analysisTime) {
+            // 清理可能的多余字符，确保格式正确
+            let cleaned = r.analysisTime.trim();
+            // 如果是 ISO 格式 (2026-07-23T08:00:00.000Z)，提取前 16 位
+            if (cleaned.includes('T') && cleaned.length > 16) {
+                cleaned = cleaned.substring(0, 16);
+            }
+            // 将空格替换为 T
+            const formatted = cleaned.replace(' ', 'T');
+            console.log('[editRecord] cleaned:', JSON.stringify(cleaned));
+            console.log('[editRecord] formatted:', JSON.stringify(formatted));
+            console.log('[editRecord] formatted length:', formatted.length);
+            timeEl.value = formatted;
+            console.log('[editRecord] timeEl.value after set:', JSON.stringify(timeEl.value));
+        } else {
+            console.log('[editRecord] timeEl or analysisTime missing, timeEl:', !!timeEl, 'analysisTime:', !!r.analysisTime);
+        }
         // 分析人同步为当前登录用户
         if (session && session.name) {
             document.getElementById('analyst').value = session.name;
         }
         switchPage('entry');
+    };
+
+    // 生成质保下拉框 HTML（包含自定义定责类型）
+    function generateAuditSelect(r) {
+        let options = `<option value="" ${!r.auditResult ? 'selected' : ''}>未判定</option>`;
+        options += `<option value="质保" ${r.auditResult === '质保' ? 'selected' : ''}>质保</option>`;
+        options += `<option value="非质保" ${r.auditResult === '非质保' ? 'selected' : ''}>非质保</option>`;
+        // 添加自定义定责类型
+        customAuditTypes.forEach(t => {
+            if (t !== '质保' && t !== '非质保') {
+                options += `<option value="${esc(t)}" ${r.auditResult === t ? 'selected' : ''}>${esc(t)}</option>`;
+            }
+        });
+        // 如果当前记录的定责不在列表中，也添加为选项
+        if (r.customAudit && !customAuditTypes.includes(r.customAudit)) {
+            options += `<option value="${esc(r.customAudit)}" selected>${esc(r.customAudit)}</option>`;
+        }
+        return `<select class="audit-select" onchange="updateAuditResult('${r.id}', this.value)" style="padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:12px; cursor:pointer;">${options}</select>`;
+    }
+
+    // 更新质保状态（下拉选择）
+    window.updateAuditResult = function(id, value) {
+        const r = records.find(x => x.id === id);
+        if (!r) return;
+        r.auditResult = value;
+        if (value && value !== '质保' && value !== '非质保') {
+            saveCustomAuditType(value);
+            r.customAudit = value;
+        }
+        saveRecords();
+        renderTodayTable();
+        updateDashboard();
+    };
+
+    // 更新自定义定责
+    window.updateCustomAudit = function(id, value) {
+        const r = records.find(x => x.id === id);
+        if (!r) return;
+        r.customAudit = value.trim();
+        if (value.trim()) {
+            saveCustomAuditType(value.trim());
+            r.auditResult = value.trim();
+        }
+        saveRecords();
+        renderTodayTable();
+        updateDashboard();
     };
 
     window.deleteRecord = function(id) {
@@ -911,11 +1282,20 @@
         const removed = records.splice(idx, 1)[0];
         removed._deletedAt = new Date().toISOString();
         trashRecords.push(removed);
-        saveRecords();
+        saveRecords(false, false); // 保存到本地并触发云同步
         saveTrash();
         renderTodayTable();
         renderHistoryPage();
         updateDashboard();
+        // 立即同步到云端（不等待 2 秒延迟），确保删除操作同步
+        const cfg = getCloudConfig();
+        if (cfg && cfg.enabled) {
+            pushToCloud().then(success => {
+                if (!success) {
+                    alert('⚠️ 云同步失败，删除的记录可能在下次登录时恢复。请检查网络连接后重试。');
+                }
+            });
+        }
     };
 
     window.restoreRecord = function(id) {
@@ -968,7 +1348,10 @@
                     <td>${esc(r.model)}</td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
-                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
+                    <td>
+                    ${generateAuditSelect(r)}
+                    <input type="text" class="custom-audit-input" placeholder="新增定责" value="" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
+                </td>
                     <td title="${esc(r.initialAnalysis||'')}">${esc((r.initialAnalysis||'—').substring(0, 20))}${(r.initialAnalysis||'').length > 20 ? '…' : ''}</td>
                     <td>
                         <button class="btn btn-text" style="color:var(--success)" onclick="restoreRecord('${r.id}')">↩ 恢复</button>
@@ -985,7 +1368,7 @@
         if (!tbody) return;
         count.textContent = records.length;
         if (records.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">📂</div>暂无历史数据</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">📂</div>暂无历史数据</td></tr>';
             return;
         }
         // 获取筛选条件
@@ -1003,7 +1386,7 @@
         count.textContent = filtered.length + ' / ' + records.length;
 
         if (filtered.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">🔍</div>无匹配记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="11" class="empty-state"><div class="empty-state-icon">🔍</div>无匹配记录</td></tr>';
             return;
         }
 
@@ -1017,24 +1400,115 @@
         });
 
         const rows = [];
-        Object.keys(groups).forEach(dateKey => {
-            rows.push(`<tr class="date-group-header"><td colspan="10">📅 ${dateKey}</td></tr>`);
+        // 按日期倒序排列（最新的日期在上面）- 从已排序的数组中提取日期键
+        const dateKeys = [];
+        sorted.forEach(r => {
+            const dateKey = formatDateShort(r.analysisTime);
+            if (!dateKeys.includes(dateKey)) {
+                dateKeys.push(dateKey);
+            }
+        });
+        dateKeys.forEach(dateKey => {
+            rows.push(`<tr class="date-group-header"><td colspan="11">📅 ${dateKey}</td></tr>`);
             groups[dateKey].forEach(r => {
                 rows.push(`<tr>
+                    <td><input type="checkbox" class="row-checkbox" data-id="${r.id}" onchange="updateSelectedCount()" style="cursor:pointer;"></td>
                     <td>${formatTimeOnly(r.analysisTime)}</td>
                     <td>${esc(r.workOrderNo)}</td>
                     <td>${esc(r.airframeNo)}</td>
                     <td>${esc(r.model)}</td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
-                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
+                    <td>
+                    ${generateAuditSelect(r)}
+                    <input type="text" class="custom-audit-input" placeholder="新增定责" value="" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
+                </td>
                     <td title="${esc(r.initialAnalysis||'')}">${esc((r.initialAnalysis||'—').substring(0, 25))}${(r.initialAnalysis||'').length > 25 ? '…' : ''}</td>
                     <td title="${esc(r.finalConclusion||'')}">${esc((r.finalConclusion||'—').substring(0, 25))}${(r.finalConclusion||'').length > 25 ? '…' : ''}</td>
-                    <td><button class="btn btn-text" onclick="editRecord('${r.id}')">✏️</button><button class="btn btn-text" style="color:var(--danger)" onclick="deleteRecord('${r.id}')">🗑️</button></td>
+                    <td><button class="btn btn-text" onclick="editRecord('${r.id}')">✏️</button><button class="btn btn-text" style="color:#007bff;" onclick="openFollowupFromRecord('${r.id}')">📋</button><button class="btn btn-text" style="color:var(--danger)" onclick="deleteRecord('${r.id}')">🗑️</button></td>
                 </tr>`);
             });
         });
         tbody.innerHTML = rows.join('');
+        
+        // 重置全选状态
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const headerSelectAll = document.getElementById('headerSelectAll');
+        if (selectAllCheckbox) selectAllCheckbox.checked = false;
+        if (headerSelectAll) headerSelectAll.checked = false;
+        updateSelectedCount();
+    };
+
+    // ========== 批量删除功能 ==========
+    window.toggleSelectAll = function(checked) {
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        checkboxes.forEach(cb => cb.checked = checked);
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const headerSelectAll = document.getElementById('headerSelectAll');
+        if (selectAllCheckbox) selectAllCheckbox.checked = checked;
+        if (headerSelectAll) headerSelectAll.checked = checked;
+        updateSelectedCount();
+    };
+
+    window.updateSelectedCount = function() {
+        const checkboxes = document.querySelectorAll('.row-checkbox');
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        const count = checked.length;
+        const countEl = document.getElementById('selectedCount');
+        const btn = document.getElementById('batchDeleteBtn');
+        if (countEl) countEl.textContent = `已选 ${count} 条`;
+        if (btn) {
+            btn.disabled = count === 0;
+            btn.style.opacity = count === 0 ? '0.5' : '1';
+        }
+        // 同步全选框状态
+        const allCount = checkboxes.length;
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        const headerSelectAll = document.getElementById('headerSelectAll');
+        if (selectAllCheckbox) selectAllCheckbox.checked = count === allCount && allCount > 0;
+        if (headerSelectAll) headerSelectAll.checked = count === allCount && allCount > 0;
+    };
+
+    window.batchDeleteSelected = function() {
+        const checked = document.querySelectorAll('.row-checkbox:checked');
+        if (checked.length === 0) {
+            alert('请先选择要删除的记录');
+            return;
+        }
+        if (!confirm(`确定删除选中的 ${checked.length} 条记录？删除后可在回收站恢复。`)) return;
+        
+        const idsToDelete = Array.from(checked).map(cb => cb.dataset.id);
+        let deletedCount = 0;
+        
+        idsToDelete.forEach(id => {
+            const idx = records.findIndex(r => r.id === id);
+            if (idx !== -1) {
+                const removed = records.splice(idx, 1)[0];
+                removed._deletedAt = new Date().toISOString();
+                trashRecords.push(removed);
+                deletedCount++;
+            }
+        });
+        
+        saveRecords(false, false);
+        saveTrash();
+        renderHistoryPage();
+        renderTodayTable();
+        updateDashboard();
+        
+        // 立即同步到云端
+        const cfg = getCloudConfig();
+        if (cfg && cfg.enabled) {
+            pushToCloud().then(success => {
+                if (success) {
+                    alert(`✅ 成功删除 ${deletedCount} 条记录，已同步到云端`);
+                } else {
+                    alert(`⚠️ 已删除 ${deletedCount} 条记录，但云同步失败。请检查网络连接后重试。`);
+                }
+            });
+        } else {
+            alert(`✅ 成功删除 ${deletedCount} 条记录`);
+        }
     };
 
     // ========== 从日常记录一键生成定责报告 ==========
@@ -1116,26 +1590,392 @@
 
         const tbody = document.querySelector('#todayTable tbody');
         if (recentRecords.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">📝</div>最近7天暂无记录</td></tr>';
+            // 重置全选状态
+            const selectAll = document.getElementById('todaySelectAll');
+            const headerSelectAll = document.getElementById('todayHeaderSelectAll');
+            if (selectAll) selectAll.checked = false;
+            if (headerSelectAll) headerSelectAll.checked = false;
+            updateTodaySelectedCount();
             return;
         }
-        tbody.innerHTML = recentRecords.sort((a,b) => new Date(b.analysisTime) - new Date(a.analysisTime)).map(r => `
+        tbody.innerHTML = recentRecords.sort((a,b) => new Date(b.analysisTime) - new Date(a.analysisTime)).map(r => {
+            // 识别反馈人中的"跟进"标记
+            const isFollowup = r.feedbackPerson && (r.feedbackPerson.includes('跟进') || r.feedbackPerson.toLowerCase().includes('follow'));
+            // 如果标记为跟进，自动创建跟进任务
+            if (isFollowup && !followupRecords.find(f => f.sourceRecordId === r.id)) {
+                createFollowupFromRecord(r);
+            }
+            return `
             <tr>
+                <td><input type="checkbox" class="today-row-checkbox" data-id="${r.id}" onchange="updateTodaySelectedCount()" style="cursor:pointer;"></td>
                 <td>${formatDateTime(r.analysisTime)}</td>
-                <td>${esc(r.workOrderNo)}</td>
+                <td><span class="model-badge">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
-                <td>${esc(r.feedbackPerson)}</td>
+                <td>${esc(r.flightBatch)}</td>
+                <td>${esc(r.region)}</td>
+                <td>${isFollowup ? '<span class="followup-badge">跟进</span>' : esc(r.feedbackPerson)}</td>
                 <td>${esc(r.analyst)}</td>
                 <td>${esc(r.problemType)}</td>
-                <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
+                <td>
+                    ${generateAuditSelect(r)}
+                    <input type="text" class="custom-audit-input" placeholder="新增定责" value="" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
+                </td>
                 <td>
                     <button class="btn btn-text" onclick="editRecord('${r.id}')">编辑</button>
+                    <button class="btn btn-text" style="color:#007bff;" onclick="openFollowupFromRecord('${r.id}')">跟进</button>
                     <button class="btn btn-text" style="color:var(--primary)" onclick="generateReportFromRecord('${r.id}')">📝报告</button>
                     <button class="btn btn-text" style="color:var(--danger)" onclick="deleteRecord('${r.id}')">删除</button>
                 </td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
+        // 重置全选状态
+        const selectAll = document.getElementById('todaySelectAll');
+        const headerSelectAll = document.getElementById('todayHeaderSelectAll');
+        if (selectAll) selectAll.checked = false;
+        if (headerSelectAll) headerSelectAll.checked = false;
+        updateTodaySelectedCount();
     }
+
+    // ========== 最近记录批量删除功能 ==========
+    window.toggleTodaySelectAll = function(checked) {
+        const checkboxes = document.querySelectorAll('.today-row-checkbox');
+        checkboxes.forEach(cb => cb.checked = checked);
+        const selectAll = document.getElementById('todaySelectAll');
+        const headerSelectAll = document.getElementById('todayHeaderSelectAll');
+        if (selectAll) selectAll.checked = checked;
+        if (headerSelectAll) headerSelectAll.checked = checked;
+        updateTodaySelectedCount();
+    };
+
+    window.updateTodaySelectedCount = function() {
+        const checkboxes = document.querySelectorAll('.today-row-checkbox');
+        const checked = document.querySelectorAll('.today-row-checkbox:checked');
+        const count = checked.length;
+        const countEl = document.getElementById('todaySelectedCount');
+        const btn = document.getElementById('todayBatchDeleteBtn');
+        if (countEl) countEl.textContent = `已选 ${count} 条`;
+        if (btn) {
+            btn.disabled = count === 0;
+            btn.style.opacity = count === 0 ? '0.5' : '1';
+        }
+        // 同步全选框状态
+        const allCount = checkboxes.length;
+        const selectAll = document.getElementById('todaySelectAll');
+        const headerSelectAll = document.getElementById('todayHeaderSelectAll');
+        if (selectAll) selectAll.checked = count === allCount && allCount > 0;
+        if (headerSelectAll) headerSelectAll.checked = count === allCount && allCount > 0;
+    };
+
+    window.batchDeleteTodaySelected = function() {
+        const checked = document.querySelectorAll('.today-row-checkbox:checked');
+        if (checked.length === 0) {
+            alert('请先选择要删除的记录');
+            return;
+        }
+        if (!confirm(`确定删除选中的 ${checked.length} 条记录？删除后可在回收站恢复。`)) return;
+        
+        const idsToDelete = Array.from(checked).map(cb => cb.dataset.id);
+        let deletedCount = 0;
+        
+        idsToDelete.forEach(id => {
+            const idx = records.findIndex(r => r.id === id);
+            if (idx !== -1) {
+                const removed = records.splice(idx, 1)[0];
+                removed._deletedAt = new Date().toISOString();
+                trashRecords.push(removed);
+                deletedCount++;
+            }
+        });
+        
+        saveRecords(false, false);
+        saveTrash();
+        renderTodayTable();
+        renderHistoryPage();
+        updateDashboard();
+        
+        // 立即同步到云端
+        const cfg = getCloudConfig();
+        if (cfg && cfg.enabled) {
+            pushToCloud().then(success => {
+                if (success) {
+                    alert(`✅ 成功删除 ${deletedCount} 条记录，已同步到云端`);
+                } else {
+                    alert(`⚠️ 已删除 ${deletedCount} 条记录，但云同步失败。请检查网络连接后重试。`);
+                }
+            });
+        } else {
+            alert(`✅ 成功删除 ${deletedCount} 条记录`);
+        }
+    };
+
+    // ========== 跟进任务 ==========
+    let followupRecords = [];
+    const FOLLOWUP_KEY = 'droneWorkbenchFollowupRecords';
+
+    function loadFollowupRecords() {
+        try {
+            const saved = localStorage.getItem(FOLLOWUP_KEY);
+            followupRecords = saved ? JSON.parse(saved) : [];
+        } catch (e) {
+            followupRecords = [];
+        }
+    }
+
+    function saveFollowupRecords() {
+        localStorage.setItem(FOLLOWUP_KEY, JSON.stringify(followupRecords));
+    }
+
+    function generateFollowupId() {
+        return 'fu' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+    }
+
+    // 从记录自动创建跟进任务
+    function createFollowupFromRecord(record) {
+        const followup = {
+            id: generateFollowupId(),
+            sourceRecordId: record.id, // 关联原始记录ID
+            analysisTime: record.analysisTime,
+            workOrderNo: record.workOrderNo,
+            airframeNo: record.airframeNo,
+            model: record.model,
+            reporter: record.feedbackPerson,
+            analyst: record.analyst,
+            problemType: record.problemType,
+            isWarranty: record.auditResult === '质保' ? '质保' : (record.auditResult === '非质保' ? '非质保' : ''),
+            status: '待跟进',
+            notes: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        followupRecords.push(followup);
+        saveFollowupRecords();
+        console.log('[跟进] 自动创建跟进任务:', followup.workOrderNo);
+    }
+
+    window.openFollowupFromRecord = function(recordId) {
+        const record = records.find(r => r.id === recordId);
+        if (!record) { alert('记录不存在'); return; }
+        
+        // 检查是否已有跟进任务
+        let followup = followupRecords.find(f => f.sourceRecordId === recordId);
+        if (!followup) {
+            // 自动创建
+            createFollowupFromRecord(record);
+            followup = followupRecords.find(f => f.sourceRecordId === recordId);
+        }
+        
+        // 打开编辑弹窗
+        openFollowupModal(followup.id);
+    };
+
+    window.openFollowupModal = function(id) {
+        const modal = document.getElementById('followupModal');
+        const title = document.getElementById('followupModalTitle');
+        
+        if (id) {
+            // 编辑模式
+            const record = followupRecords.find(r => r.id === id);
+            if (!record) return;
+            title.textContent = '编辑跟进任务';
+            document.getElementById('editFollowupId').value = id;
+            document.getElementById('followupAnalysisTime').value = record.analysisTime ? record.analysisTime.replace(' ', 'T') : '';
+            document.getElementById('followupModel').value = record.model || '';
+            document.getElementById('followupWorkOrderNo').value = record.workOrderNo || '';
+            document.getElementById('followupAirframeNo').value = record.airframeNo || '';
+            document.getElementById('followupReporter').value = record.reporter || '';
+            document.getElementById('followupAnalyst').value = record.analyst || '';
+            document.getElementById('followupProblemType').value = record.problemType || '';
+            document.getElementById('followupIsWarranty').value = record.isWarranty || '';
+            document.getElementById('followupStatus').value = record.status || '待跟进';
+            document.getElementById('followupNotes').value = record.notes || '';
+        } else {
+            // 新增模式
+            title.textContent = '新增跟进任务';
+            document.getElementById('editFollowupId').value = '';
+            document.getElementById('followupAnalysisTime').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('followupModel').value = '';
+            document.getElementById('followupWorkOrderNo').value = '';
+            document.getElementById('followupAirframeNo').value = '';
+            document.getElementById('followupReporter').value = '';
+            document.getElementById('followupAnalyst').value = '';
+            document.getElementById('followupProblemType').value = '';
+            document.getElementById('followupIsWarranty').value = '';
+            document.getElementById('followupStatus').value = '待跟进';
+            document.getElementById('followupNotes').value = '';
+        }
+        
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.classList.add('show');
+    };
+
+    window.closeFollowupModal = function() {
+        const modal = document.getElementById('followupModal');
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+    };
+
+    // 从记录行直接打开跟进弹窗（自动填充信息）
+    window.openFollowupFromRecord = function(id) {
+        const record = records.find(r => r.id === id);
+        if (!record) return;
+        const modal = document.getElementById('followupModal');
+        const title = document.getElementById('followupModalTitle');
+        title.textContent = '新增跟进任务';
+        document.getElementById('editFollowupId').value = '';
+        document.getElementById('followupAnalysisTime').value = record.analysisTime ? record.analysisTime.replace(' ', 'T') : new Date().toISOString().slice(0, 16);
+        document.getElementById('followupModel').value = record.model || '';
+        document.getElementById('followupWorkOrderNo').value = record.workOrderNo || '';
+        document.getElementById('followupAirframeNo').value = record.airframeNo || '';
+        document.getElementById('followupReporter').value = record.feedbackPerson || '';
+        document.getElementById('followupAnalyst').value = record.analyst || '';
+        document.getElementById('followupProblemType').value = record.problemType || '';
+        document.getElementById('followupIsWarranty').value = record.auditResult || '';
+        document.getElementById('followupStatus').value = '待跟进';
+        document.getElementById('followupNotes').value = '';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.classList.add('show');
+    };
+
+    // 从问题解决记录打开跟进弹窗
+    window.openFollowupFromSolution = function(id) {
+        const solution = solutionRecords.find(r => r.id === id);
+        if (!solution) return;
+        const modal = document.getElementById('followupModal');
+        const title = document.getElementById('followupModalTitle');
+        title.textContent = '新增跟进任务';
+        document.getElementById('editFollowupId').value = '';
+        document.getElementById('followupAnalysisTime').value = solution.faultTime ? solution.faultTime.replace(' ', 'T') : new Date().toISOString().slice(0, 16);
+        document.getElementById('followupModel').value = solution.model || '';
+        document.getElementById('followupWorkOrderNo').value = '';
+        document.getElementById('followupAirframeNo').value = solution.droneNo || '';
+        document.getElementById('followupReporter').value = '';
+        document.getElementById('followupAnalyst').value = '';
+        document.getElementById('followupProblemType').value = '';
+        document.getElementById('followupIsWarranty').value = '';
+        document.getElementById('followupStatus').value = '待跟进';
+        document.getElementById('followupNotes').value = solution.faultDesc || '';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.classList.add('show');
+    };
+
+    window.saveFollowup = function() {
+        const id = document.getElementById('editFollowupId').value;
+        const analysisTime = document.getElementById('followupAnalysisTime').value;
+        
+        if (!analysisTime) {
+            alert('请填写分析时间');
+            return;
+        }
+        
+        const record = {
+            id: id || generateFollowupId(),
+            analysisTime: analysisTime,
+            model: document.getElementById('followupModel').value.trim(),
+            workOrderNo: document.getElementById('followupWorkOrderNo').value.trim(),
+            airframeNo: document.getElementById('followupAirframeNo').value.trim(),
+            reporter: document.getElementById('followupReporter').value.trim(),
+            analyst: document.getElementById('followupAnalyst').value.trim(),
+            problemType: document.getElementById('followupProblemType').value.trim(),
+            isWarranty: document.getElementById('followupIsWarranty').value,
+            status: document.getElementById('followupStatus').value,
+            notes: document.getElementById('followupNotes').value.trim(),
+            createdAt: id ? (followupRecords.find(r => r.id === id)?.createdAt || new Date().toISOString()) : new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        if (id) {
+            // 更新
+            const idx = followupRecords.findIndex(r => r.id === id);
+            if (idx !== -1) {
+                followupRecords[idx] = record;
+            }
+        } else {
+            // 新增
+            followupRecords.push(record);
+        }
+        
+        saveFollowupRecords();
+        closeFollowupModal();
+        renderFollowupPage();
+        alert(id ? '✅ 跟进任务已更新' : '✅ 跟进任务已添加');
+    };
+
+    window.deleteFollowup = function(id) {
+        if (!confirm('确定删除这条跟进任务？')) return;
+        followupRecords = followupRecords.filter(r => r.id !== id);
+        saveFollowupRecords();
+        renderFollowupPage();
+        alert('✅ 跟进任务已删除');
+    };
+
+    window.renderFollowupPage = function() {
+        const tbody = document.querySelector('#followupTable tbody');
+        const count = document.getElementById('followupCount');
+        if (!tbody) return;
+        
+        // 获取筛选条件
+        const filterDate = (document.getElementById('followupFilterDate') || {}).value || '';
+        const filterWorkOrder = (document.getElementById('followupFilterWorkOrder') || {}).value || '';
+        const filterAnalyst = (document.getElementById('followupFilterAnalyst') || {}).value || '';
+        const filterStatus = (document.getElementById('followupFilterStatus') || {}).value || '';
+        
+        let filtered = [...followupRecords];
+        if (filterDate) filtered = filtered.filter(r => r.analysisTime && r.analysisTime.startsWith(filterDate));
+        if (filterWorkOrder) filtered = filtered.filter(r => r.workOrderNo && r.workOrderNo.includes(filterWorkOrder));
+        if (filterAnalyst) filtered = filtered.filter(r => r.analyst && r.analyst.includes(filterAnalyst));
+        if (filterStatus) filtered = filtered.filter(r => r.status && r.status.includes(filterStatus));
+        
+        count.textContent = filtered.length;
+        
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">📋</div>暂无跟进任务</td></tr>';
+            return;
+        }
+        
+        // 按时间倒序排列
+        const sorted = filtered.sort((a, b) => new Date(b.analysisTime) - new Date(a.analysisTime));
+        
+        const rows = [];
+        sorted.forEach(r => {
+            const statusClass = r.status === '已完成' ? 'status-completed' : 
+                               r.status === '跟进中' ? 'status-progress' : 
+                               r.status === '已关闭' ? 'status-closed' : 'status-pending';
+            rows.push(`<tr>
+                <td>${formatDateTime(r.analysisTime)}</td>
+                <td><span class="model-badge">${esc(r.model || '—')}</span></td>
+                <td>${esc(r.airframeNo)}</td>
+                <td>${esc(r.flightBatch)}</td>
+                <td>${esc(r.region)}</td>
+                <td>${esc(r.reporter)}</td>
+                <td>${esc(r.analyst)}</td>
+                <td>${esc(r.problemType)}</td>
+                <td><span class="warranty-badge ${r.isWarranty === '质保' ? 'warranty-yes' : 'warranty-no'}">${esc(r.isWarranty || '—')}</span></td>
+                <td>
+                    <button class="btn btn-text" onclick="openFollowupModal('${r.id}')">编辑</button>
+                    <button class="btn btn-text" onclick="deleteFollowup('${r.id}')" style="color:#dc3545;">删除</button>
+                </td>
+            </tr>`);
+        });
+        
+        tbody.innerHTML = rows.join('');
+    };
+
+    function formatDateTime(s) {
+        if (!s) return '—';
+        const d = new Date(s);
+        return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    // 保存按钮事件
+    document.getElementById('btnSaveFollowup').addEventListener('click', saveFollowup);
 
     // ========== 智能录入 ==========
     let smartParsedRows = [];
@@ -1157,6 +1997,430 @@
         }, 100);
     }
 
+    // ========== 反馈模板解析 ==========
+    function parseFeedbackTemplate(text) {
+        const result = {
+            droneNo: '',
+            fieldNo: '',
+            faultTime: '',
+            faultPeriod: '',
+            faultDesc: '',
+            requirement: '',
+            logs: { drone: false, video: false, app: false, fpv: false, flight: false, other: false }
+        };
+
+        const lines = text.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const trimmed = line.trim();
+            // 无人机编号
+            if (/无人机编号|飞机编号|机架号|SN/i.test(trimmed)) {
+                const m = trimmed.match(/[：:]\s*(.+)/);
+                if (m) result.droneNo = m[1].trim();
+            }
+            // 地块编号
+            if (/地块编号|地块|架次/i.test(trimmed)) {
+                const m = trimmed.match(/[：:]\s*(.+)/);
+                if (m) result.fieldNo = m[1].trim();
+            }
+            // 故障时间
+            if (/故障时间|时间/i.test(trimmed)) {
+                const m = trimmed.match(/[：:]\s*(.+)/);
+                if (m) {
+                    const timeStr = m[1].trim();
+                    result.faultPeriod = timeStr;
+                    // 尝试解析日期：7.12日 → 2026-07-12
+                    const dateMatch = timeStr.match(/(\d{1,2})[.\/\-](\d{1,2})[日号]?/);
+                    if (dateMatch) {
+                        const month = dateMatch[1].padStart(2, '0');
+                        const day = dateMatch[2].padStart(2, '0');
+                        const year = new Date().getFullYear();
+                        result.faultTime = `${year}-${month}-${day}`;
+                    }
+                    // 尝试解析时间段：上午7.12到9.00
+                    const periodMatch = timeStr.match(/(上午|下午)?\s*(\d{1,2})[.:：](\d{2})\s*[到至\-~]\s*(\d{1,2})[.:：](\d{2})/);
+                    if (periodMatch) {
+                        result.faultPeriod = timeStr;
+                    }
+                }
+            }
+            // 故障现象
+            if (/故障现象|故障描述|问题描述|现象/i.test(trimmed)) {
+                const m = trimmed.match(/[：:]\s*(.+)/);
+                if (m) result.faultDesc = m[1].trim();
+            }
+            // 需求
+            if (/需求|查询|分析|原因/i.test(trimmed)) {
+                const m = trimmed.match(/[：:，,]\s*(.+)/);
+                if (m) result.requirement = m[1].trim();
+                else if (/查询|分析|原因/.test(trimmed)) result.requirement = trimmed;
+            }
+            // 日志状态
+            if (/日志|已上传|已传/i.test(trimmed)) {
+                if (/无人机.*日志|飞控日志/i.test(trimmed)) result.logs.drone = true;
+                if (/图传.*日志|图传/i.test(trimmed)) result.logs.video = true;
+                if (/APP.*日志|APP/i.test(trimmed)) result.logs.app = true;
+                if (/FPV.*日志|FPV/i.test(trimmed)) result.logs.fpv = true;
+                if (/飞控.*日志|飞控/i.test(trimmed)) result.logs.flight = true;
+            }
+        }
+        return result;
+    }
+
+    // 反馈模板实时预览
+    function handleFeedbackTemplateInput(e) {
+        setTimeout(() => {
+            const text = e.target.value;
+            const preview = document.getElementById('feedbackTemplatePreview');
+            if (!text.trim()) {
+                preview.innerHTML = '<p class="hint">请输入反馈模板文本</p>';
+                return;
+            }
+            const parsed = parseFeedbackTemplate(text);
+            const logStatus = [];
+            if (parsed.logs.drone) logStatus.push('无人机日志');
+            if (parsed.logs.video) logStatus.push('图传日志');
+            if (parsed.logs.app) logStatus.push('APP日志');
+            if (parsed.logs.fpv) logStatus.push('FPV日志');
+            if (parsed.logs.flight) logStatus.push('飞控日志');
+            if (parsed.logs.other) logStatus.push('其他');
+
+            preview.innerHTML = `<p class="hint">✅ 解析结果预览</p>
+                <table class="data-table mini">
+                    <tr><th style="width:120px">无人机编号</th><td>${esc(parsed.droneNo) || '—'}</td></tr>
+                    <tr><th>地块编号</th><td>${esc(parsed.fieldNo) || '—'}</td></tr>
+                    <tr><th>故障时间</th><td>${esc(parsed.faultTime) || '—'} ${esc(parsed.faultPeriod) || ''}</td></tr>
+                    <tr><th>故障现象</th><td>${esc(parsed.faultDesc) || '—'}</td></tr>
+                    <tr><th>需求描述</th><td>${esc(parsed.requirement) || '—'}</td></tr>
+                    <tr><th>日志状态</th><td>${logStatus.length > 0 ? logStatus.join('、') : '—'}</td></tr>
+                </table>`;
+        }, 100);
+    }
+
+    // 确认反馈模板录入
+    function confirmFeedbackEntry() {
+        const textarea = document.getElementById('feedbackTemplateText');
+        if (!textarea || !textarea.value.trim()) {
+            alert('⚠️ 请输入反馈模板文本');
+            return;
+        }
+        const parsed = parseFeedbackTemplate(textarea.value);
+        if (!parsed.droneNo && !parsed.faultDesc) {
+            alert('⚠️ 未能识别到有效信息，请检查格式');
+            return;
+        }
+        // 创建问题解决记录
+        const solution = {
+            id: Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+            droneNo: parsed.droneNo,
+            fieldNo: parsed.fieldNo,
+            faultTime: parsed.faultTime ? parsed.faultTime + 'T00:00' : '',
+            faultPeriod: parsed.faultPeriod,
+            faultDesc: parsed.faultDesc,
+            requirement: parsed.requirement,
+            logs: parsed.logs,
+            status: '待分析',
+            analysis: '',
+            remark: '',
+            createTime: new Date().toISOString()
+        };
+        // 保存到 solutionRecords
+        if (typeof solutionRecords === 'undefined') window.solutionRecords = [];
+        solutionRecords.push(solution);
+        localStorage.setItem('droneWorkbenchSolutions', JSON.stringify(solutionRecords));
+        // 同步到日常工作记录
+        const record = {
+            id: solution.id,
+            analysisTime: solution.faultTime || new Date().toISOString().slice(0, 16),
+            workOrderNo: '',
+            airframeNo: parsed.droneNo,
+            model: '',
+            flightBatch: parsed.fieldNo,
+            feedbackPerson: '',
+            analyst: '',
+            problemType: '',
+            auditResult: '',
+            tracker: '',
+            reviewer: '',
+            problemDescription: parsed.requirement,
+            faultCondition: parsed.faultDesc,
+            initialAnalysis: '',
+            followUp: '日志上传状态：' + Object.entries(parsed.logs).filter(([k, v]) => v).map(([k]) => k).join('、'),
+            finalConclusion: '',
+            region: ''
+        };
+        records.push(record);
+        saveRecords();
+        renderTodayTable();
+        // 关闭弹窗，切换到问题解决页面
+        document.getElementById('smartEntryModal').classList.remove('show');
+        switchPage('solution');
+        renderSolutionPage();
+        alert('✅ 已录入到问题解决页面');
+    }
+
+    // ========== 问题解决页面 ==========
+    let solutionRecords = [];
+    function loadSolutions() {
+        try {
+            const raw = localStorage.getItem('droneWorkbenchSolutions');
+            solutionRecords = raw ? JSON.parse(raw) : [];
+        } catch (e) { solutionRecords = []; }
+    }
+    function saveSolutions() {
+        localStorage.setItem('droneWorkbenchSolutions', JSON.stringify(solutionRecords));
+    }
+
+    function renderSolutionPage() {
+        loadSolutions();
+        const tbody = document.querySelector('#solutionTable tbody');
+        if (!tbody) return;
+
+        // 筛选
+        const filterDate = document.getElementById('solutionFilterDate')?.value || '';
+        const filterDrone = document.getElementById('solutionFilterDrone')?.value.trim() || '';
+        const filterStatus = document.getElementById('solutionFilterStatus')?.value.trim() || '';
+
+        let filtered = solutionRecords.filter(r => {
+            if (filterDate && r.faultTime && !r.faultTime.startsWith(filterDate)) return false;
+            if (filterDrone && !r.droneNo.includes(filterDrone)) return false;
+            if (filterStatus && r.status !== filterStatus) return false;
+            return true;
+        });
+
+        // 按时间倒序
+        filtered.sort((a, b) => (b.faultTime || '').localeCompare(a.faultTime || ''));
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🔧</div>暂无问题解决记录</td></tr>';
+            return;
+        }
+
+        const rows = filtered.map(r => {
+            const logStatus = [];
+            if (r.logs) {
+                if (r.logs.drone) logStatus.push('🛩️');
+                if (r.logs.video) logStatus.push('📡');
+                if (r.logs.app) logStatus.push('📱');
+                if (r.logs.fpv) logStatus.push('🎥');
+                if (r.logs.flight) logStatus.push('🎮');
+            }
+            const statusClass = r.status === '已解决' ? 'warranty-yes' : (r.status === '待分析' ? 'warranty-no' : '');
+            const faultTimeDisplay = r.faultTime ? new Date(r.faultTime).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }) : '—';
+            return `<tr>
+                <td>${faultTimeDisplay}</td>
+                <td><strong>${esc(r.droneNo) || '—'}</strong></td>
+                <td>${esc(r.fieldNo) || '—'}</td>
+                <td title="${esc(r.faultDesc)}">${esc(r.faultDesc ? r.faultDesc.substring(0, 20) + (r.faultDesc.length > 20 ? '...' : '') : '—')}</td>
+                <td title="${esc(r.requirement)}">${esc(r.requirement ? r.requirement.substring(0, 20) + (r.requirement.length > 20 ? '...' : '') : '—')}</td>
+                <td>${logStatus.join(' ') || '—'}</td>
+                <td><span class="warranty-badge ${statusClass}">${esc(r.status) || '—'}</span></td>
+                <td>
+                    <button class="btn btn-text" onclick="viewSolutionDetail('${r.id}')">查看</button>
+                    <button class="btn btn-text" onclick="openFollowupFromSolution('${r.id}')" style="color:#007bff;">跟进</button>
+                    <button class="btn btn-text" onclick="editSolution('${r.id}')">编辑</button>
+                    <button class="btn btn-text" onclick="deleteSolution('${r.id}')" style="color:#dc3545;">删除</button>
+                </td>
+            </tr>`;
+        });
+        tbody.innerHTML = rows.join('');
+    }
+
+    window.openSolutionModal = function() {
+        document.getElementById('solutionModalTitle').textContent = '新建问题';
+        document.getElementById('editSolutionId').value = '';
+        document.getElementById('solutionDroneNo').value = '';
+        document.getElementById('solutionFieldNo').value = '';
+        document.getElementById('solutionFaultTime').value = '';
+        document.getElementById('solutionFaultPeriod').value = '';
+        document.getElementById('solutionFaultDesc').value = '';
+        document.getElementById('solutionRequirement').value = '';
+        document.getElementById('solutionStatus').value = '待分析';
+        document.getElementById('solutionAnalysis').value = '';
+        document.getElementById('solutionRemark').value = '';
+        document.getElementById('logDrone').checked = true;
+        document.getElementById('logVideo').checked = true;
+        document.getElementById('logApp').checked = true;
+        document.getElementById('logFpv').checked = true;
+        document.getElementById('logFlight').checked = true;
+        document.getElementById('logOther').checked = false;
+        document.getElementById('solutionModal').classList.add('show');
+    };
+
+    window.closeSolutionModal = function() {
+        document.getElementById('solutionModal').classList.remove('show');
+    };
+
+    window.editSolution = function(id) {
+        const r = solutionRecords.find(x => x.id === id);
+        if (!r) return;
+        document.getElementById('solutionModalTitle').textContent = '编辑问题';
+        document.getElementById('editSolutionId').value = r.id;
+        document.getElementById('solutionDroneNo').value = r.droneNo || '';
+        document.getElementById('solutionFieldNo').value = r.fieldNo || '';
+        document.getElementById('solutionFaultTime').value = r.faultTime || '';
+        document.getElementById('solutionFaultPeriod').value = r.faultPeriod || '';
+        document.getElementById('solutionFaultDesc').value = r.faultDesc || '';
+        document.getElementById('solutionRequirement').value = r.requirement || '';
+        document.getElementById('solutionStatus').value = r.status || '待分析';
+        document.getElementById('solutionAnalysis').value = r.analysis || '';
+        document.getElementById('solutionRemark').value = r.remark || '';
+        if (r.logs) {
+            document.getElementById('logDrone').checked = !!r.logs.drone;
+            document.getElementById('logVideo').checked = !!r.logs.video;
+            document.getElementById('logApp').checked = !!r.logs.app;
+            document.getElementById('logFpv').checked = !!r.logs.fpv;
+            document.getElementById('logFlight').checked = !!r.logs.flight;
+            document.getElementById('logOther').checked = !!r.logs.other;
+        }
+        document.getElementById('solutionModal').classList.add('show');
+    };
+
+    window.deleteSolution = function(id) {
+        if (!confirm('确定删除此问题记录？')) return;
+        solutionRecords = solutionRecords.filter(r => r.id !== id);
+        saveSolutions();
+        renderSolutionPage();
+    };
+
+    window.viewSolutionDetail = function(id) {
+        const r = solutionRecords.find(x => x.id === id);
+        if (!r) return;
+        const logStatus = [];
+        if (r.logs) {
+            if (r.logs.drone) logStatus.push('✅ 无人机日志');
+            if (r.logs.video) logStatus.push('✅ 图传日志');
+            if (r.logs.app) logStatus.push('✅ APP日志');
+            if (r.logs.fpv) logStatus.push('✅ FPV日志');
+            if (r.logs.flight) logStatus.push('✅ 飞控日志');
+            if (r.logs.other) logStatus.push('✅ 其他日志');
+        }
+        const content = document.getElementById('solutionDetailContent');
+        content.innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                <div><strong>无人机编号：</strong>${esc(r.droneNo) || '—'}</div>
+                <div><strong>地块编号：</strong>${esc(r.fieldNo) || '—'}</div>
+                <div><strong>故障时间：</strong>${r.faultTime ? new Date(r.faultTime).toLocaleDateString('zh-CN') : '—'} ${esc(r.faultPeriod) || ''}</div>
+                <div><strong>解决状态：</strong><span class="warranty-badge ${r.status === '已解决' ? 'warranty-yes' : ''}">${esc(r.status)}</span></div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>故障现象：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">${esc(r.faultDesc) || '—'}</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>需求描述：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">${esc(r.requirement) || '—'}</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>日志上传状态：</strong>
+                <div style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">
+                    ${logStatus.length > 0 ? logStatus.join(' &nbsp; ') : '—'}
+                </div>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>分析过程 / 解决方案：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;white-space:pre-wrap;">${esc(r.analysis) || '—'}</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <strong>备注：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">${esc(r.remark) || '—'}</p>
+            </div>
+            <div style="color:#999;font-size:12px;">
+                创建时间：${r.createTime ? new Date(r.createTime).toLocaleString('zh-CN') : '—'}
+            </div>
+        `;
+        document.getElementById('btnEditSolution').onclick = () => { closeSolutionDetail(); editSolution(id); };
+        document.getElementById('btnExportSolution').onclick = () => exportSolutionReport(id);
+        document.getElementById('solutionDetailModal').classList.add('show');
+    };
+
+    window.closeSolutionDetail = function() {
+        document.getElementById('solutionDetailModal').classList.remove('show');
+    };
+
+    function exportSolutionReport(id) {
+        const r = solutionRecords.find(x => x.id === id);
+        if (!r) return;
+        const logStatus = [];
+        if (r.logs) {
+            if (r.logs.drone) logStatus.push('无人机日志');
+            if (r.logs.video) logStatus.push('图传日志');
+            if (r.logs.app) logStatus.push('APP日志');
+            if (r.logs.fpv) logStatus.push('FPV日志');
+            if (r.logs.flight) logStatus.push('飞控日志');
+            if (r.logs.other) logStatus.push('其他日志');
+        }
+        const text = `问题解决报告
+==================
+无人机编号：${r.droneNo || '—'}
+地块编号：${r.fieldNo || '—'}
+故障时间：${r.faultTime ? new Date(r.faultTime).toLocaleDateString('zh-CN') : '—'} ${r.faultPeriod || ''}
+解决状态：${r.status}
+
+故障现象：
+${r.faultDesc || '—'}
+
+需求描述：
+${r.requirement || '—'}
+
+日志上传状态：
+${logStatus.length > 0 ? logStatus.join('、') : '—'}
+
+分析过程 / 解决方案：
+${r.analysis || '—'}
+
+备注：
+${r.remark || '—'}
+
+创建时间：${r.createTime ? new Date(r.createTime).toLocaleString('zh-CN') : '—'}
+`;
+        const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `问题解决报告_${r.droneNo || '未知'}_${new Date().toLocaleDateString('zh-CN').replace(/\//g, '')}.txt`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // 保存问题解决记录
+    function saveSolutionRecord() {
+        const editId = document.getElementById('editSolutionId').value;
+        const record = {
+            id: editId || Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+            droneNo: document.getElementById('solutionDroneNo').value.trim(),
+            fieldNo: document.getElementById('solutionFieldNo').value.trim(),
+            faultTime: document.getElementById('solutionFaultTime').value,
+            faultPeriod: document.getElementById('solutionFaultPeriod').value.trim(),
+            faultDesc: document.getElementById('solutionFaultDesc').value.trim(),
+            requirement: document.getElementById('solutionRequirement').value.trim(),
+            logs: {
+                drone: document.getElementById('logDrone').checked,
+                video: document.getElementById('logVideo').checked,
+                app: document.getElementById('logApp').checked,
+                fpv: document.getElementById('logFpv').checked,
+                flight: document.getElementById('logFlight').checked,
+                other: document.getElementById('logOther').checked
+            },
+            status: document.getElementById('solutionStatus').value,
+            analysis: document.getElementById('solutionAnalysis').value.trim(),
+            remark: document.getElementById('solutionRemark').value.trim(),
+            createTime: editId ? (solutionRecords.find(r => r.id === editId)?.createTime || new Date().toISOString()) : new Date().toISOString()
+        };
+        if (!record.droneNo) { alert('请填写无人机编号'); return; }
+        if (!record.faultDesc) { alert('请填写故障现象'); return; }
+
+        if (editId) {
+            const idx = solutionRecords.findIndex(r => r.id === editId);
+            if (idx >= 0) solutionRecords[idx] = record;
+        } else {
+            solutionRecords.push(record);
+        }
+        saveSolutions();
+        closeSolutionModal();
+        renderSolutionPage();
+        alert('✅ 保存成功');
+    }
+
     // ========== 图片OCR识别 ==========
     let ocrWorker = null;
     let ocrImageFile = null;
@@ -1170,6 +2434,7 @@
                 const target = tab.dataset.tab;
                 document.getElementById('smartTabText').style.display = target === 'text' ? '' : 'none';
                 document.getElementById('smartTabImage').style.display = target === 'image' ? '' : 'none';
+                document.getElementById('smartTabFeedback').style.display = target === 'feedback' ? '' : 'none';
             });
         });
     }
@@ -1381,9 +2646,10 @@
 
         for (let line of lines) {
             // 检测是否是结构化数据行（包含日期、机架号等特征）
-            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line);
-            // 支持多种机架号格式：JMZK/JMZJ/EAVUAV/JMZ 或纯数字（如 95109）
-            const hasFrame = /(JMZK|JMZJ|EAVUAV|JMZ|J\d{6,}|\d{5,})/i.test(line);
+            // 支持日期格式：2026-07-23 / 2026/07/23 / 2026年7月23日
+            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line) || /\d{4}年\d{1,2}月\d{1,2}日/.test(line);
+            // 支持多种机架号格式：JMZK/JMZJ/EAVUAV/JMZ 或纯数字（如 95109）或字母+数字（如 A0162）
+            const hasFrame = /(JMZK|JMZJ|EAVUAV|JMZ|J\d{6,}|\d{5,}|[A-Z]\d{3,5})/i.test(line);
             // 支持更多机型
             const hasModel = /\b(J50|J70|J100|J150|J160|E50|E100|J25|J50pro|E50pro|E100pro)\b/i.test(line);
 
@@ -1670,6 +2936,28 @@
     // 列顺序：时间 | 机型 | 机架号 | 架次 | 省份 | 初步结论 | 问题定性
     // 兼容：纯中文 / 中英双语 / 纯英文（表头自动识别）
     // ============================================================
+    // 根据机架号自动推导机型
+    // 规则：机架号格式为 前缀(JMZK/JMZJ/EAVUAV等) + 后5位
+    // 后5位的首字符 -> 机型
+    // 8 -> J100, 9 -> J150, 5 -> J70, A -> J160, B -> J110
+    function detectModelFromAirframe(airframeNo) {
+        if (!airframeNo) return '';
+        // 去掉分隔符（空格、横杠、下划线等），保留字母和数字
+        const cleaned = airframeNo.replace(/[\s\-_]/g, '');
+        // 提取后5位
+        const last5 = cleaned.slice(-5);
+        if (last5.length < 5) return '';
+        const firstChar = last5[0].toUpperCase();
+        const modelMap = {
+            '8': 'J100',
+            '9': 'J150',
+            '5': 'J70',
+            'A': 'J160',
+            'B': 'J110'
+        };
+        return modelMap[firstChar] || '';
+    }
+
     function parseSmartText(text) {
         const lines = text.split('\n').filter(l => l.trim());
         if (lines.length < 1) return [];
@@ -1708,20 +2996,40 @@
             // 智能推断表头：根据内容特征匹配已知格式
             // 炸机分析表（7列）：日期 | 机型 | 机架号 | 架次 | 省份 | 初步结论 | 问题定性
             // 日常工作录入（10列）：日期 | 工单编号 | 机架号 | 机型 | 架次-地块 | 省份 | 反馈人 | 分析人 | 问题定性 | 是否质保
-            // 判断依据：检查第一行第2列是否为机型代码（Jxx格式），第3列是否为纯数字机架号
+            // 判断依据：检查第一行第2列是否为机型代码（Jxx格式或JMZK/JMZJ/EAVUAV前缀），第3列是否为纯数字机架号
             const firstRowCols = lines[dataStartIndex].split(/\t+/).map(c => c.trim());
             const isCrashAnalysisFormat = (
                 firstRowCols.length >= 5 &&
-                /^J\d{2,3}$/i.test(firstRowCols[1]) &&  // 第2列是机型如 J70/J150
+                (/^J\d{2,3}$/i.test(firstRowCols[1]) || /^(JMZK|JMZJ|EAVUAV)/i.test(firstRowCols[1])) &&  // 第2列是机型如 J70/J150 或 JMZK...
                 /^\d{4,6}$/.test(firstRowCols[2])         // 第3列是机架号如 59963
             );
 
             const DEFAULT_HEADERS_7 = ['分析时间','机型','机架号','架次','省份','初步结论','问题定性'];
+            const DEFAULT_HEADERS_9 = ['分析时间','机型','机架号','地块','反馈人','分析人','问题定性','是否质保','备注'];
+            const DEFAULT_HEADERS_10_NEW = ['分析时间','机型','机架号','地块','省区','反馈人','分析人','问题定性','是否质保','备注'];
             const DEFAULT_HEADERS_10 = ['分析时间','工单编号','机架号','机型','架次-地块','省份','反馈人','分析人','问题定性','是否质保'];
 
-            if (isCrashAnalysisFormat) {
+            // 备用检测：7列数据，最后一列包含问题定性关键词 → 炸机分析表
+            const PROBLEM_TYPE_KEYWORDS = /操作问题|动力|问题|故障|断裂|烧|炸|裂纹|变形|损坏|质量问题|不符合质保|质保|手动碰撞|卡扣|尾插|机臂|信号|失联|雷达|避障|喷洒|播撒|GPS|RTK|航线|偏航|翻机|坠机|失控/i;
+            let isCrashByContent = false;
+            if (!isCrashAnalysisFormat && expectedCols === 7 && firstRowCols.length >= 7) {
+                const lastCol = firstRowCols[firstRowCols.length - 1] || '';
+                const secondLastCol = firstRowCols[firstRowCols.length - 2] || '';
+                // 最后一列或倒数第二列包含问题定性/初步结论关键词
+                if (PROBLEM_TYPE_KEYWORDS.test(lastCol) || PROBLEM_TYPE_KEYWORDS.test(secondLastCol)) {
+                    isCrashByContent = true;
+                }
+            }
+
+            if (isCrashAnalysisFormat || isCrashByContent) {
                 headers = DEFAULT_HEADERS_7.slice();
                 expectedCols = 7;  // 强制使用7列，即使第一行只有5个Tab
+            } else if (expectedCols === 9) {
+                // 9列数据：没有"省区"列
+                headers = DEFAULT_HEADERS_9.slice();
+            } else if (expectedCols === 10) {
+                // 10列数据：包含"省区"列
+                headers = DEFAULT_HEADERS_10_NEW.slice();
             } else {
                 headers = DEFAULT_HEADERS_10.slice(0, expectedCols);
             }
@@ -1738,9 +3046,11 @@
             const colCount = tabCount + 1;
 
             // 检测是否是新记录的开始：包含日期+机型/机架号
-            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line);
+            // 支持日期格式：2026-07-23 / 2026/07/23 / 2026年7月23日
+            const hasDate = /\d{4}[-\/]\d{1,2}[-\/]\d{1,2}/.test(line) || /\d{4}年\d{1,2}月\d{1,2}日/.test(line);
             const hasModel = /\b(J\d{2,3}|E\d{2,3})\b/i.test(line);
-            const hasFrame = /\b\d{5,6}\b/.test(line);
+            // 支持机架号格式：纯数字(90147) 或 字母+数字(A0162, A0589)
+            const hasFrame = /\b\d{5,6}\b/.test(line) || /\b[A-Z]\d{3,5}\b/i.test(line);
             const isNewRecord = hasDate && (hasModel || hasFrame);
 
             if (isNewRecord || colCount >= expectedCols) {
@@ -1783,13 +3093,19 @@
                     if (j < finalCols.length) row[h] = finalCols[j] || '';
                 });
             }
-            // 日期格式标准化：2026/7/20 → 2026-07-20
+            // 日期格式标准化：2026/7/20 → 2026-07-20，2026年7月23日 → 2026-07-23
             if (row['分析时间'] || row['时间'] || row['日期']) {
                 const dateKey = row['分析时间'] ? '分析时间' : (row['时间'] ? '时间' : '日期');
                 const dateVal = row[dateKey];
+                // YYYY/MM/DD → YYYY-MM-DD
                 const dateMatch = dateVal.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})/);
                 if (dateMatch) {
                     row[dateKey] = dateMatch[1] + '-' + String(dateMatch[2]).padStart(2,'0') + '-' + String(dateMatch[3]).padStart(2,'0');
+                }
+                // YYYY年MM月DD日 → YYYY-MM-DD
+                const cnDateMatch = dateVal.match(/(\d{4})年(\d{1,2})月(\d{1,2})日/);
+                if (cnDateMatch) {
+                    row[dateKey] = cnDateMatch[1] + '-' + String(cnDateMatch[2]).padStart(2,'0') + '-' + String(cnDateMatch[3]).padStart(2,'0');
                 }
             }
             rows.push(row);
@@ -1820,8 +3136,10 @@
             '机架号': 'airframeNo', '飞机号': 'airframeNo', 'Airframe SN': 'airframeNo', 'SN': 'airframeNo',
             // 机型
             '机型': 'model', '型号': 'model', 'Model': 'model',
-            // 架次（支持多种格式）
-            '架次': 'flightBatch', '架次-地块': 'flightBatch', 'Flight ID': 'flightBatch',
+            // 架次/地块（支持多种格式）
+            '架次': 'flightBatch', '架次-地块': 'flightBatch', '地块': 'flightBatch', 'Flight ID': 'flightBatch',
+            // 省区
+            '省区': 'region', '省份': 'region', '区域': 'region', 'Region': 'region',
             // 人员
             '反馈人': 'feedbackPerson', '分析人': 'analyst', '处理人': 'analyst',
             // 问题定性（炸机分析表）
@@ -1838,8 +3156,6 @@
             '跟进情况': 'followUp', '异常跟进': 'followUp',
             // 最终结论
             '最终结论': 'finalConclusion', '结论': 'finalConclusion',
-            // 省份/区域
-            '省份': 'region', '区域': 'region', 'Region': 'region',
             // 英文表头兼容
             'time': 'analysisTime', 'date': 'analysisTime',
             'model': 'model', 'airframe': 'airframeNo', 'sn': 'airframeNo',
@@ -1868,6 +3184,10 @@
                 if (dateMatch) {
                     record.analysisTime = dateMatch[1] + '-' + String(dateMatch[2]).padStart(2,'0') + '-' + String(dateMatch[3]).padStart(2,'0');
                 }
+            }
+            // 自动推导机型：如果 model 为空但有 airframeNo，根据机架号后5位首字符推导
+            if (!record.model && record.airframeNo) {
+                record.model = detectModelFromAirframe(record.airframeNo);
             }
             if (record.analysisTime || record.workOrderNo || record.airframeNo) {
                 records.push(record);
@@ -1933,7 +3253,10 @@
                     <td>${esc(r.model)}</td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
-                    <td><span class="audit-badge audit-${r.auditResult||'未判定'}">${esc(r.auditResult||'未判定')}</span></td>
+                    <td>
+                    ${generateAuditSelect(r)}
+                    <input type="text" class="custom-audit-input" placeholder="新增定责" value="" onchange="updateCustomAudit('${r.id}', this.value)" style="margin-left:4px; padding:2px 6px; border-radius:4px; border:1px solid #ddd; font-size:11px; width:80px;" title="输入新的定责类型">
+                </td>
                     <td class="text-ellipsis" title="${esc(r.initialAnalysis)}">${esc(r.initialAnalysis||'—')}</td>
                     <td class="text-ellipsis" title="${esc(r.finalConclusion)}">${esc(r.finalConclusion||'—')}</td>
                 </tr>
@@ -3207,6 +4530,9 @@
         
         // 确保弹窗居中显示
         const modal = document.getElementById('settingsModal');
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
         modal.style.display = 'flex';
         modal.style.alignItems = 'center';
         modal.style.justifyContent = 'center';
