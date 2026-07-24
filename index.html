@@ -1097,7 +1097,16 @@
         </div>
     </div>
 
-    <script src="app.js?v=64"></script>
+    <script>
+        // 动态加载 app.js，使用时间戳强制刷新缓存
+        (function() {
+            var script = document.createElement('script');
+            script.src = 'app.js?v=' + Date.now();
+            document.body.appendChild(script);
+        })();
+    </script>
+</body>
+</html>
 </function>
 </body>
 </html>
