@@ -580,7 +580,70 @@
             });
             followupSelect.value = currentVal;
         }
+
+        // 更新定责类型管理面板
+        updateAuditTypeManager();
     }
+
+    // 更新定责类型管理面板
+    function updateAuditTypeManager() {
+        const panel = document.getElementById('auditTypeManager');
+        const list = document.getElementById('auditTypeList');
+        const empty = document.getElementById('auditTypeEmpty');
+        if (!panel || !list || !empty) return;
+
+        // 过滤掉内置类型
+        const customTypes = customAuditTypes.filter(t => t !== '质保' && t !== '非质保');
+
+        if (customTypes.length === 0) {
+            list.style.display = 'none';
+            empty.style.display = 'block';
+        } else {
+            list.style.display = 'block';
+            empty.style.display = 'none';
+            list.innerHTML = customTypes.map(t => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;margin-bottom:4px;background:#fff;border:1px solid #e9ecef;border-radius:4px;">
+                    <span style="flex:1;">${esc(t)}</span>
+                    <button type="button" onclick="deleteAuditType('${esc(t)}')" style="padding:2px 8px;font-size:11px;color:#dc3545;background:#fff;border:1px solid #dc3545;border-radius:3px;cursor:pointer;" title="删除此定责类型">删除</button>
+                </div>
+            `).join('');
+        }
+    }
+
+    // 删除定责类型
+    window.deleteAuditType = function(type) {
+        if (!confirm(`确定删除定责类型「${type}」吗？\n\n注意：已使用此类型的记录不会被修改，但下拉框中将不再显示此选项。`)) return;
+        removeCustomAuditType(type);
+        // 同时清理所有记录中使用此类型的定责
+        let cleaned = 0;
+        records.forEach(r => {
+            if (r.auditResult === type) {
+                r.auditResult = '';
+                cleaned++;
+            }
+            if (r.customAudit === type) {
+                r.customAudit = '';
+                cleaned++;
+            }
+        });
+        if (cleaned > 0) {
+            saveRecords();
+            renderTodayTable();
+            updateDashboard();
+        }
+        updateAuditTypeManager();
+        console.log(`[定责管理] 已删除类型「${type}」，清理了 ${cleaned} 条记录`);
+    };
+
+    // 切换定责类型管理面板显示/隐藏
+    window.toggleAuditTypeManager = function() {
+        const panel = document.getElementById('auditTypeManager');
+        if (!panel) return;
+        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        if (panel.style.display === 'block') {
+            updateAuditTypeManager();
+        }
+    };
 
     function loadRecords() {
         try {
@@ -1092,6 +1155,14 @@
                 if (e.key === 'Enter') { e.preventDefault(); applyCustomAudit(); }
             });
             customAuditInput.addEventListener('blur', applyCustomAudit);
+        }
+
+        // 定责类型管理按钮
+        const btnManageAuditTypes = document.getElementById('btnManageAuditTypes');
+        if (btnManageAuditTypes) {
+            btnManageAuditTypes.addEventListener('click', () => {
+                window.toggleAuditTypeManager();
+            });
         }
         document.getElementById('btnSmartEntry').addEventListener('click', () => {
             document.getElementById('smartEntryModal').classList.add('show');
