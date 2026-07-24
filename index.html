@@ -221,13 +221,20 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="auditResult">是否质保</label>
-                                <div style="display:flex;gap:6px;">
+                                <div style="display:flex;gap:6px;align-items:center;">
                                     <select id="auditResult" style="flex:1;">
                                         <option value="">请选择</option>
                                         <option value="质保">质保</option>
                                         <option value="非质保">非质保</option>
                                     </select>
                                     <input type="text" id="customAuditInput" placeholder="自定义定责" style="width:100px;font-size:12px;" title="输入后回车保存">
+                                    <button type="button" id="btnManageAuditTypes" style="padding:4px 8px;font-size:11px;cursor:pointer;background:#f0f0f0;border:1px solid #ddd;border-radius:4px;white-space:nowrap;" title="管理定责类型">⚙️ 管理</button>
+                                </div>
+                                <!-- 定责类型管理面板 -->
+                                <div id="auditTypeManager" style="display:none;margin-top:8px;padding:10px;background:#f8f9fa;border:1px solid #e9ecef;border-radius:6px;font-size:12px;">
+                                    <div style="font-weight:600;margin-bottom:8px;color:#495057;"> 自定义定责类型</div>
+                                    <div id="auditTypeList" style="max-height:150px;overflow-y:auto;"></div>
+                                    <div id="auditTypeEmpty" style="display:none;color:#6c757d;font-style:italic;">暂无自定义定责类型</div>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -1134,6 +1141,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=77"></script>
+    <script src="app.js?v=78"></script>
 </body>
 </html>
