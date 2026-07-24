@@ -1764,7 +1764,8 @@
             if (!record) return;
             title.textContent = '编辑跟进任务';
             document.getElementById('editFollowupId').value = id;
-            document.getElementById('followupAnalysisTime').value = record.analysisTime || '';
+            document.getElementById('followupAnalysisTime').value = record.analysisTime ? record.analysisTime.replace(' ', 'T') : '';
+            document.getElementById('followupModel').value = record.model || '';
             document.getElementById('followupWorkOrderNo').value = record.workOrderNo || '';
             document.getElementById('followupAirframeNo').value = record.airframeNo || '';
             document.getElementById('followupReporter').value = record.reporter || '';
@@ -1778,6 +1779,7 @@
             title.textContent = '新增跟进任务';
             document.getElementById('editFollowupId').value = '';
             document.getElementById('followupAnalysisTime').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('followupModel').value = '';
             document.getElementById('followupWorkOrderNo').value = '';
             document.getElementById('followupAirframeNo').value = '';
             document.getElementById('followupReporter').value = '';
@@ -1808,7 +1810,8 @@
         const title = document.getElementById('followupModalTitle');
         title.textContent = '新增跟进任务';
         document.getElementById('editFollowupId').value = '';
-        document.getElementById('followupAnalysisTime').value = record.analysisTime || new Date().toISOString().slice(0, 16);
+        document.getElementById('followupAnalysisTime').value = record.analysisTime ? record.analysisTime.replace(' ', 'T') : new Date().toISOString().slice(0, 16);
+        document.getElementById('followupModel').value = record.model || '';
         document.getElementById('followupWorkOrderNo').value = record.workOrderNo || '';
         document.getElementById('followupAirframeNo').value = record.airframeNo || '';
         document.getElementById('followupReporter').value = record.feedbackPerson || '';
@@ -1831,7 +1834,8 @@
         const title = document.getElementById('followupModalTitle');
         title.textContent = '新增跟进任务';
         document.getElementById('editFollowupId').value = '';
-        document.getElementById('followupAnalysisTime').value = solution.faultTime || new Date().toISOString().slice(0, 16);
+        document.getElementById('followupAnalysisTime').value = solution.faultTime ? solution.faultTime.replace(' ', 'T') : new Date().toISOString().slice(0, 16);
+        document.getElementById('followupModel').value = solution.model || '';
         document.getElementById('followupWorkOrderNo').value = '';
         document.getElementById('followupAirframeNo').value = solution.droneNo || '';
         document.getElementById('followupReporter').value = '';
@@ -1849,17 +1853,17 @@
     window.saveFollowup = function() {
         const id = document.getElementById('editFollowupId').value;
         const analysisTime = document.getElementById('followupAnalysisTime').value;
-        const workOrderNo = document.getElementById('followupWorkOrderNo').value.trim();
         
-        if (!analysisTime || !workOrderNo) {
-            alert('请填写分析时间和工单编号');
+        if (!analysisTime) {
+            alert('请填写分析时间');
             return;
         }
         
         const record = {
             id: id || generateFollowupId(),
             analysisTime: analysisTime,
-            workOrderNo: workOrderNo,
+            model: document.getElementById('followupModel').value.trim(),
+            workOrderNo: document.getElementById('followupWorkOrderNo').value.trim(),
             airframeNo: document.getElementById('followupAirframeNo').value.trim(),
             reporter: document.getElementById('followupReporter').value.trim(),
             analyst: document.getElementById('followupAnalyst').value.trim(),
