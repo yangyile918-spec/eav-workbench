@@ -395,26 +395,6 @@
     "region": "美国 Kentucky"
   },
   {
-    "id": "mrwxi361v68pv",
-    "analysisTime": "2026-07-23T11:05",
-    "workOrderNo": "",
-    "airframeNo": "",
-    "model": "",
-    "flightBatch": "",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "",
-    "faultCondition": "",
-    "initialAnalysis": "",
-    "followUp": "",
-    "finalConclusion": "",
-    "region": ""
-  },
-  {
     "id": "mruezyixlwhcu",
     "analysisTime": "2026-07-20",
     "workOrderNo": "96376",
