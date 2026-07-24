@@ -664,6 +664,26 @@
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
                 console.log('[数据迁移] 已修复列错位/补充机型');
             }
+
+            // 数据迁移 v77：清理记录中的手机号/账号定责
+            let migratedV77 = false;
+            records.forEach(r => {
+                // 如果 auditResult 或 customAudit 是纯数字且长度>=10，清理掉
+                if (r.auditResult && /^\d{10,}$/.test(r.auditResult)) {
+                    console.log('[v77 清理] 记录', r.airframeNo, '- auditResult:', r.auditResult);
+                    r.auditResult = '';
+                    migratedV77 = true;
+                }
+                if (r.customAudit && /^\d{10,}$/.test(r.customAudit)) {
+                    console.log('[v77 清理] 记录', r.airframeNo, '- customAudit:', r.customAudit);
+                    r.customAudit = '';
+                    migratedV77 = true;
+                }
+            });
+            if (migratedV77) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                console.log('[数据迁移 v77] 已清理手机号/账号定责');
+            }
         } catch(e) { records = []; }
     }
     function loadTrash() {
@@ -868,6 +888,14 @@
                     r.problemType = r.initialAnalysis || '';
                     r.initialAnalysis = temp;
                 }
+            }
+
+            // 迁移 4：清理手机号/账号定责
+            if (r.auditResult && /^\d{10,}$/.test(r.auditResult)) {
+                r.auditResult = '';
+            }
+            if (r.customAudit && /^\d{10,}$/.test(r.customAudit)) {
+                r.customAudit = '';
             }
         });
     }
@@ -1386,6 +1414,13 @@
     window.updateAuditResult = function(id, value) {
         const r = records.find(x => x.id === id);
         if (!r) return;
+        // 防止手机号/账号被保存为定责
+        if (/^\d{10,}$/.test(value)) {
+            alert('⚠️ 手机号/账号不能作为定责类型');
+            r.auditResult = '';
+            renderTodayTable();
+            return;
+        }
         r.auditResult = value;
         if (value && value !== '质保' && value !== '非质保') {
             saveCustomAuditType(value);
@@ -1400,10 +1435,17 @@
     window.updateCustomAudit = function(id, value) {
         const r = records.find(x => x.id === id);
         if (!r) return;
-        r.customAudit = value.trim();
-        if (value.trim()) {
-            saveCustomAuditType(value.trim());
-            r.auditResult = value.trim();
+        const trimmed = value.trim();
+        // 防止手机号/账号被保存为定责
+        if (/^\d{10,}$/.test(trimmed)) {
+            alert('⚠️ 手机号/账号不能作为定责类型');
+            renderTodayTable();
+            return;
+        }
+        r.customAudit = trimmed;
+        if (trimmed) {
+            saveCustomAuditType(trimmed);
+            r.auditResult = trimmed;
         }
         saveRecords();
         renderTodayTable();
