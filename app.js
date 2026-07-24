@@ -44,6 +44,66 @@
         if (deletedIds.size === 0) return cloudRecords;
         return cloudRecords.filter(r => !deletedIds.has(r.id));
     }
+    
+    //  云端墓碑同步（v83 新增）- 解决多设备删除记录又出现的问题
+    async function syncDeletedIdsToCloud() {
+        const cfg = getCloudConfig();
+        if (!cfg || !cfg.enabled || !cfg.token) return false;
+        try {
+            const deletedIds = Array.from(getDeletedIds());
+            const apiUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/data/deleted_ids.json`;
+            const content = btoa(unescape(encodeURIComponent(JSON.stringify(deletedIds, null, 2))));
+            // 获取现有 SHA
+            let sha = null;
+            try {
+                const resp = await fetch(apiUrl, {
+                    headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                });
+                if (resp.ok) {
+                    const existing = await resp.json();
+                    sha = existing.sha;
+                }
+            } catch(e) { /* 文件不存在 */ }
+            const body = {
+                message: `sync deleted_ids: ${deletedIds.length} tombstones @ ${new Date().toLocaleString('zh-CN')}`,
+                content: content,
+                branch: cfg.branch || 'main'
+            };
+            if (sha) body.sha = sha;
+            const resp = await fetch(apiUrl, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `token ${cfg.token}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+            return resp.ok;
+        } catch(e) {
+            console.warn('[syncDeletedIdsToCloud] error:', e);
+            return false;
+        }
+    }
+    
+    async function pullDeletedIdsFromCloud() {
+        const cfg = getCloudConfig();
+        if (!cfg || !cfg.enabled || !cfg.token) return;
+        try {
+            const rawUrl = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch || 'main'}/data/deleted_ids.json`;
+            const resp = await fetch(rawUrl);
+            if (resp.ok) {
+                const cloudDeletedIds = await resp.json();
+                if (Array.isArray(cloudDeletedIds)) {
+                    // 合并云端墓碑到本地
+                    addDeletedIds(cloudDeletedIds);
+                    console.log('[pullDeletedIdsFromCloud] merged', cloudDeletedIds.length, 'tombstones from cloud');
+                }
+            }
+        } catch(e) {
+            console.warn('[pullDeletedIdsFromCloud] error:', e);
+        }
+    }
 
     // 周报生成相关
     let ordersData = null;   // 工单导出数据
@@ -997,6 +1057,9 @@
         if (!cfg || !cfg.enabled || !cfg.token) return false;
         updateSyncStatus('syncing', '从云端加载...');
         try {
+            //  先拉取云端墓碑并合并（v83 新增）
+            await pullDeletedIdsFromCloud();
+            
             // Use raw.githubusercontent.com for reading (CDN, works in China)
             const rawUrl = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch || 'main'}/data/records.json`;
             console.log('[pullFromCloud] fetching:', rawUrl);
@@ -1573,8 +1636,11 @@
         // 立即同步到云端（不等待 2 秒延迟），确保删除操作同步
         const cfg = getCloudConfig();
         if (cfg && cfg.enabled) {
-            pushToCloud().then(success => {
-                if (!success) {
+            Promise.all([
+                pushToCloud(),
+                syncDeletedIdsToCloud()  //  同步墓碑到云端（v83 新增）
+            ]).then(([recordsOk, tombstoneOk]) => {
+                if (!recordsOk || !tombstoneOk) {
                     alert('⚠️ 云同步失败，删除的记录可能在下次登录时恢复。请检查网络连接后重试。');
                 }
             });
@@ -1786,8 +1852,11 @@
         // 立即同步到云端
         const cfg = getCloudConfig();
         if (cfg && cfg.enabled) {
-            pushToCloud().then(success => {
-                if (success) {
+            Promise.all([
+                pushToCloud(),
+                syncDeletedIdsToCloud()  //  同步墓碑到云端（v83 新增）
+            ]).then(([recordsOk, tombstoneOk]) => {
+                if (recordsOk && tombstoneOk) {
                     alert(`✅ 成功删除 ${deletedCount} 条记录，已同步到云端`);
                 } else {
                     alert(`⚠️ 已删除 ${deletedCount} 条记录，但云同步失败。请检查网络连接后重试。`);
@@ -1826,8 +1895,11 @@
         // 立即同步到云端
         const cfg = getCloudConfig();
         if (cfg && cfg.enabled) {
-            pushToCloud().then(success => {
-                if (success) {
+            Promise.all([
+                pushToCloud(),
+                syncDeletedIdsToCloud()  //  同步墓碑到云端（v83 新增）
+            ]).then(([recordsOk, tombstoneOk]) => {
+                if (recordsOk && tombstoneOk) {
                     alert(`✅ 已清空所有记录，已同步到云端`);
                 } else {
                     alert(`⚠️ 已清空所有记录，但云同步失败。请检查网络连接后重试。`);
@@ -2039,8 +2111,11 @@
         // 立即同步到云端
         const cfg = getCloudConfig();
         if (cfg && cfg.enabled) {
-            pushToCloud().then(success => {
-                if (success) {
+            Promise.all([
+                pushToCloud(),
+                syncDeletedIdsToCloud()  //  同步墓碑到云端（v83 新增）
+            ]).then(([recordsOk, tombstoneOk]) => {
+                if (recordsOk && tombstoneOk) {
                     alert(`✅ 成功删除 ${deletedCount} 条记录，已同步到云端`);
                 } else {
                     alert(`⚠️ 已删除 ${deletedCount} 条记录，但云同步失败。请检查网络连接后重试。`);
@@ -2079,8 +2154,11 @@
         // 立即同步到云端
         const cfg = getCloudConfig();
         if (cfg && cfg.enabled) {
-            pushToCloud().then(success => {
-                if (success) {
+            Promise.all([
+                pushToCloud(),
+                syncDeletedIdsToCloud()  //  同步墓碑到云端（v83 新增）
+            ]).then(([recordsOk, tombstoneOk]) => {
+                if (recordsOk && tombstoneOk) {
                     alert(`✅ 已清空所有记录，已同步到云端`);
                 } else {
                     alert(`⚠️ 已清空所有记录，但云同步失败。请检查网络连接后重试。`);
