@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>极目售后分析组工作台</title>
-    <link rel="stylesheet" href="style.css?v=37">
+    <link rel="stylesheet" href="style.css?v=38">
     <style>
         .summary-card {
             background: linear-gradient(135deg, #f8f9ff 0%, #e8ecf8 100%) !important;
@@ -730,6 +730,10 @@
                             <input type="text" id="followupFilterAnalyst" placeholder="搜索分析人" style="font-size:12px;padding:4px 8px;">
                         </div>
                         <div class="form-group" style="margin:0;min-width:100px;">
+                            <label style="font-size:12px;">机型</label>
+                            <input type="text" id="solutionFilterModel" placeholder="搜索机型" style="font-size:12px;padding:4px 8px;">
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:100px;">
                             <label style="font-size:12px;">状态</label>
                             <select id="followupFilterStatus" style="font-size:12px;padding:4px 8px;">
                                 <option value="">全部</option>
@@ -795,6 +799,10 @@
                             <input type="text" id="solutionFilterDrone" placeholder="搜索编号" style="font-size:12px;padding:4px 8px;">
                         </div>
                         <div class="form-group" style="margin:0;min-width:100px;">
+                            <label style="font-size:12px;">机型</label>
+                            <input type="text" id="solutionFilterModel" placeholder="搜索机型" style="font-size:12px;padding:4px 8px;">
+                        </div>
+                        <div class="form-group" style="margin:0;min-width:100px;">
                             <label style="font-size:12px;">状态</label>
                             <select id="solutionFilterStatus" style="font-size:12px;padding:4px 8px;">
                                 <option value="">全部</option>
@@ -809,6 +817,7 @@
                             <thead>
                                 <tr>
                                     <th>故障时间</th>
+                                    <th>机型</th>
                                     <th>无人机编号</th>
                                     <th>地块编号</th>
                                     <th>故障现象</th>
@@ -819,7 +828,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td colspan="8" class="empty-state"><div class="empty-state-icon">🔧</div>暂无问题解决记录</td></tr>
+                                <tr><td colspan="9" class="empty-state"><div class="empty-state-icon">🔧</div>暂无问题解决记录</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1015,10 +1024,14 @@
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editSolutionId">
-                <div class="form-grid" style="grid-template-columns:1fr 1fr;">
+                <div class="form-grid" style="grid-template-columns:1fr 1fr 1fr;">
                     <div class="form-group">
-                        <label>无人机编号 <span style="color:red">*</span></label>
-                        <input type="text" id="solutionDroneNo" placeholder="如 J160" required>
+                        <label>机型</label>
+                        <input type="text" id="solutionModel" placeholder="如 J160">
+                    </div>
+                    <div class="form-group">
+                        <label>无人机编号</label>
+                        <input type="text" id="solutionDroneNo" placeholder="无人机编号">
                     </div>
                     <div class="form-group">
                         <label>地块编号</label>
@@ -1094,6 +1107,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=70"></script>
+    <script src="app.js?v=71"></script>
 </body>
 </html>

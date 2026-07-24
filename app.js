@@ -1109,6 +1109,7 @@
         // 问题解决筛选事件
         document.getElementById('solutionFilterDate').addEventListener('change', renderSolutionPage);
         document.getElementById('solutionFilterDrone').addEventListener('input', renderSolutionPage);
+        document.getElementById('solutionFilterModel').addEventListener('input', renderSolutionPage);
         document.getElementById('solutionFilterStatus').addEventListener('change', renderSolutionPage);
 
         // 日报
@@ -2316,11 +2317,13 @@
         // 筛选
         const filterDate = document.getElementById('solutionFilterDate')?.value || '';
         const filterDrone = document.getElementById('solutionFilterDrone')?.value.trim() || '';
+        const filterModel = document.getElementById('solutionFilterModel')?.value.trim() || '';
         const filterStatus = document.getElementById('solutionFilterStatus')?.value.trim() || '';
 
         let filtered = solutionRecords.filter(r => {
             if (filterDate && r.faultTime && !r.faultTime.startsWith(filterDate)) return false;
             if (filterDrone && !r.droneNo.includes(filterDrone)) return false;
+            if (filterModel && !r.model.includes(filterModel)) return false;
             if (filterStatus && r.status !== filterStatus) return false;
             return true;
         });
@@ -2346,6 +2349,7 @@
             const faultTimeDisplay = r.faultTime ? new Date(r.faultTime).toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' }) : '—';
             return `<tr>
                 <td>${faultTimeDisplay}</td>
+                <td>${esc(r.model) || '—'}</td>
                 <td><strong>${esc(r.droneNo) || '—'}</strong></td>
                 <td>${esc(r.fieldNo) || '—'}</td>
                 <td title="${esc(r.faultDesc)}">${esc(r.faultDesc ? r.faultDesc.substring(0, 20) + (r.faultDesc.length > 20 ? '...' : '') : '—')}</td>
@@ -2366,6 +2370,7 @@
     window.openSolutionModal = function() {
         document.getElementById('solutionModalTitle').textContent = '新建问题';
         document.getElementById('editSolutionId').value = '';
+        document.getElementById('solutionModel').value = '';
         document.getElementById('solutionDroneNo').value = '';
         document.getElementById('solutionFieldNo').value = '';
         document.getElementById('solutionFaultTime').value = '';
@@ -2375,11 +2380,11 @@
         document.getElementById('solutionStatus').value = '待分析';
         document.getElementById('solutionAnalysis').value = '';
         document.getElementById('solutionRemark').value = '';
-        document.getElementById('logDrone').checked = true;
-        document.getElementById('logVideo').checked = true;
-        document.getElementById('logApp').checked = true;
-        document.getElementById('logFpv').checked = true;
-        document.getElementById('logFlight').checked = true;
+        document.getElementById('logDrone').checked = false;
+        document.getElementById('logVideo').checked = false;
+        document.getElementById('logApp').checked = false;
+        document.getElementById('logFpv').checked = false;
+        document.getElementById('logFlight').checked = false;
         document.getElementById('logOther').checked = false;
         document.getElementById('solutionModal').classList.add('show');
     };
@@ -2393,6 +2398,7 @@
         if (!r) return;
         document.getElementById('solutionModalTitle').textContent = '编辑问题';
         document.getElementById('editSolutionId').value = r.id;
+        document.getElementById('solutionModel').value = r.model || '';
         document.getElementById('solutionDroneNo').value = r.droneNo || '';
         document.getElementById('solutionFieldNo').value = r.fieldNo || '';
         document.getElementById('solutionFaultTime').value = r.faultTime || '';
@@ -2525,6 +2531,7 @@ ${r.remark || '—'}
         const editId = document.getElementById('editSolutionId').value;
         const record = {
             id: editId || Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
+            model: document.getElementById('solutionModel').value.trim(),
             droneNo: document.getElementById('solutionDroneNo').value.trim(),
             fieldNo: document.getElementById('solutionFieldNo').value.trim(),
             faultTime: document.getElementById('solutionFaultTime').value,
@@ -2544,7 +2551,6 @@ ${r.remark || '—'}
             remark: document.getElementById('solutionRemark').value.trim(),
             createTime: editId ? (solutionRecords.find(r => r.id === editId)?.createTime || new Date().toISOString()) : new Date().toISOString()
         };
-        if (!record.droneNo) { alert('请填写无人机编号'); return; }
         if (!record.faultDesc) { alert('请填写故障现象'); return; }
 
         if (editId) {
