@@ -433,5 +433,252 @@
     "followUp": "日志上传状态：drone、fpv、flight",
     "finalConclusion": "",
     "region": ""
+  },
+  {
+    "id": "mrwxi361v68pv",
+    "analysisTime": "2026-07-23T11:05",
+    "workOrderNo": "",
+    "airframeNo": "",
+    "model": "",
+    "flightBatch": "",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
+    "initialAnalysis": "",
+    "followUp": "",
+    "finalConclusion": "",
+    "region": ""
+  },
+  {
+    "id": "mruezyixlwhcu",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "96376",
+    "airframeNo": "J150",
+    "model": "",
+    "flightBatch": "178454833294864 -- 50244000",
+    "region": "美国 Missouri",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "",
+    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
+  },
+  {
+    "id": "mruf1lcfxb1ef",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "96376",
+    "airframeNo": "J150",
+    "model": "",
+    "flightBatch": "178454833294864 -- 50244000",
+    "region": "美国 Missouri",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "",
+    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
+  },
+  {
+    "id": "mruezdac4z9rs",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "96376",
+    "airframeNo": "J150",
+    "model": "",
+    "flightBatch": "178454833294864 -- 50244000",
+    "region": "美国 Missouri",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "",
+    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
+  },
+  {
+    "id": "mrud2fftygc27",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "96376",
+    "airframeNo": "J150",
+    "model": "",
+    "flightBatch": "178454833294864 -- 50244000",
+    "region": "美国 Missouri",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "",
+    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
+  },
+  {
+    "id": "mrudatzpjegne",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "96376",
+    "airframeNo": "J150",
+    "model": "",
+    "flightBatch": "178454833294864 -- 50244000",
+    "region": "美国 Missouri",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "",
+    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
+  },
+  {
+    "id": "mrudc9kx4d05z",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "96376",
+    "airframeNo": "J150",
+    "model": "",
+    "flightBatch": "178454833294864 -- 50244000",
+    "region": "美国 Missouri",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "",
+    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
+  },
+  {
+    "id": "mruezyix9sr6g",
+    "analysisTime": "FPV: 无人 机客 主高 速作 业 ， 作业 高度 下降 旺机。\n大屏 数据 ; 习机 故障作业簿 度为 13.8m/s， 仿地 高度 从 3.3m 降到 0m。 四路 电宙 速度同步下 滑 。\n步分 析 : 属似 前雷达 | , B 宙无 法仿 地 ， 项要 视觉日 志进 行核实确认 。 N ER :mslsdry\n站和 人的 宙生生和 0 and the aircraft crashed. 妊似 委达 问题一 一识别过 近",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mruf1lcedhrzo",
+    "analysisTime": "FPV: 无人 机客 主高 速作 业 ， 作业 高度 下降 旺机。\n大屏 数据 ; 习机 故障作业簿 度为 13.8m/s， 仿地 高度 从 3.3m 降到 0m。 四路 电宙 速度同步下 滑 。\n步分 析 : 属似 前雷达 | , B 宙无 法仿 地 ， 项要 视觉日 志进 行核实确认 。 N ER :mslsdry\n站和 人的 宙生生和 0 and the aircraft crashed. 妊似 委达 问题一 一识别过 近",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "test_1784268099506",
+    "analysisTime": "2026-07-17T14:00",
+    "workOrderNo": "J202607170001",
+    "airframeNo": "JMZKJ150UAV602595361",
+    "model": "J150",
+    "flightBatch": "SD_FLY-1096-02",
+    "feedbackPerson": "张三",
+    "analyst": "李四",
+    "problemType": "动力",
+    "auditResult": "质保",
+    "tracker": "王五",
+    "reviewer": "赵六",
+    "problemDescription": "飞行中电机异常停转，导致飞机坠毁",
+    "faultCondition": "电机无响应，ESC报错",
+    "initialAnalysis": "检查发现电机绕组短路，导致ESC过流保护",
+    "followUp": "已更换电机，测试正常",
+    "finalConclusion": "电机质量问题",
+    "region": "山东"
+  },
+  {
+    "id": "test-1784262198943",
+    "analysisTime": "2026-07-17T14:30",
+    "workOrderNo": "TEST-001",
+    "airframeNo": "TESTFRAME001",
+    "analyst": "测试员"
+  },
+  {
+    "id": "mrookju4rah60",
+    "analysisTime": "2026-07-17T16:33",
+    "workOrderNo": "",
+    "airframeNo": "",
+    "model": "",
+    "flightBatch": "",
+    "feedbackPerson": "",
+    "analyst": "",
+    "problemType": "",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
+    "initialAnalysis": "",
+    "followUp": "",
+    "finalConclusion": "",
+    "region": ""
+  },
+  {
+    "id": "mruaij98mxkpc",
+    "analysisTime": "大屏数据：飞机相对高度显示异常，大屏播报遥控器信号丢失。"
+  },
+  {
+    "id": "mruaij98yaob0",
+    "analysisTime": "初步分析：疑似因为气压计异常引起高度错误，导致雷达建图异常后进行防地升高，自主模式下升高到100米切手动，但手动数据未进行回传，可能是在下降的过程中没电坠落。需要上传雷达日志 无人机日志跟飞控日志核实确认最终原因。"
+  },
+  {
+    "id": "mruaij98fe7e4",
+    "analysisTime": "FPV:The height of the uav was rising,The FPV did not record the faulty shot."
+  },
+  {
+    "id": "mruaij98a2qzy",
+    "analysisTime": "Data Dashboard:Abnormal relative altitude displayed, with remote control signal loss alert on main screen."
+  },
+  {
+    "id": "mruaij98q46hy",
+    "analysisTime": "Preliminary analysis: Abnormal barometer readings caused altitude errors, resulting in faulty radar mapping and automatic terrain avoidance climb. The aircraft switched to manual mode after ascending to 100 m, yet manual flight data failed to transmit. The unit likely crashed due to power depletion during descent. Upload radar, drone and flight controller logs to confirm the root cause.",
+    "workOrderNo": "疑似主控问题——气压计异常"
+  },
+  {
+    "id": "mrud2fftehib5",
+    "analysisTime": "FPV: 无人 机客 主高 速作 业 ， 作业 高度 下降 旺机。\n大屏 数据 ; 习机 故障作业簿 度为 13.8m/s， 仿地 高度 从 3.3m 降到 0m。 四路 电宙 速度同步下 滑 。\n步分 析 : 属似 前雷达 | , B 宙无 法仿 地 ， 项要 视觉日 志进 行核实确认 。 N ER :mslsdry\n站和 人的 宙生生和 0 and the aircraft crashed. 妊似 委达 问题一 一识别过 近",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrudatzpzu4cj",
+    "analysisTime": "FPV: 无人 机客 主高 速作 业 ， 作业 高度 下降 旺机。\n大屏 数据 ; 习机 故障作业簿 度为 13.8m/s， 仿地 高度 从 3.3m 降到 0m。 四路 电宙 速度同步下 滑 。\n步分 析 : 属似 前雷达 | , B 宙无 法仿 地 ， 项要 视觉日 志进 行核实确认 。 N ER :mslsdry\n站和 人的 宙生生和 0 and the aircraft crashed. 妊似 委达 问题一 一识别过 近",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mrudc9kx2tf54",
+    "analysisTime": "FPV: 无人 机客 主高 速作 业 ， 作业 高度 下降 旺机。\n大屏 数据 ; 习机 故障作业簿 度为 13.8m/s， 仿地 高度 从 3.3m 降到 0m。 四路 电宙 速度同步下 滑 。\n步分 析 : 属似 前雷达 | , B 宙无 法仿 地 ， 项要 视觉日 志进 行核实确认 。 N ER :mslsdry\n站和 人的 宙生生和 0 and the aircraft crashed. 妊似 委达 问题一 一识别过 近",
+    "analyst": "杨怡乐",
+    "customAudit": "",
+    "auditResult": ""
+  },
+  {
+    "id": "mroitz5qas8t1",
+    "analysisTime": "2026-07-17T13:51",
+    "workOrderNo": "1",
+    "airframeNo": "1",
+    "model": "1",
+    "flightBatch": "1",
+    "feedbackPerson": "1",
+    "analyst": "1",
+    "problemType": "操作",
+    "auditResult": "质保",
+    "tracker": "1",
+    "reviewer": "1",
+    "problemDescription": "11",
+    "faultCondition": "11",
+    "initialAnalysis": "1",
+    "followUp": "1",
+    "finalConclusion": "1",
+    "region": "1"
+  },
+  {
+    "id": "mruaij98yt9tl",
+    "analysisTime": "Iowa",
+    "workOrderNo": "FPV:一直在升高，视频未记录到故障画面。"
+  },
+  {
+    "id": "mruaij980ycgt",
+    "analysisTime": "Suspected main controller issue – abnormal barometer readings"
+  },
+  {
+    "id": "mruezdact1l0i",
+    "analysisTime": "FPV: 无人 机客 主高 速作 业 ， 作业 高度 下降 旺机。\n大屏 数据 ; 习机 故障作业簿 度为 13.8m/s， 仿地 高度 从 3.3m 降到 0m。 四路 电宙 速度同步下 滑 。\n步分 析 : 属似 前雷达 | , B 宙无 法仿 地 ， 项要 视觉日 志进 行核实确认 。 N ER :mslsdry\n站和 人的 宙生生和 0 and the aircraft crashed. 妊似 委达 问题一 一识别过 近",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "mropdgi1bst7f",
+    "analysisTime": "2026-07-17T16:55",
+    "workOrderNo": "",
+    "airframeNo": "",
+    "model": "",
+    "flightBatch": "",
+    "feedbackPerson": "",
+    "analyst": "",
+    "problemType": "",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
+    "initialAnalysis": "",
+    "followUp": "",
+    "finalConclusion": "",
+    "region": ""
   }
 ]
