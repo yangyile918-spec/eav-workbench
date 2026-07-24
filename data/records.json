@@ -480,6 +480,24 @@
     "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
   },
   {
+    "id": "mrudc9kx4d05z",
+    "analysisTime": "2026-07-20",
+    "workOrderNo": "96376",
+    "airframeNo": "J150",
+    "model": "",
+    "flightBatch": "178454833294864 -- 50244000",
+    "region": "美国 Missouri",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "",
+    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
+  },
+  {
+    "id": "mruezyix9sr6g",
+    "analysisTime": "FPV: 无人 机客 主高 速作 业 ， 作业 高度 下降 旺机。\n大屏 数据 ; 习机 故障作业簿 度为 13.8m/s， 仿地 高度 从 3.3m 降到 0m。 四路 电宙 速度同步下 滑 。\n步分 析 : 属似 前雷达 | , B 宙无 法仿 地 ， 项要 视觉日 志进 行核实确认 。 N ER :mslsdry\n站和 人的 宙生生和 0 and the aircraft crashed. 妊似 委达 问题一 一识别过 近",
+    "analyst": "杨怡乐"
+  },
+  {
     "id": "mruf1lcedhrzo",
     "analysisTime": "FPV: 无人 机客 主高 速作 业 ， 作业 高度 下降 旺机。\n大屏 数据 ; 习机 故障作业簿 度为 13.8m/s， 仿地 高度 从 3.3m 降到 0m。 四路 电宙 速度同步下 滑 。\n步分 析 : 属似 前雷达 | , B 宙无 法仿 地 ， 项要 视觉日 志进 行核实确认 。 N ER :mslsdry\n站和 人的 宙生生和 0 and the aircraft crashed. 妊似 委达 问题一 一识别过 近",
     "analyst": "杨怡乐"
