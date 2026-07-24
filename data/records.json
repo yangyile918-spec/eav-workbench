@@ -192,17 +192,23 @@
   },
   {
     "id": "mrx75434fhupw",
-    "analysisTime": "2026-07-23",
+    "analysisTime": "2026-07-24T11:34",
     "workOrderNo": "J150",
     "airframeNo": "90147",
     "model": "J150",
     "flightBatch": "178476101233136 -- 3469253",
-    "region": "广东省",
     "feedbackPerson": "",
     "analyst": "杨怡乐",
-    "problemType": "",
+    "problemType": "操作问题——卡扣未卡紧",
     "auditResult": "非质保",
-    "initialAnalysis": "FPV：飞机起飞时，右侧有异物飞出，机身向右后倾斜炸机。\n大屏数据：飞机起飞前播报，右后机臂未卡紧，起飞时，右侧有异物飞出，机身向右后倾斜炸机。"
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "",
+    "faultCondition": "",
+    "initialAnalysis": "FPV：飞机起飞时，右侧有异物飞出，机身向右后倾斜炸机。\n大屏数据：飞机起飞前播报，右后机臂未卡紧，起飞时，右侧有异物飞出，机身向右后倾斜炸机。",
+    "followUp": "",
+    "finalConclusion": "",
+    "region": "广东省"
   },
   {
     "id": "mrx75434728ww",
