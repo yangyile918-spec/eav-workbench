@@ -812,10 +812,15 @@
                             </select>
                         </div>
                     </div>
+                    <div style="margin-bottom: 8px; display: flex; gap: 10px; align-items: center;">
+                        <button class="btn btn-danger" onclick="batchDeleteSolution()" id="btnBatchDeleteSolution" style="display:none;">🗑️ 批量删除</button>
+                        <span id="solutionSelectedCount" style="color:#666;font-size:13px;"></span>
+                    </div>
                     <div class="table-responsive">
                         <table class="table" id="solutionTable">
                             <thead>
                                 <tr>
+                                    <th style="width:36px;"><input type="checkbox" onchange="toggleSelectAllSolution(this.checked)" id="solutionSelectAll"></th>
                                     <th>故障时间</th>
                                     <th>机型</th>
                                     <th>无人机编号</th>
@@ -828,7 +833,7 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr><td colspan="9" class="empty-state"><div class="empty-state-icon">🔧</div>暂无问题解决记录</td></tr>
+                                <tr><td colspan="10" class="empty-state"><div class="empty-state-icon">🔧</div>暂无问题解决记录</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -1124,6 +1129,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=72"></script>
+    <script src="app.js?v=73"></script>
 </body>
 </html>
