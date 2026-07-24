@@ -1630,7 +1630,7 @@
                     <td>${formatTimeOnly(r.analysisTime)}</td>
                     <td>${esc(r.workOrderNo)}</td>
                     <td>${esc(r.airframeNo)}</td>
-                    <td>${esc(r.model)}</td>
+                    <td><span class="model-badge" style="background-color: ${getModelColor(r.model)}20; color: ${getModelColor(r.model)}; border: 1px solid ${getModelColor(r.model)}40;">${esc(r.model || '—')}</span></td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
                     <td>
@@ -1701,7 +1701,7 @@
                     <td>${formatTimeOnly(r.analysisTime)}</td>
                     <td>${esc(r.workOrderNo)}</td>
                     <td>${esc(r.airframeNo)}</td>
-                    <td>${esc(r.model)}</td>
+                    <td><span class="model-badge" style="background-color: ${getModelColor(r.model)}20; color: ${getModelColor(r.model)}; border: 1px solid ${getModelColor(r.model)}40;">${esc(r.model || '—')}</span></td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
                     <td>
@@ -1905,6 +1905,20 @@
         // 更新预览
         updateReportPreview();
     };
+    // 机型颜色映射
+    function getModelColor(model) {
+        if (!model || model === '—') return '#999';
+        const colors = {
+            'J100': '#1976d2',  // 蓝色
+            'J150': '#388e3c',  // 绿色
+            'J160': '#d32f2f',  // 红色
+            'J70': '#f57c00',   // 橙色
+            'J110': '#7b1fa2',  // 紫色
+            'J200': '#00796b'   // 青色
+        };
+        return colors[model] || '#666';
+    }
+
     function renderTodayTable() {
         // 显示最近7天的记录
         const now = new Date();
@@ -1935,7 +1949,7 @@
             <tr>
                 <td><input type="checkbox" class="today-row-checkbox" data-id="${r.id}" onchange="updateTodaySelectedCount()" style="cursor:pointer;"></td>
                 <td>${formatDateTime(r.analysisTime)}</td>
-                <td><span class="model-badge">${esc(r.model || '—')}</span></td>
+                <td><span class="model-badge" style="background-color: ${getModelColor(r.model)}20; color: ${getModelColor(r.model)}; border: 1px solid ${getModelColor(r.model)}40;">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
                 <td>${esc(r.flightBatch)}</td>
                 <td>${esc(r.region)}</td>
@@ -2322,7 +2336,7 @@
                                r.status === '已关闭' ? 'status-closed' : 'status-pending';
             rows.push(`<tr>
                 <td>${formatDateTime(r.analysisTime)}</td>
-                <td><span class="model-badge">${esc(r.model || '—')}</span></td>
+                <td><span class="model-badge" style="background-color: ${getModelColor(r.model)}20; color: ${getModelColor(r.model)}; border: 1px solid ${getModelColor(r.model)}40;">${esc(r.model || '—')}</span></td>
                 <td>${esc(r.airframeNo)}</td>
                 <td>${esc(r.flightBatch)}</td>
                 <td>${esc(r.region)}</td>
@@ -2631,7 +2645,7 @@
             return `<tr>
                 <td><input type="checkbox" class="solution-checkbox" value="${r.id}" onchange="updateSolutionBatchDeleteBtn()"></td>
                 <td>${faultTimeDisplay}</td>
-                <td>${esc(r.model) || '—'}</td>
+                <td><span class="model-badge" style="background-color: ${getModelColor(r.model)}20; color: ${getModelColor(r.model)}; border: 1px solid ${getModelColor(r.model)}40;">${esc(r.model) || '—'}</span></td>
                 <td><strong>${esc(r.droneNo) || '—'}</strong></td>
                 <td>${esc(r.fieldNo) || '—'}</td>
                 <td title="${esc(r.faultDesc)}">${esc(r.faultDesc ? r.faultDesc.substring(0, 20) + (r.faultDesc.length > 20 ? '...' : '') : '—')}</td>
@@ -3731,7 +3745,7 @@ ${r.remark || '—'}
                     <td>${formatDateTime(r.analysisTime)}</td>
                     <td>${esc(r.workOrderNo)}</td>
                     <td>${esc(r.airframeNo)}</td>
-                    <td>${esc(r.model)}</td>
+                    <td><span class="model-badge" style="background-color: ${getModelColor(r.model)}20; color: ${getModelColor(r.model)}; border: 1px solid ${getModelColor(r.model)}40;">${esc(r.model || '—')}</span></td>
                     <td>${esc(r.analyst)}</td>
                     <td>${esc(r.problemType)}</td>
                     <td>
