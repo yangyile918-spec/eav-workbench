@@ -309,32 +309,6 @@
     "problemType": "FPV：飞机作业时，前方有电线，刹停时，惯性与电线发生碰撞导致炸机。"
   },
   {
-    "id": "mruezyixlwhcu",
-    "analysisTime": "2026-07-20",
-    "workOrderNo": "96376",
-    "airframeNo": "J150",
-    "model": "",
-    "flightBatch": "178454833294864 -- 50244000",
-    "region": "美国 Missouri",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
-  },
-  {
-    "id": "mruf1lcfxb1ef",
-    "analysisTime": "2026-07-20",
-    "workOrderNo": "96376",
-    "airframeNo": "J150",
-    "model": "",
-    "flightBatch": "178454833294864 -- 50244000",
-    "region": "美国 Missouri",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
-  },
-  {
     "id": "mruf8z9ks6cmt",
     "analysisTime": "2026-07-21T16:59",
     "workOrderNo": "",
@@ -401,19 +375,6 @@
     "analyst": "杨怡乐"
   },
   {
-    "id": "mruezdac4z9rs",
-    "analysisTime": "2026-07-20",
-    "workOrderNo": "96376",
-    "airframeNo": "J150",
-    "model": "",
-    "flightBatch": "178454833294864 -- 50244000",
-    "region": "美国 Missouri",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
-  },
-  {
     "id": "mruaolrlweupc",
     "analysisTime": "2026-07-21T14:48",
     "workOrderNo": "",
@@ -432,64 +393,5 @@
     "followUp": "",
     "finalConclusion": "疑似操作问题——机臂未卡紧\nSuspected operational error – Unlocked loose arm frame",
     "region": "美国 Kentucky"
-  },
-  {
-    "id": "mrud2fftygc27",
-    "analysisTime": "2026-07-20",
-    "workOrderNo": "96376",
-    "airframeNo": "J150",
-    "model": "",
-    "flightBatch": "178454833294864 -- 50244000",
-    "region": "美国 Missouri",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
-  },
-  {
-    "id": "mrudatzpjegne",
-    "analysisTime": "2026-07-20",
-    "workOrderNo": "96376",
-    "airframeNo": "J150",
-    "model": "",
-    "flightBatch": "178454833294864 -- 50244000",
-    "region": "美国 Missouri",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
-  },
-  {
-    "id": "mrudc9kx4d05z",
-    "analysisTime": "2026-07-20",
-    "workOrderNo": "96376",
-    "airframeNo": "J150",
-    "model": "",
-    "flightBatch": "178454833294864 -- 50244000",
-    "region": "美国 Missouri",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "initialAnalysis": "Suspected Radar Issue — Overly Short\nashboard Data: Operation speed at the moment of fault was 13.8 m/s; terrain-following altitude Detection Distance\ndropped from 3.3 m to 0 m; RPM of all four motors declined synchronously.\nPreliminary Analysis: Suspected front radar malfunction preventing terrain-following. Vision log is\nrequired for verification."
-  },
-  {
-    "id": "mrwxi361v68pv",
-    "analysisTime": "2026-07-23T11:05",
-    "workOrderNo": "",
-    "airframeNo": "",
-    "model": "",
-    "flightBatch": "",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "",
-    "faultCondition": "",
-    "initialAnalysis": "",
-    "followUp": "",
-    "finalConclusion": "",
-    "region": ""
   }
 ]
