@@ -1202,9 +1202,25 @@
         });
         // 分析时间：转换为 datetime-local 格式 (YYYY-MM-DDTHH:MM)
         const timeEl = document.getElementById('analysisTime');
+        console.log('[editRecord] id:', id);
+        console.log('[editRecord] r.analysisTime:', JSON.stringify(r.analysisTime));
+        console.log('[editRecord] timeEl exists:', !!timeEl);
         if (timeEl && r.analysisTime) {
-            // 将 "2026-07-23 08:00" 转换为 "2026-07-23T08:00"
-            timeEl.value = r.analysisTime.replace(' ', 'T');
+            // 清理可能的多余字符，确保格式正确
+            let cleaned = r.analysisTime.trim();
+            // 如果是 ISO 格式 (2026-07-23T08:00:00.000Z)，提取前 16 位
+            if (cleaned.includes('T') && cleaned.length > 16) {
+                cleaned = cleaned.substring(0, 16);
+            }
+            // 将空格替换为 T
+            const formatted = cleaned.replace(' ', 'T');
+            console.log('[editRecord] cleaned:', JSON.stringify(cleaned));
+            console.log('[editRecord] formatted:', JSON.stringify(formatted));
+            console.log('[editRecord] formatted length:', formatted.length);
+            timeEl.value = formatted;
+            console.log('[editRecord] timeEl.value after set:', JSON.stringify(timeEl.value));
+        } else {
+            console.log('[editRecord] timeEl or analysisTime missing, timeEl:', !!timeEl, 'analysisTime:', !!r.analysisTime);
         }
         // 分析人同步为当前登录用户
         if (session && session.name) {
