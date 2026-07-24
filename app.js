@@ -760,6 +760,44 @@
         }
     }
 
+    // 对云端数据执行迁移（修复字段错位）
+    function migrateCloudRecords(records) {
+        const PROBLEM_KW = /操作问题 | 动力问题 | 质量问题 | 故障 | 断裂 | 烧 | 炸 | 裂纹 | 变形 | 损坏 | 不符合质保 | 手动碰撞 | 卡扣 | 尾插 | 机臂 | 信号 | 失联 | 雷达 | 避障 | 喷洒 | 播撒 | GPS|RTK|航线 | 偏航 | 翻机 | 坠机 | 失控 | 问题/i;
+        const FLIGHT_BATCH_PATTERN = /^\d{10,}\s*[—\-–]+\s*\d+/;
+        const PROVINCE_PATTERN = /^(广东 | 海南 | 四川 | 云南 | 福建 | 湖南 | 湖北 | 河南 | 河北 | 山东 | 山西 | 陕西 | 甘肃 | 青海 | 台湾 | 广西 | 贵州 | 安徽 | 江苏 | 浙江 | 江西 | 黑龙江 | 吉林 | 辽宁 | 内蒙古 | 新疆 | 西藏 | 宁夏 | 北京 | 天津 | 上海 | 重庆 | 香港 | 澳门 | 美国)/;
+
+        records.forEach(r => {
+            // 迁移 1：feedbackPerson 存的是问题定性
+            if (r.feedbackPerson && PROBLEM_KW.test(r.feedbackPerson) && !r.problemType) {
+                r.problemType = r.feedbackPerson;
+                r.feedbackPerson = '';
+            }
+
+            // 迁移 2：model 存的是地块编号，flightBatch 存的是省区
+            const modelIsFlightBatch = r.model && FLIGHT_BATCH_PATTERN.test(r.model);
+            const flightBatchIsRegion = r.flightBatch && PROVINCE_PATTERN.test(r.flightBatch);
+            if (modelIsFlightBatch || flightBatchIsRegion) {
+                const correctFlightBatch = modelIsFlightBatch ? r.model : (r.flightBatch || '');
+                const correctRegion = flightBatchIsRegion ? r.flightBatch : (r.region || '');
+                const correctProblemType = r.feedbackPerson || '';
+                r.model = '';
+                r.flightBatch = correctFlightBatch;
+                r.region = correctRegion;
+                r.problemType = correctProblemType;
+                r.feedbackPerson = '';
+            }
+
+            // 迁移 3：problemType 包含 FPV 描述（与 initialAnalysis 错位）
+            if (r.problemType && (r.problemType.includes('FPV:') || r.problemType.length > 50)) {
+                if (!r.initialAnalysis || r.initialAnalysis.length < r.problemType.length) {
+                    const temp = r.problemType;
+                    r.problemType = r.initialAnalysis || '';
+                    r.initialAnalysis = temp;
+                }
+            }
+        });
+    }
+
     async function pullFromCloud() {
         const cfg = getCloudConfig();
         console.log('[pullFromCloud] config:', cfg ? 'exists' : 'null');
@@ -777,6 +815,9 @@
                 const cloudRecords = JSON.parse(content);
                 console.log('[pullFromCloud] cloudRecords:', Array.isArray(cloudRecords) ? 'array, length=' + cloudRecords.length : 'not array');
                 if (Array.isArray(cloudRecords)) {
+                    // 对云端数据也执行数据迁移（修复字段错位）
+                    migrateCloudRecords(cloudRecords);
+                    
                     // Merge: local records + cloud records (by id, LOCAL wins to preserve deletions)
                     const merged = new Map();
                     cloudRecords.forEach(r => merged.set(r.id, r));  // 先放云端数据
@@ -784,6 +825,14 @@
                     records = Array.from(merged.values());
                     console.log('[pullFromCloud] merged records:', records.length);
                     saveRecords(true, true); // save locally without re-syncing
+                    
+                    // 迁移后推送修正数据回云端
+                    pushToCloud().then(() => {
+                        console.log('[pullFromCloud] 已推送修正数据到云端');
+                    }).catch(e => {
+                        console.warn('[pullFromCloud] 推送云端失败:', e);
+                    });
+                    
                     renderTodayTable();
                     generateDailyReport();
                     generateWeeklyReport();
