@@ -182,7 +182,7 @@ body {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
     margin-bottom: 20px;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .card-header {
