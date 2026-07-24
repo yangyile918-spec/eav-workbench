@@ -1152,7 +1152,7 @@
     function saveRecord() {
         const record = {
             id: editingId || Date.now().toString(36) + Math.random().toString(36).substr(2,5),
-            analysisTime: document.getElementById('analysisTime').value,
+            analysisTime: document.getElementById('analysisTime').value.replace('T', ' '),
             workOrderNo: document.getElementById('workOrderNo').value.trim(),
             airframeNo: document.getElementById('airframeNo').value.trim(),
             model: document.getElementById('model').value.trim(),
@@ -1194,12 +1194,18 @@
         if (!r) return;
         editingId = id;
         const session = getSession();
-        ['analysisTime','workOrderNo','airframeNo','model','flightBatch','feedbackPerson',
+        ['workOrderNo','airframeNo','model','flightBatch','feedbackPerson',
          'analyst','problemType','auditResult','tracker','reviewer','problemDescription',
          'faultCondition','initialAnalysis','followUp','finalConclusion','region'].forEach(k => {
             const el = document.getElementById(k);
             if (el) el.value = r[k] || '';
         });
+        // 分析时间：转换为 datetime-local 格式 (YYYY-MM-DDTHH:MM)
+        const timeEl = document.getElementById('analysisTime');
+        if (timeEl && r.analysisTime) {
+            // 将 "2026-07-23 08:00" 转换为 "2026-07-23T08:00"
+            timeEl.value = r.analysisTime.replace(' ', 'T');
+        }
         // 分析人同步为当前登录用户
         if (session && session.name) {
             document.getElementById('analyst').value = session.name;
