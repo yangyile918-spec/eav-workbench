@@ -1046,6 +1046,9 @@
         });
 
         // 问题解决
+        document.getElementById('btnAddSolution').addEventListener('click', () => {
+            window.openSolutionModal();
+        });
         document.getElementById('btnSaveSolution').addEventListener('click', saveSolutionRecord);
 
         // 日报
