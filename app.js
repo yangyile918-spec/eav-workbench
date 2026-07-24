@@ -786,6 +786,39 @@
                 } catch(e) {
                     console.warn('Cloud sync solutions error:', e);
                 }
+                // 同时也推送跟进任务记录到云端
+                try {
+                    const followupUrl = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/data/followup.json`;
+                    loadFollowupRecords();
+                    const fuContent = btoa(unescape(encodeURIComponent(JSON.stringify(followupRecords, null, 2))));
+                    let fuSha = null;
+                    try {
+                        const fuResp = await fetch(followupUrl, {
+                            headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                        });
+                        if (fuResp.ok) {
+                            const fuExisting = await fuResp.json();
+                            fuSha = fuExisting.sha;
+                        }
+                    } catch(e) { /* 文件不存在，首次创建 */ }
+                    const fuBody = {
+                        message: `auto-sync followup: ${followupRecords.length} records @ ${new Date().toLocaleString('zh-CN')}`,
+                        content: fuContent,
+                        branch: cfg.branch || 'main'
+                    };
+                    if (fuSha) fuBody.sha = fuSha;
+                    await fetch(followupUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `token ${cfg.token}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(fuBody)
+                    });
+                } catch(e) {
+                    console.warn('Cloud sync followup error:', e);
+                }
                 updateSyncStatus('synced', `已同步 ${records.length} 条`);
                 return true;
             } else {
@@ -900,6 +933,26 @@
                     } catch(e) {
                         console.warn('[pullFromCloud] solutions sync error:', e);
                     }
+                    // 同时拉取跟进任务记录
+                    try {
+                        const fuRawUrl = `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch || 'main'}/data/followup.json`;
+                        const fuResp = await fetch(fuRawUrl);
+                        if (fuResp.ok) {
+                            const fuContent = await fuResp.text();
+                            const cloudFollowup = JSON.parse(fuContent);
+                            if (Array.isArray(cloudFollowup) && cloudFollowup.length > 0) {
+                                // 合并：本地优先
+                                const fuMerged = new Map();
+                                cloudFollowup.forEach(r => fuMerged.set(r.id, r));
+                                followupRecords.forEach(r => fuMerged.set(r.id, r));
+                                followupRecords = Array.from(fuMerged.values());
+                                saveFollowupRecords();
+                                console.log('[pullFromCloud] loaded', cloudFollowup.length, 'followup from cloud');
+                            }
+                        }
+                    } catch(e) {
+                        console.warn('[pullFromCloud] followup sync error:', e);
+                    }
                     
                     renderTodayTable();
                     generateDailyReport();
@@ -907,6 +960,9 @@
                     updateDashboard();
                     if (document.getElementById('page-solution')?.classList.contains('active')) {
                         renderSolutionPage();
+                    }
+                    if (document.getElementById('page-followup')?.classList.contains('active')) {
+                        renderFollowupPage();
                     }
                     updateSyncStatus('synced', `已加载 ${records.length} 条`);
                     console.log('[pullFromCloud] success, loaded', records.length, 'records');
@@ -1789,6 +1845,13 @@
 
     function saveFollowupRecords() {
         localStorage.setItem(FOLLOWUP_KEY, JSON.stringify(followupRecords));
+        // 触发云同步（异步，不阻塞）
+        try {
+            const cfg = getCloudConfig();
+            if (cfg && cfg.enabled && cfg.token) {
+                pushToCloud();
+            }
+        } catch(e) { /* ignore */ }
     }
 
     function generateFollowupId() {
