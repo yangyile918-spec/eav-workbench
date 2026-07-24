@@ -635,19 +635,25 @@
             // 数据迁移 v57：修复问题定性与初步分析字段错位
             // 特征：problemType 包含 FPV: 或长描述（>50字符），而 initialAnalysis 为空或较短
             let migratedV57 = false;
+            let v57Checked = 0;
+            let v57Swapped = 0;
             records.forEach(r => {
+                v57Checked++;
                 // 如果 problemType 包含 FPV 描述或过长，而 initialAnalysis 为空或也是 FPV 描述
                 if (r.problemType && (r.problemType.includes('FPV:') || r.problemType.length > 50)) {
+                    console.log('[v57 检测] 记录', r.airframeNo, '- problemType 长度:', r.problemType.length, '- initialAnalysis 长度:', (r.initialAnalysis||'').length);
                     if (!r.initialAnalysis || r.initialAnalysis.length < r.problemType.length) {
                         // 交换：problemType 的内容应该到 initialAnalysis
                         const temp = r.problemType;
                         r.problemType = r.initialAnalysis || '';
                         r.initialAnalysis = temp;
                         migratedV57 = true;
+                        v57Swapped++;
                         console.log('[数据迁移 v57] 修复记录:', r.airframeNo);
                     }
                 }
             });
+            console.log('[v57 统计] 检查:', v57Checked, '条 - 交换:', v57Swapped, '条');
             if (migratedV57) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
                 console.log('[数据迁移 v57] 已修复问题定性与初步分析错位');
