@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>极目售后分析组工作台</title>
-    <link rel="stylesheet" href="style.css?v=38">
+    <link rel="stylesheet" href="style.css?v=39">
     <style>
         .summary-card {
             background: linear-gradient(135deg, #f8f9ff 0%, #e8ecf8 100%) !important;
@@ -1078,8 +1078,25 @@
                     <textarea id="solutionAnalysis" rows="2" placeholder="分析结果"></textarea>
                 </div>
                 <div class="form-group" style="margin-top:8px;">
+                    <label>解决办法</label>
+                    <textarea id="solutionSolution" rows="2" placeholder="解决办法"></textarea>
+                </div>
+                <div class="form-group" style="margin-top:8px;">
                     <label>备注</label>
                     <textarea id="solutionRemark" rows="2" placeholder="备注"></textarea>
+                </div>
+                <!-- 反馈模板快捷录入 -->
+                <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px;">
+                    <button class="btn btn-text" id="btnSolutionFeedbackToggle" style="font-size:12px;color:var(--primary);">📋 反馈模板快捷录入</button>
+                    <div id="solutionFeedbackPanel" style="display:none;margin-top:8px;">
+                        <p class="hint" style="font-size:12px;margin-bottom:6px;">粘贴模板文本，自动填充上方字段</p>
+                        <textarea id="solutionFeedbackText" rows="4" placeholder="无人机编号：J160&#10;地块编号：535565&#10;故障时间：7.12日，上午7.12~7.00&#10;故障现象：无人机自主作业返航时掉树上了&#10;需求描述：需要现场处理" style="width:100%;font-size:12px;padding:6px;border:1px solid var(--border);border-radius:6px;resize:vertical;"></textarea>
+                        <div style="display:flex;gap:8px;margin-top:6px;">
+                            <button class="btn btn-primary btn-sm" id="btnSolutionFeedbackParse">📥 填入表单</button>
+                            <button class="btn btn-secondary btn-sm" id="btnSolutionFeedbackClear">🗑️ 清空</button>
+                        </div>
+                        <div id="solutionFeedbackPreview" style="margin-top:8px;font-size:12px;color:var(--text-light);"></div>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -1107,6 +1124,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=71"></script>
+    <script src="app.js?v=72"></script>
 </body>
 </html>

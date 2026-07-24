@@ -1106,6 +1106,16 @@
             window.openSolutionModal();
         });
         document.getElementById('btnSaveSolution').addEventListener('click', saveSolutionRecord);
+        // 问题解决 - 反馈模板
+        document.getElementById('btnSolutionFeedbackToggle').addEventListener('click', () => {
+            const panel = document.getElementById('solutionFeedbackPanel');
+            panel.style.display = panel.style.display === 'none' ? '' : 'none';
+        });
+        document.getElementById('btnSolutionFeedbackParse').addEventListener('click', parseSolutionFeedback);
+        document.getElementById('btnSolutionFeedbackClear').addEventListener('click', () => {
+            document.getElementById('solutionFeedbackText').value = '';
+            document.getElementById('solutionFeedbackPreview').innerHTML = '';
+        });
         // 问题解决筛选事件
         document.getElementById('solutionFilterDate').addEventListener('change', renderSolutionPage);
         document.getElementById('solutionFilterDrone').addEventListener('input', renderSolutionPage);
@@ -2252,6 +2262,7 @@
             logs: parsed.logs,
             status: '待分析',
             analysis: '',
+            solution: '',
             remark: '',
             createTime: new Date().toISOString()
         };
@@ -2288,6 +2299,44 @@
         switchPage('solution');
         renderSolutionPage();
         alert('✅ 已录入到问题解决页面');
+    }
+
+    // 问题解决 - 反馈模板解析填充
+    function parseSolutionFeedback() {
+        const textarea = document.getElementById('solutionFeedbackText');
+        if (!textarea || !textarea.value.trim()) {
+            alert('⚠️ 请先在反馈模板框内粘贴文本');
+            return;
+        }
+        const parsed = parseFeedbackTemplate(textarea.value);
+        if (!parsed.droneNo && !parsed.fieldNo && !parsed.faultDesc) {
+            alert('⚠️ 未能识别到有效信息，请检查模板格式');
+            return;
+        }
+        // 填充表单
+        if (parsed.droneNo) document.getElementById('solutionDroneNo').value = parsed.droneNo;
+        if (parsed.fieldNo) document.getElementById('solutionFieldNo').value = parsed.fieldNo;
+        if (parsed.faultTime) document.getElementById('solutionFaultTime').value = parsed.faultTime + 'T00:00';
+        if (parsed.faultPeriod) document.getElementById('solutionFaultPeriod').value = parsed.faultPeriod;
+        if (parsed.faultDesc) document.getElementById('solutionFaultDesc').value = parsed.faultDesc;
+        if (parsed.requirement) document.getElementById('solutionRequirement').value = parsed.requirement;
+        // 日志
+        document.getElementById('logDrone').checked = parsed.logs.drone;
+        document.getElementById('logVideo').checked = parsed.logs.video;
+        document.getElementById('logApp').checked = parsed.logs.app;
+        document.getElementById('logFpv').checked = parsed.logs.fpv;
+        document.getElementById('logFlight').checked = parsed.logs.flight;
+        document.getElementById('logOther').checked = parsed.logs.other;
+        // 预览
+        const preview = document.getElementById('solutionFeedbackPreview');
+        const logStatus = [];
+        if (parsed.logs.drone) logStatus.push('无人机日志');
+        if (parsed.logs.video) logStatus.push('图传日志');
+        if (parsed.logs.app) logStatus.push('APP日志');
+        if (parsed.logs.fpv) logStatus.push('FPV日志');
+        if (parsed.logs.flight) logStatus.push('飞控日志');
+        if (parsed.logs.other) logStatus.push('其他');
+        preview.innerHTML = `✅ 已填入表单：无人机编号=${esc(parsed.droneNo) || '—'}, 地块=${esc(parsed.fieldNo) || '—'}, 日志=${logStatus.length > 0 ? logStatus.join('、') : '未勾选'}`;
     }
 
     // ========== 问题解决页面 ==========
@@ -2379,6 +2428,7 @@
         document.getElementById('solutionRequirement').value = '';
         document.getElementById('solutionStatus').value = '待分析';
         document.getElementById('solutionAnalysis').value = '';
+        document.getElementById('solutionSolution').value = '';
         document.getElementById('solutionRemark').value = '';
         document.getElementById('logDrone').checked = false;
         document.getElementById('logVideo').checked = false;
@@ -2386,6 +2436,13 @@
         document.getElementById('logFpv').checked = false;
         document.getElementById('logFlight').checked = false;
         document.getElementById('logOther').checked = false;
+        // 重置反馈模板区
+        const fbPanel = document.getElementById('solutionFeedbackPanel');
+        if (fbPanel) fbPanel.style.display = 'none';
+        const fbText = document.getElementById('solutionFeedbackText');
+        if (fbText) fbText.value = '';
+        const fbPreview = document.getElementById('solutionFeedbackPreview');
+        if (fbPreview) fbPreview.innerHTML = '';
         document.getElementById('solutionModal').classList.add('show');
     };
 
@@ -2407,6 +2464,7 @@
         document.getElementById('solutionRequirement').value = r.requirement || '';
         document.getElementById('solutionStatus').value = r.status || '待分析';
         document.getElementById('solutionAnalysis').value = r.analysis || '';
+        document.getElementById('solutionSolution').value = r.solution || '';
         document.getElementById('solutionRemark').value = r.remark || '';
         if (r.logs) {
             document.getElementById('logDrone').checked = !!r.logs.drone;
@@ -2465,6 +2523,10 @@
                 <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;white-space:pre-wrap;">${esc(r.analysis) || '—'}</p>
             </div>
             <div style="margin-bottom:16px;">
+                <strong>解决办法：</strong>
+                <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;white-space:pre-wrap;">${esc(r.solution) || '—'}</p>
+            </div>
+            <div style="margin-bottom:16px;">
                 <strong>备注：</strong>
                 <p style="margin:8px 0;padding:12px;background:#f8f9fa;border-radius:6px;">${esc(r.remark) || '—'}</p>
             </div>
@@ -2512,6 +2574,9 @@ ${logStatus.length > 0 ? logStatus.join('、') : '—'}
 分析过程 / 解决方案：
 ${r.analysis || '—'}
 
+解决办法：
+${r.solution || '—'}
+
 备注：
 ${r.remark || '—'}
 
@@ -2548,6 +2613,7 @@ ${r.remark || '—'}
             },
             status: document.getElementById('solutionStatus').value,
             analysis: document.getElementById('solutionAnalysis').value.trim(),
+            solution: document.getElementById('solutionSolution').value.trim(),
             remark: document.getElementById('solutionRemark').value.trim(),
             createTime: editId ? (solutionRecords.find(r => r.id === editId)?.createTime || new Date().toISOString()) : new Date().toISOString()
         };
