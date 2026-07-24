@@ -1591,11 +1591,8 @@
         const count = checked.length;
         const countEl = document.getElementById('selectedCount');
         const btn = document.getElementById('batchDeleteBtn');
-        if (countEl) countEl.textContent = `已选 ${count} 条`;
-        if (btn) {
-            btn.disabled = count === 0;
-            btn.style.opacity = count === 0 ? '0.5' : '1';
-        }
+        if (countEl) countEl.textContent = count > 0 ? `已选 ${count} 条` : '';
+        if (btn) btn.style.display = count > 0 ? 'inline-block' : 'none';
         // 同步全选框状态
         const allCount = checkboxes.length;
         const selectAllCheckbox = document.getElementById('selectAllCheckbox');
@@ -1790,11 +1787,8 @@
         const count = checked.length;
         const countEl = document.getElementById('todaySelectedCount');
         const btn = document.getElementById('todayBatchDeleteBtn');
-        if (countEl) countEl.textContent = `已选 ${count} 条`;
-        if (btn) {
-            btn.disabled = count === 0;
-            btn.style.opacity = count === 0 ? '0.5' : '1';
-        }
+        if (countEl) countEl.textContent = count > 0 ? `已选 ${count} 条` : '';
+        if (btn) btn.style.display = count > 0 ? 'inline-block' : 'none';
         // 同步全选框状态
         const allCount = checkboxes.length;
         const selectAll = document.getElementById('todaySelectAll');

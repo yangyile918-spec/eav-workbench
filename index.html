@@ -281,6 +281,10 @@
                     <div class="card-header">
                         <h2>📋 最近记录 <span id="todayCount" class="badge">0 条</span></h2>
                     </div>
+                    <div style="padding: 8px 16px; display: flex; gap: 10px; align-items: center;">
+                        <button class="btn btn-danger" onclick="batchDeleteTodaySelected()" id="todayBatchDeleteBtn" style="display:none;">🗑️ 批量删除</button>
+                        <span id="todaySelectedCount" style="color:#666;font-size:13px;"></span>
+                    </div>
                     <table class="data-table" id="todayTable">
                         <thead>
                             <tr>
@@ -1129,6 +1133,6 @@
         </div>
     </div>
 
-    <script src="app.js?v=73"></script>
+    <script src="app.js?v=74"></script>
 </body>
 </html>
