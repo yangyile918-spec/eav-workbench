@@ -1436,9 +1436,10 @@
             finalConclusion: document.getElementById('finalConclusion').value.trim(),
             region: document.getElementById('region').value.trim()
         };
-        // 自动推导机型：如果 model 为空但有 airframeNo
-        if (!record.model && record.airframeNo) {
-            record.model = detectModelFromAirframe(record.airframeNo);
+        // 自动推导机型：只要有架号就始终匹配（v81：始终覆盖）
+        if (record.airframeNo) {
+            const detected = detectModelFromAirframe(record.airframeNo);
+            if (detected) record.model = detected;
         }
         if (!record.analysisTime) { alert('请填写分析时间'); return; }
 
@@ -3681,9 +3682,10 @@ ${r.remark || '—'}
                     record.analysisTime = dateMatch[1] + '-' + String(dateMatch[2]).padStart(2,'0') + '-' + String(dateMatch[3]).padStart(2,'0');
                 }
             }
-            // 自动推导机型：如果 model 为空但有 airframeNo，根据机架号后5位首字符推导
-            if (!record.model && record.airframeNo) {
-                record.model = detectModelFromAirframe(record.airframeNo);
+            // 自动推导机型：只要有架号就始终匹配（v81：始终覆盖）
+            if (record.airframeNo) {
+                const detected = detectModelFromAirframe(record.airframeNo);
+                if (detected) record.model = detected;
             }
             if (record.analysisTime || record.workOrderNo || record.airframeNo) {
                 records.push(record);
