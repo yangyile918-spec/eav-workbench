@@ -1,1 +1,46 @@
-[]
+[
+  {
+    "id": "mryojyea3injv",
+    "droneNo": "90074",
+    "fieldNo": "",
+    "faultTime": "2026-22-55T00:00",
+    "faultPeriod": "7月23日22.55～23:10",
+    "faultDesc": "无人机异常失去动力掉落炸机",
+    "requirement": "请求分析原因",
+    "logs": {
+      "drone": true,
+      "video": false,
+      "app": false,
+      "fpv": true,
+      "flight": true,
+      "other": false
+    },
+    "status": "待分析",
+    "analysis": "",
+    "solution": "",
+    "remark": "",
+    "createTime": "2026-07-24T08:30:24.994Z"
+  },
+  {
+    "id": "mryokfujuxh3b",
+    "droneNo": "80566",
+    "fieldNo": "无人机自主作业进入地块时遥控器上什么也没报就掉线来了",
+    "faultTime": "2026-07-24T00:00",
+    "faultPeriod": "7.24日，上午6点20到6点40",
+    "faultDesc": "无人机自主作业进入地块时遥控器上什么也没报就掉线来了",
+    "requirement": "查询炸机原因",
+    "logs": {
+      "drone": true,
+      "video": false,
+      "app": false,
+      "fpv": true,
+      "flight": true,
+      "other": false
+    },
+    "status": "待分析",
+    "analysis": "",
+    "solution": "",
+    "remark": "",
+    "createTime": "2026-07-24T08:30:47.611Z"
+  }
+]
