@@ -616,7 +616,7 @@
                 if (modelIsFlightBatch || flightBatchIsRegion) {
                     const correctFlightBatch = modelIsFlightBatch ? r.model : (r.flightBatch || '');
                     const correctRegion = flightBatchIsRegion ? r.flightBatch : (r.region || '');
-                    const correctProblemType = r.region || '';
+                    const correctProblemType = r.feedbackPerson || '';
                     
                     r.model = '';
                     r.flightBatch = correctFlightBatch;
@@ -630,6 +630,27 @@
             if (migratedV47) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
                 console.log('[数据迁移 v47] 已修复字段错位');
+            }
+
+            // 数据迁移 v57：修复问题定性与初步分析字段错位
+            // 特征：problemType 包含 FPV: 或长描述（>50字符），而 initialAnalysis 为空或较短
+            let migratedV57 = false;
+            records.forEach(r => {
+                // 如果 problemType 包含 FPV 描述或过长，而 initialAnalysis 为空或也是 FPV 描述
+                if (r.problemType && (r.problemType.includes('FPV:') || r.problemType.length > 50)) {
+                    if (!r.initialAnalysis || r.initialAnalysis.length < r.problemType.length) {
+                        // 交换：problemType 的内容应该到 initialAnalysis
+                        const temp = r.problemType;
+                        r.problemType = r.initialAnalysis || '';
+                        r.initialAnalysis = temp;
+                        migratedV57 = true;
+                        console.log('[数据迁移 v57] 修复记录:', r.airframeNo);
+                    }
+                }
+            });
+            if (migratedV57) {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+                console.log('[数据迁移 v57] 已修复问题定性与初步分析错位');
             }
             if (migrated) {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
