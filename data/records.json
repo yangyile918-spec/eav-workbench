@@ -375,26 +375,6 @@
     "region": "美国 Kentucky"
   },
   {
-    "id": "mryokfujuxh3b",
-    "analysisTime": "2026-07-24T00:00",
-    "workOrderNo": "",
-    "airframeNo": "80566",
-    "model": "J100",
-    "flightBatch": "无人机自主作业进入地块时遥控器上什么也没报就掉线来了",
-    "feedbackPerson": "",
-    "analyst": "",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "查询炸机原因",
-    "faultCondition": "无人机自主作业进入地块时遥控器上什么也没报就掉线来了",
-    "initialAnalysis": "",
-    "followUp": "日志上传状态：drone、fpv、flight",
-    "finalConclusion": "",
-    "region": ""
-  },
-  {
     "id": "mryojyea3injv",
     "analysisTime": "2026-22-55T00:00",
     "workOrderNo": "",
