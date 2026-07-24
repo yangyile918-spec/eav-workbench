@@ -84,7 +84,8 @@
     "region": "美国\nMinnesota",
     "initialAnalysis": "FPV：飞机航线与电线夹角过小，与电线发生碰撞导致炸机。\n大屏数据：飞机未关闭小电，换地块后，未设置地块内有电线，与电线发生碰撞导致炸机。",
     "problemType": "设置问题——撞电线\nConfiguration Issue – Collision with Power Lines",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "非质保"
   },
   {
     "id": "mrx4ugbwiytxj",
@@ -95,7 +96,8 @@
     "region": "美国\nIndiana",
     "initialAnalysis": "FPV:无\n大屏数据：无人机自主飞行，作业速度由9.4m/s降至2.6m/s,后相对高度降低，飞机坠落。\n初步分析：故障区域地区显示为树丛，疑似碰撞树木，需上传雷达日志进一步分析。",
     "problemType": "设置问题——参数设置问题\nSetting Error—Parameter Configuration Error",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "非质保"
   },
   {
     "id": "mrx7543407m7g",
@@ -193,7 +195,8 @@
     "region": "广东省",
     "feedbackPerson": "",
     "analyst": "杨怡乐",
-    "problemType": "FPV：飞机起飞时，右侧有异物飞出，机身向右后倾斜炸机。\n大屏数据：飞机起飞前播报，右后机臂未卡紧，起飞时，右侧有异物飞出，机身向右后倾斜炸机。"
+    "problemType": "FPV：飞机起飞时，右侧有异物飞出，机身向右后倾斜炸机。\n大屏数据：飞机起飞前播报，右后机臂未卡紧，起飞时，右侧有异物飞出，机身向右后倾斜炸机。",
+    "auditResult": "非质保"
   },
   {
     "id": "mrx75434728ww",
