@@ -830,6 +830,10 @@
                     records.forEach(r => merged.set(r.id, r));       // 本地数据覆盖云端（本地优先）
                     records = Array.from(merged.values());
                     console.log('[pullFromCloud] merged records:', records.length);
+                    
+                    // 合并后再跑一次迁移，确保最终数据正确
+                    migrateCloudRecords(records);
+                    
                     saveRecords(true, true); // save locally without re-syncing
                     
                     // 迁移后推送修正数据回云端
