@@ -6,6 +6,7 @@
     const TRASH_KEY = 'droneWorkbenchTrash';
     const CLOUD_CONFIG_KEY = 'droneWorkbenchCloudConfig';
     const CUSTOM_AUDIT_KEY = 'droneWorkbenchCustomAudits';
+    const DELETED_IDS_KEY = 'droneWorkbenchDeletedIds'; // 墓碑：已删除记录的ID集合
     const FINISHED_STATUS = ['完结待签字', '待评价', '已评价'];
 
     // 默认云同步配置（Token 分段拼接，避免 GitHub secret 检测）
@@ -22,6 +23,27 @@
     let trashRecords = [];
     let charts = {};
     let editingId = null;
+
+    // ========== 墓碑管理（防止已删除记录被云端拉回） ==========
+    function getDeletedIds() {
+        try {
+            const data = localStorage.getItem(DELETED_IDS_KEY);
+            return data ? new Set(JSON.parse(data)) : new Set();
+        } catch(e) { return new Set(); }
+    }
+    function addDeletedIds(ids) {
+        const set = getDeletedIds();
+        ids.forEach(id => set.add(id));
+        // 只保留最近2000条墓碑，防止无限增长
+        const arr = Array.from(set);
+        const trimmed = arr.length > 2000 ? arr.slice(arr.length - 2000) : arr;
+        localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(trimmed));
+    }
+    function filterCloudByTombstone(cloudRecords) {
+        const deletedIds = getDeletedIds();
+        if (deletedIds.size === 0) return cloudRecords;
+        return cloudRecords.filter(r => !deletedIds.has(r.id));
+    }
 
     // 周报生成相关
     let ordersData = null;   // 工单导出数据
@@ -423,9 +445,11 @@
                         const localStr = JSON.stringify(records.map(r => r.id).sort());
                         const cloudStr = JSON.stringify(cloudRecords.map(r => r.id).sort());
                         if (localStr !== cloudStr || records.length !== cloudRecords.length) {
-                            // 合并：本地优先（与 pullFromCloud 保持一致，防止已删除记录被云端缓存拉回）
+                            // 🔥 用墓碑过滤云端数据，防止已删除记录被拉回
+                            const filteredCloud = filterCloudByTombstone(cloudRecords);
+                            // 合并：本地优先 + 墓碑过滤
                             const merged = new Map();
-                            cloudRecords.forEach(r => merged.set(r.id, r));
+                            filteredCloud.forEach(r => merged.set(r.id, r));
                             records.forEach(r => merged.set(r.id, r));
                             records = Array.from(merged.values());
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
@@ -986,10 +1010,14 @@
                     // 对云端数据也执行数据迁移（修复字段错位）
                     migrateCloudRecords(cloudRecords);
                     
-                    // Merge: local records + cloud records (by id, LOCAL wins to preserve deletions)
+                    // 🔥 关键：用墓碑过滤云端数据，排除已删除的记录
+                    const filteredCloudRecords = filterCloudByTombstone(cloudRecords);
+                    console.log('[pullFromCloud] 墓碑过滤: 云端' + cloudRecords.length + '条 → 过滤后' + filteredCloudRecords.length + '条');
+                    
+                    // Merge: local records + cloud records (by id, LOCAL wins)
                     const merged = new Map();
-                    cloudRecords.forEach(r => merged.set(r.id, r));  // 先放云端数据
-                    records.forEach(r => merged.set(r.id, r));       // 本地数据覆盖云端（本地优先）
+                    filteredCloudRecords.forEach(r => merged.set(r.id, r));  // 先放过滤后的云端数据
+                    records.forEach(r => merged.set(r.id, r));               // 本地数据覆盖云端（本地优先）
                     records = Array.from(merged.values());
                     console.log('[pullFromCloud] merged records:', records.length);
                     
@@ -1530,6 +1558,8 @@
         if (!confirm('确定删除此记录？可前往回收站恢复')) return;
         const idx = records.findIndex(r => r.id === id);
         if (idx === -1) return;
+        // 🔥 记录墓碑
+        addDeletedIds([id]);
         const removed = records.splice(idx, 1)[0];
         removed._deletedAt = new Date().toISOString();
         trashRecords.push(removed);
@@ -1555,6 +1585,10 @@
         const restored = trashRecords.splice(idx, 1)[0];
         delete restored._deletedAt;
         records.push(restored);
+        // 🔥 恢复时从墓碑中移除，允许云端版本再次同步
+        const deletedIds = getDeletedIds();
+        deletedIds.delete(id);
+        localStorage.setItem(DELETED_IDS_KEY, JSON.stringify(Array.from(deletedIds)));
         saveTrash();
         saveRecords();
         renderTrashPage();
@@ -1728,6 +1762,9 @@
         const idsToDelete = Array.from(checked).map(cb => cb.dataset.id);
         let deletedCount = 0;
         
+        // 🔥 记录墓碑：防止云端同步把已删除的记录拉回来
+        addDeletedIds(idsToDelete);
+        
         idsToDelete.forEach(id => {
             const idx = records.findIndex(r => r.id === id);
             if (idx !== -1) {
@@ -1768,6 +1805,9 @@
         if (!confirm(`⚠️ 确定清空全部 ${records.length} 条记录？\n删除后可在回收站恢复。`)) return;
         if (!confirm(`再次确认：真的要清空所有 ${records.length} 条记录吗？`)) return;
 
+        // 🔥 记录墓碑：防止云端同步把已删除的记录拉回来
+        addDeletedIds(records.map(r => r.id));
+        
         // 全部移入回收站
         records.forEach(r => {
             r._deletedAt = new Date().toISOString();
@@ -1961,6 +2001,9 @@
         const idsToDelete = Array.from(checked).map(cb => cb.dataset.id);
         let deletedCount = 0;
         
+        // 🔥 记录墓碑：防止云端同步把已删除的记录拉回来
+        addDeletedIds(idsToDelete);
+        
         idsToDelete.forEach(id => {
             const idx = records.findIndex(r => r.id === id);
             if (idx !== -1) {
@@ -2001,6 +2044,9 @@
         if (!confirm(`⚠️ 确定清空全部 ${records.length} 条记录？\n删除后可在回收站恢复。`)) return;
         if (!confirm(`再次确认：真的要清空所有 ${records.length} 条记录吗？`)) return;
 
+        // 🔥 记录墓碑：防止云端同步把已删除的记录拉回来
+        addDeletedIds(records.map(r => r.id));
+        
         // 全部移入回收站
         records.forEach(r => {
             r._deletedAt = new Date().toISOString();
@@ -5262,6 +5308,7 @@ ${r.remark || '—'}
     // ========== 拖拽选择表格行 ==========
     function initDragSelect() {
         let isDragging = false;
+        let hasDragged = false; // 标记是否真的拖拽过（区分点击和拖拽）
         let dragStartIndex = -1;
         let dragTable = null;
 
@@ -5275,8 +5322,9 @@ ${r.remark || '—'}
         }
 
         function handleMouseDown(e) {
-            // 只在按住 Shift 或 Alt 键时启用拖拽选择，或者普通点击行（非按钮/输入框区域）
-            if (e.target.closest('button, input, select, a, .btn, .btn-text')) return;
+            // 排除按钮、链接、文本框等交互元素，但允许从 checkbox 开始拖拽
+            if (e.target.closest('button, a, select, .btn, .btn-text')) return;
+            if (e.target.closest('input[type="text"], input[type="number"], input[type="date"], textarea')) return;
             const tr = e.target.closest('tr');
             if (!tr) return;
             const tbody = tr.parentElement;
@@ -5284,13 +5332,17 @@ ${r.remark || '—'}
             const table = tbody.closest('table');
             if (!table) return;
 
-            // 普通点击也支持拖拽选择（不需要按键）
+            // 支持拖拽选择（包括从 checkbox 列开始）
             isDragging = true;
+            hasDragged = false; // 重置拖拽标记
             dragStartIndex = getRowIndex(tr);
             dragTable = table;
 
             // 清除其他表格的选择
             document.querySelectorAll('.drag-selected').forEach(el => el.classList.remove('drag-selected'));
+            
+            // 阻止默认的文本选择行为
+            e.preventDefault();
         }
 
         function handleMouseOver(e) {
@@ -5301,6 +5353,12 @@ ${r.remark || '—'}
             if (tbody !== dragTable.querySelector('tbody')) return;
 
             const currentIndex = getRowIndex(tr);
+            
+            // 如果拖拽到了不同的行，标记为真的拖拽
+            if (currentIndex !== dragStartIndex) {
+                hasDragged = true;
+            }
+            
             const start = Math.min(dragStartIndex, currentIndex);
             const end = Math.max(dragStartIndex, currentIndex);
             const rows = tbody.querySelectorAll('tr');
@@ -5317,22 +5375,26 @@ ${r.remark || '—'}
             if (!isDragging) return;
             isDragging = false;
 
-            // 将拖拽选择的行对应的 checkbox 勾选
-            const selected = document.querySelectorAll('.drag-selected');
-            if (selected.length > 0) {
-                selected.forEach(tr => {
-                    const cb = tr.querySelector('input[type="checkbox"]');
-                    if (cb) cb.checked = true;
-                });
-                // 触发 count 更新
-                if (dragTable && dragTable.id === 'todayTable') {
-                    if (window.updateTodaySelectedCount) window.updateTodaySelectedCount();
-                } else {
-                    if (window.updateSelectedCount) window.updateSelectedCount();
+            // 只有真的拖拽过才处理选择（区分点击和拖拽）
+            if (hasDragged) {
+                // 将拖拽选择的行对应的 checkbox 勾选
+                const selected = document.querySelectorAll('.drag-selected');
+                if (selected.length > 0) {
+                    selected.forEach(tr => {
+                        const cb = tr.querySelector('input[type="checkbox"]');
+                        if (cb) cb.checked = true;
+                    });
+                    // 触发 count 更新
+                    if (dragTable && dragTable.id === 'todayTable') {
+                        if (window.updateTodaySelectedCount) window.updateTodaySelectedCount();
+                    } else {
+                        if (window.updateSelectedCount) window.updateSelectedCount();
+                    }
                 }
+                // 清除拖拽高亮（保留 checkbox 选中状态）
+                document.querySelectorAll('.drag-selected').forEach(el => el.classList.remove('drag-selected'));
             }
-            // 清除拖拽高亮（保留 checkbox 选中状态）
-            document.querySelectorAll('.drag-selected').forEach(el => el.classList.remove('drag-selected'));
+            
             dragTable = null;
         }
 
