@@ -57,7 +57,7 @@
             let sha = null;
             try {
                 const resp = await fetch(apiUrl, {
-                    headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                    headers: { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
                 });
                 if (resp.ok) {
                     const existing = await resp.json();
@@ -73,7 +73,7 @@
             const resp = await fetch(apiUrl, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `token ${cfg.token}`,
+                    'Authorization': `Bearer ${cfg.token}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
@@ -900,7 +900,7 @@
             let sha = null;
             try {
                 const resp = await fetch(apiUrl, {
-                    headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                    headers: { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
                 });
                 if (resp.ok) {
                     const existing = await resp.json();
@@ -917,7 +917,7 @@
             const resp = await fetch(apiUrl, {
                 method: 'PUT',
                 headers: {
-                    'Authorization': `token ${cfg.token}`,
+                    'Authorization': `Bearer ${cfg.token}`,
                     'Accept': 'application/vnd.github.v3+json',
                     'Content-Type': 'application/json'
                 },
@@ -932,7 +932,7 @@
                     let solSha = null;
                     try {
                         const solResp = await fetch(solutionsUrl, {
-                            headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                            headers: { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
                         });
                         if (solResp.ok) {
                             const solExisting = await solResp.json();
@@ -948,7 +948,7 @@
                     await fetch(solutionsUrl, {
                         method: 'PUT',
                         headers: {
-                            'Authorization': `token ${cfg.token}`,
+                            'Authorization': `Bearer ${cfg.token}`,
                             'Accept': 'application/vnd.github.v3+json',
                             'Content-Type': 'application/json'
                         },
@@ -965,7 +965,7 @@
                     let fuSha = null;
                     try {
                         const fuResp = await fetch(followupUrl, {
-                            headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                            headers: { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
                         });
                         if (fuResp.ok) {
                             const fuExisting = await fuResp.json();
@@ -981,7 +981,7 @@
                     await fetch(followupUrl, {
                         method: 'PUT',
                         headers: {
-                            'Authorization': `token ${cfg.token}`,
+                            'Authorization': `Bearer ${cfg.token}`,
                             'Accept': 'application/vnd.github.v3+json',
                             'Content-Type': 'application/json'
                         },
@@ -1173,7 +1173,7 @@
     async function testCloudConnection(cfg) {
         try {
             const resp = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`, {
-                headers: { 'Authorization': `token ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
+                headers: { 'Authorization': `Bearer ${cfg.token}`, 'Accept': 'application/vnd.github.v3+json' }
             });
             if (resp.ok) {
                 const repo = await resp.json();
