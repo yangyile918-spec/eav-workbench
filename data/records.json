@@ -881,66 +881,6 @@
     "analyst": "杨怡乐"
   },
   {
-    "id": "ms30g989kdx9p",
-    "analysisTime": "2026-07-27",
-    "workOrderNo": "J160",
-    "airframeNo": "A0852",
-    "model": "",
-    "flightBatch": "海南省",
-    "region": "海南省",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": ""
-  },
-  {
-    "id": "ms30g989dawyv",
-    "analysisTime": "2026-07-27",
-    "workOrderNo": "J160",
-    "airframeNo": "A0621",
-    "model": "",
-    "flightBatch": "广西壮族自治区",
-    "region": "广西壮族自治区",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": ""
-  },
-  {
-    "id": "ms30g989bxurb",
-    "analysisTime": "2026-07-27",
-    "workOrderNo": "J160",
-    "airframeNo": "A0723",
-    "model": "",
-    "flightBatch": "山西省",
-    "region": "山西省",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": ""
-  },
-  {
-    "id": "ms30g989rzjdc",
-    "analysisTime": "2026-07-27",
-    "workOrderNo": "J160",
-    "airframeNo": "A0929",
-    "model": "",
-    "flightBatch": "山东省",
-    "region": "山东省",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": ""
-  },
-  {
-    "id": "ms30g989d0av5",
-    "analysisTime": "2026-07-27",
-    "workOrderNo": "J160",
-    "airframeNo": "A0140",
-    "model": "",
-    "flightBatch": "湖南省",
-    "region": "湖南省",
-    "feedbackPerson": "",
-    "analyst": "杨怡乐",
-    "problemType": ""
-  },
-  {
     "id": "ms306xzxp4txi",
     "analysisTime": "2026-23-03T00:00",
     "workOrderNo": "",
