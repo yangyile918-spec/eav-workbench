@@ -16,7 +16,7 @@
       "flight": false,
       "other": false
     },
-    "status": "分析中",
+    "status": "已解决",
     "analysis": "飞机自主下降时，电池电压异常下降，四个电机转速几乎同时下降，向下坠落炸机。\n初步分析：电池电压异常",
     "solution": "检查尾插 更换尾插或电池上盖",
     "remark": "这种情况大概率是尾插烧融或小概率电池上盖mos烧融",
@@ -44,5 +44,27 @@
     "solution": "",
     "remark": "",
     "createTime": "2026-07-24T08:30:47.611Z"
+  },
+  {
+    "id": "ms306xzxp4txi",
+    "droneNo": "81003",
+    "fieldNo": "",
+    "faultTime": "2026-23-03T00:00",
+    "faultPeriod": "7月25日23.3～23:10",
+    "faultDesc": "无人机起飞时失去动力炸机",
+    "requirement": "请求分析原因",
+    "logs": {
+      "drone": true,
+      "video": false,
+      "app": false,
+      "fpv": false,
+      "flight": false,
+      "other": false
+    },
+    "status": "待分析",
+    "analysis": "",
+    "solution": "",
+    "remark": "",
+    "createTime": "2026-07-27T09:07:18.045Z"
   }
 ]
