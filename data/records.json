@@ -463,6 +463,26 @@
     "analyst": "杨怡乐"
   },
   {
+    "id": "ms306xzxp4txi",
+    "analysisTime": "2026-23-03T00:00",
+    "workOrderNo": "",
+    "airframeNo": "81003",
+    "model": "J100",
+    "flightBatch": "",
+    "feedbackPerson": "",
+    "analyst": "",
+    "problemType": "",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "请求分析原因",
+    "faultCondition": "无人机起飞时失去动力炸机",
+    "initialAnalysis": "",
+    "followUp": "日志上传状态：drone",
+    "finalConclusion": "",
+    "region": ""
+  },
+  {
     "id": "ms30eu6kzp17o",
     "analysisTime": "2026-07-24",
     "model": "J150",
@@ -878,6 +898,61 @@
     "region": "美国\nKansas",
     "initialAnalysis": "FPV:无人机自主飞行与航向前方树木碰撞炸机。\n大屏数据：飞机设置不仿地、不避障飞行，障碍物前，飞机速度逐渐下降，由于惯性，与树发生碰撞。",
     "problemType": "设置问题——参数设置问题\nSetting Error—Parameter Configuration Error",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms30g989kdx9p",
+    "analysisTime": "2026-07-27",
+    "workOrderNo": "J160",
+    "airframeNo": "A0852",
+    "model": "J160",
+    "flightBatch": "海南省",
+    "region": "FPV：飞机下降时，与障碍物发生碰撞，振动后向下坠落炸机。",
+    "feedbackPerson": "跟进",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms30g989dawyv",
+    "analysisTime": "2026-07-27",
+    "workOrderNo": "J160",
+    "airframeNo": "A0621",
+    "model": "J160",
+    "flightBatch": "广西壮族自治区",
+    "region": "FPV：飞机下降后，手动飞行，发生碰撞导致炸机。\n大屏数据：飞机落地后，切换为手动飞行，手动操作与障碍物发生碰撞导致炸机。",
+    "feedbackPerson": "操作问题——手动碰撞\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms30g989bxurb",
+    "analysisTime": "2026-07-27",
+    "workOrderNo": "J160",
+    "airframeNo": "A0723",
+    "model": "J160",
+    "flightBatch": "山西省",
+    "region": "FPV：飞机起飞向右倾斜坠落炸机。\n大屏数据：飞机右后电流异常未上升，右后转速上不去，期望值拉满。\n现场：加药枪未拔，导致炸机。",
+    "feedbackPerson": "操作问题——加药枪没拔\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms30g989rzjdc",
+    "analysisTime": "2026-07-27",
+    "workOrderNo": "J160",
+    "airframeNo": "A0929",
+    "model": "J160",
+    "flightBatch": "山东省",
+    "region": "FPV：飞机航线与电线夹角过小，前进时与电线发生碰撞导致炸机。\n大屏数据：未设置地块内有电线，航线与电线夹角过小，前进时与电线发生碰撞导致炸机。",
+    "feedbackPerson": "设置问题——撞电线\n不符合质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms30g989d0av5",
+    "analysisTime": "2026-07-27",
+    "workOrderNo": "J160",
+    "airframeNo": "A0140",
+    "model": "J160",
+    "flightBatch": "湖南省",
+    "region": "大屏数据:飞机吊运时，电池电压低向下迫降炸机。",
+    "feedbackPerson": "操作问题——电池电压耗尽\n不符合质保",
     "analyst": "杨怡乐"
   }
 ]
