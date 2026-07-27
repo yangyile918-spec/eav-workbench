@@ -895,26 +895,6 @@
     "auditResult": "非质保"
   },
   {
-    "id": "ms306xzxp4txi",
-    "analysisTime": "2026-23-03T00:00",
-    "workOrderNo": "",
-    "airframeNo": "81003",
-    "model": "J100",
-    "flightBatch": "",
-    "feedbackPerson": "",
-    "analyst": "",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "请求分析原因",
-    "faultCondition": "无人机起飞时失去动力炸机",
-    "initialAnalysis": "",
-    "followUp": "日志上传状态：drone",
-    "finalConclusion": "",
-    "region": ""
-  },
-  {
     "id": "ms31q327zn1d6",
     "analysisTime": "2026-07-26",
     "model": "J160",
@@ -984,5 +964,25 @@
     "problemType": "操作问题——电池电压耗尽",
     "auditResult": "非质保",
     "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms306xzxp4txi",
+    "analysisTime": "2026-23-03T00:00",
+    "workOrderNo": "",
+    "airframeNo": "81003",
+    "model": "J100",
+    "flightBatch": "",
+    "feedbackPerson": "",
+    "analyst": "",
+    "problemType": "",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "请求分析原因",
+    "faultCondition": "无人机起飞时失去动力炸机",
+    "initialAnalysis": "",
+    "followUp": "日志上传状态：drone",
+    "finalConclusion": "",
+    "region": ""
   }
 ]
