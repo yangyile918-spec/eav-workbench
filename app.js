@@ -993,9 +993,15 @@
                 updateSyncStatus('synced', `已同步 ${records.length} 条`);
                 return true;
             } else {
-                const err = await resp.json();
-                updateSyncStatus('error', '同步失败');
-                console.error('Cloud sync error:', err);
+                const err = await resp.json().catch(() => ({ message: '无法解析错误' }));
+                console.error('[pushToCloud] API error, status=', resp.status, err);
+                if (resp.status === 406 || resp.status === 403) {
+                    updateSyncStatus('error', `认证失败(HTTP ${resp.status})`);
+                } else if (resp.status === 422) {
+                    updateSyncStatus('error', '数据冲突，请刷新重试');
+                } else {
+                    updateSyncStatus('error', `同步失败(${resp.status})`);
+                }
                 return false;
             }
         } catch(e) {
@@ -1159,8 +1165,14 @@
             } else if (resp.status === 404) {
                 updateSyncStatus('synced', '云端暂无数据');
                 return false;
+            } else if (resp.status === 406 || resp.status === 403) {
+                // v84修复：406=认证方式过期/403=权限不足，给出明确提示
+                console.error('[pullFromCloud] API拒绝访问, status=', resp.status);
+                updateSyncStatus('error', `同步失败(HTTP ${resp.status})`);
+                return false;
             } else {
-                updateSyncStatus('error', '加载失败');
+                console.warn('[pullFromCloud] 非预期状态:', resp.status);
+                updateSyncStatus('error', `加载失败(${resp.status})`);
                 return false;
             }
         } catch(e) {
@@ -1206,13 +1218,13 @@
         document.getElementById('btnSave').addEventListener('click', saveRecord);
         document.getElementById('btnClear').addEventListener('click', clearForm);
         
-        // 机架号输入时自动匹配机型
+        // 机架号输入时自动匹配机型（始终覆盖，v84修复）
         const airframeInput = document.getElementById('airframeNo');
         const modelInput = document.getElementById('model');
         if (airframeInput && modelInput) {
             airframeInput.addEventListener('input', function() {
                 const airframeNo = this.value.trim();
-                if (airframeNo && !modelInput.value.trim()) {
+                if (airframeNo) {
                     const detected = detectModelFromAirframe(airframeNo);
                     if (detected) {
                         modelInput.value = detected;
@@ -1223,11 +1235,31 @@
             });
             airframeInput.addEventListener('blur', function() {
                 const airframeNo = this.value.trim();
-                if (airframeNo && !modelInput.value.trim()) {
+                if (airframeNo) {
                     const detected = detectModelFromAirframe(airframeNo);
                     if (detected) {
                         modelInput.value = detected;
                     }
+                }
+            });
+        }
+
+        // 问题解决页面：无人机编号→机型自动匹配（v84新增）
+        const solDroneInput = document.getElementById('solutionDroneNo');
+        const solModelInput = document.getElementById('solutionModel');
+        if (solDroneInput && solModelInput) {
+            solDroneInput.addEventListener('input', function() {
+                const val = this.value.trim();
+                if (val) {
+                    const d = detectModelFromAirframe(val);
+                    if (d) { solModelInput.value = d; }
+                }
+            });
+            solDroneInput.addEventListener('blur', function() {
+                const val = this.value.trim();
+                if (val) {
+                    const d = detectModelFromAirframe(val);
+                    if (d) { solModelInput.value = d; }
                 }
             });
         }
@@ -2492,7 +2524,14 @@
             if (/故障时间|时间/i.test(trimmed)) {
                 const m = trimmed.match(/[：:]\s*(.+)/);
                 if (m) {
-                    const timeStr = m[1].trim();
+                    let timeStr = m[1].trim();
+                    // v84修复：标准化时间段格式（个位分钟补零，统一分隔符）
+                    timeStr = timeStr.replace(/(\d{1,2}):(\d{1,2})(?=\s*[到至\-~])/g, (m,h,min) =>
+                        h.padStart(2,'0') + ':' + min.padStart(2,'0')
+                    );
+                    timeStr = timeStr.replace(/(\d{1,2}):(\d{1,2})(?!\d)/g, (m,h,min) =>
+                        h.padStart(2,'0') + ':' + min.padStart(2,'0')
+                    );
                     result.faultPeriod = timeStr;
                     // 尝试解析日期：7.12日 → 2026-07-12
                     const dateMatch = timeStr.match(/(\d{1,2})[.\/\-](\d{1,2})[日号]?/);
@@ -2502,8 +2541,8 @@
                         const year = new Date().getFullYear();
                         result.faultTime = `${year}-${month}-${day}`;
                     }
-                    // 尝试解析时间段：上午7.12到9.00
-                    const periodMatch = timeStr.match(/(上午|下午)?\s*(\d{1,2})[.:：](\d{2})\s*[到至\-~]\s*(\d{1,2})[.:：](\d{2})/);
+                    // 尝试解析时间段：上午7.12到9.00 或 23:3~23:10（v84：支持个位分钟）
+                    const periodMatch = timeStr.match(/(上午|下午)?\s*(\d{1,2})[.:：](\d{1,2})\s*[到至\-~]\s*(\d{1,2})[.:：](\d{1,2})/);
                     if (periodMatch) {
                         result.faultPeriod = timeStr;
                     }
@@ -2639,6 +2678,11 @@
         }
         // 填充表单
         if (parsed.droneNo) document.getElementById('solutionDroneNo').value = parsed.droneNo;
+        // v84：无人机编号自动匹配机型
+        if (parsed.droneNo) {
+            const detected = detectModelFromAirframe(parsed.droneNo);
+            if (detected) document.getElementById('solutionModel').value = detected;
+        }
         if (parsed.fieldNo) document.getElementById('solutionFieldNo').value = parsed.fieldNo;
         if (parsed.faultTime) document.getElementById('solutionFaultTime').value = parsed.faultTime + 'T00:00';
         if (parsed.faultPeriod) document.getElementById('solutionFaultPeriod').value = parsed.faultPeriod;
@@ -2959,10 +3003,16 @@ ${r.remark || '—'}
     // 保存问题解决记录
     function saveSolutionRecord() {
         const editId = document.getElementById('editSolutionId').value;
+        const droneNo = document.getElementById('solutionDroneNo').value.trim();
+        let model = document.getElementById('solutionModel').value.trim();
+        // v84：无人机编号自动匹配机型
+        if (droneNo && !model) {
+            model = detectModelFromAirframe(droneNo);
+        }
         const record = {
             id: editId || Date.now().toString(36) + Math.random().toString(36).substr(2, 5),
-            model: document.getElementById('solutionModel').value.trim(),
-            droneNo: document.getElementById('solutionDroneNo').value.trim(),
+            model: model,
+            droneNo: droneNo,
             fieldNo: document.getElementById('solutionFieldNo').value.trim(),
             faultTime: document.getElementById('solutionFaultTime').value,
             faultPeriod: document.getElementById('solutionFaultPeriod').value.trim(),
