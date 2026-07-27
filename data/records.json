@@ -920,7 +920,8 @@
     "region": "海南省",
     "initialAnalysis": "FPV：飞机下降时，与障碍物发生碰撞，振动后向下坠落炸机。",
     "problemType": "跟进",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "非质保"
   },
   {
     "id": "ms31q327wgk1e",
