@@ -461,5 +461,25 @@
     "initialAnalysis": "FPV:无人机自主飞行与航向前方树木碰撞炸机。\n大屏数据：飞机设置不仿地、不避障飞行，障碍物前，飞机速度逐渐下降，由于惯性，与树发生碰撞。",
     "problemType": "设置问题——参数设置问题\nSetting Error—Parameter Configuration Error",
     "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms306xzxp4txi",
+    "analysisTime": "2026-23-03T00:00",
+    "workOrderNo": "",
+    "airframeNo": "81003",
+    "model": "",
+    "flightBatch": "",
+    "feedbackPerson": "",
+    "analyst": "",
+    "problemType": "",
+    "auditResult": "",
+    "tracker": "",
+    "reviewer": "",
+    "problemDescription": "请求分析原因",
+    "faultCondition": "无人机起飞时失去动力炸机",
+    "initialAnalysis": "",
+    "followUp": "日志上传状态：drone",
+    "finalConclusion": "",
+    "region": ""
   }
 ]
