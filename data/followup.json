@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "id": "fums30g98bnocfn",
+    "sourceRecordId": "ms30g989kdx9p",
+    "analysisTime": "2026-07-27",
+    "workOrderNo": "J160",
+    "airframeNo": "A0852",
+    "model": "J160",
+    "reporter": "跟进",
+    "analyst": "杨怡乐",
+    "isWarranty": "",
+    "status": "待跟进",
+    "notes": "",
+    "createdAt": "2026-07-27T09:14:32.507Z",
+    "updatedAt": "2026-07-27T09:14:32.507Z"
+  }
+]
