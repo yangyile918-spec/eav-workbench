@@ -460,7 +460,8 @@
     "region": "美国\nKansas",
     "initialAnalysis": "FPV:无人机自主飞行与航向前方树木碰撞炸机。\n大屏数据：飞机设置不仿地、不避障飞行，障碍物前，飞机速度逐渐下降，由于惯性，与树发生碰撞。",
     "problemType": "设置问题——参数设置问题\nSetting Error—Parameter Configuration Error",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "非质保"
   },
   {
     "id": "ms30eu6kzp17o",
@@ -801,7 +802,8 @@
     "region": "美国\nMinnesota",
     "initialAnalysis": "FPV:无人机自主高速喷洒作业，向右倾斜炸机。\n大屏数据：飞机右后电压丢失，电机转速异常丢失，期望值上升，预期违背。\n初步分析：右后动力异常，需要排查右后电机、电调及相关线束是否异常。该飞机6.18曾发生碰撞炸机，需注意是否存在维修不良导致的右后部件松动。",
     "problemType": "动力问题——右后异常\nPower Fault – Right Rear Abnormality",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "质保"
   },
   {
     "id": "ms30eu6leq8u5",
@@ -812,7 +814,8 @@
     "region": "美国\nNorth Carolina",
     "initialAnalysis": "FPV:无，无人机自主飞行，前往作业途中，遇紧急状态后切手动炸机。\n大屏数据：飞机自主状态下，飞控播报无可行路径，后切手动，右后电机转速持续下降，对应期望值满载。\n初步分析：需上传雷达日志进一步分析，是否与航线内障碍物发生碰撞。该飞机6.4日曾发生故障，需要关注。",
     "problemType": "疑似操作问题——手动碰撞\nSuspected Operational Issue – Manual Collision",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "非质保"
   },
   {
     "id": "ms30eu6l8ai4r",
@@ -823,7 +826,8 @@
     "region": "美国\nKansas",
     "initialAnalysis": "FPV:无，无人机自主高速飞行，返航途中，偏离航向炸机。\n大屏数据：飞机进出速度为13.4m/s,故障前飞机减速，有刹停迹象，后多电机转速异常，手动降高救机失败。\n初步分析：飞机疑似与航向内障碍物发生碰撞，需上传雷达日志进一步核实。",
     "problemType": "疑似雷达问题——距离过近\nSuspected Radar Issue – Excessively Close Distance",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "质保"
   },
   {
     "id": "ms30eu6lx0ov3",
@@ -845,7 +849,8 @@
     "region": "加拿大\nAlberta",
     "initialAnalysis": "FPV:无人机准备起飞状态，机身向右旋转，向后倾倒炸机。\n大屏数据：飞机左后电机转速异常下降，预期相悖，手动抬升高度起飞失败。\n初步分析：大屏播报左后电调断连，需排查相关线束及左后部位电机。",
     "problemType": "疑似动力问题——左后异常\nPower Issue – Abnormality on Rear Left Motor",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "质保"
   },
   {
     "id": "ms30eu6lhht5c",
@@ -856,7 +861,8 @@
     "region": "美国\nIllinois",
     "initialAnalysis": "FPV:无法播放，无人机自主喷洒作业，无路径后切手动，一段时间后坠机。\n大屏数据：飞机左前电机转速异常下降，期望满载，预期相悖。\n初步分析：左前动力异常，飞机在手动控制阶段，向后退飞行中，可能左前电机部位留下隐患。",
     "problemType": "疑似动力问题——左前异常\nPower Issue – Front-Left Abnormality",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "质保"
   },
   {
     "id": "ms30eu6l5owbg",
@@ -867,7 +873,8 @@
     "region": "美国\nWisconsin",
     "initialAnalysis": "FPV:无，无人机自主高速飞行，偏离航线坠机。\n大屏数据：飞机故障时间段动力数据缺失，作业高度由3.3m降至1.6m,相对高度由4.7m降至3.5m。\n暂定分析：疑似碰撞，需上传故障时间段无人机、雷达日志。",
     "problemType": "疑似雷达问题——距离过近\nRadar Issue – Excessively Close Distance",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "质保"
   },
   {
     "id": "ms30eu6lxclwm",
@@ -878,7 +885,8 @@
     "region": "美国\nKansas",
     "initialAnalysis": "FPV:无人机自主飞行与航向前方树木碰撞炸机。\n大屏数据：飞机设置不仿地、不避障飞行，障碍物前，飞机速度逐渐下降，由于惯性，与树发生碰撞。",
     "problemType": "设置问题——参数设置问题\nSetting Error—Parameter Configuration Error",
-    "analyst": "杨怡乐"
+    "analyst": "杨怡乐",
+    "auditResult": "非质保"
   },
   {
     "id": "ms306xzxp4txi",
