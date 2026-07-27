@@ -1,10 +1,10 @@
 [
   {
     "id": "mryojyea3injv",
-    "model": "",
+    "model": "J150",
     "droneNo": "90074",
     "fieldNo": "",
-    "faultTime": "",
+    "faultTime": "2026-07-23T17:22",
     "faultPeriod": "7月23日22.55～23:10",
     "faultDesc": "无人机异常失去动力掉落炸机",
     "requirement": "请求分析原因",
