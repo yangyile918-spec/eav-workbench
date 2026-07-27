@@ -3618,37 +3618,59 @@ ${r.remark || '—'}
             }
             expectedCols = maxCols;
 
-            // 智能推断表头：根据内容特征匹配已知格式
-            // 炸机分析表（7列）：日期 | 机型 | 机架号 | 架次 | 省份 | 初步结论 | 问题定性
+            // 智能推断表头：根据内容特征匹配已知格式（v86 增强）
+            // 炸机分析表（7列·含工单号）：日期 | 机型 | 机架号 | 工单编号 | 省份 | 初步结论 | 问题定性
+            // 炸机分析表（7列·含架次）：日期 | 机型 | 机架号 | 架次 | 省份 | 初步结论 | 问题定性
             // 日常工作录入（10列）：日期 | 工单编号 | 机架号 | 机型 | 架次-地块 | 省份 | 反馈人 | 分析人 | 问题定性 | 是否质保
-            // 判断依据：检查第一行第2列是否为机型代码（Jxx格式或JMZK/JMZJ/EAVUAV前缀），第3列是否为纯数字机架号
-            const firstRowCols = lines[dataStartIndex].split(/\t+/).map(c => c.trim());
+            // 关键改进：从所有数据行中挑选"最完整"（含机型+机架号且列数最多）的一行判断格式，
+            // 避免首行因"跟进"等字段缺失分隔符导致整批误判为10列模板。
+
+            // 选样：优先选同时含机型+机架号、且列数最多的行
+            let bestLine = lines[dataStartIndex];
+            for (let i = dataStartIndex; i < lines.length; i++) {
+                const lc = lines[i].split(/\t+/).length;
+                const hasModelFrame = /\b(J\d{2,3}|E\d{2,3})\b/i.test(lines[i]) &&
+                    (/\b\d{5,6}\b/.test(lines[i]) || /\b[A-Z]\d{3,5}\b/i.test(lines[i]));
+                if (hasModelFrame && lc >= bestLine.split(/\t+/).length) {
+                    bestLine = lines[i];
+                }
+            }
+            const firstRowCols = bestLine.split(/\t+/).map(c => c.trim());
+
             const isCrashAnalysisFormat = (
                 firstRowCols.length >= 5 &&
-                (/^J\d{2,3}$/i.test(firstRowCols[1]) || /^(JMZK|JMZJ|EAVUAV)/i.test(firstRowCols[1])) &&  // 第2列是机型如 J70/J150 或 JMZK...
-                /^\d{4,6}$/.test(firstRowCols[2])         // 第3列是机架号如 59963
+                (/^J\d{2,3}$/i.test(firstRowCols[1]) || /^(JMZK|JMZJ|EAVUAV)/i.test(firstRowCols[1])) &&  // 第2列是机型
+                (/\d{4,6}$/.test(firstRowCols[2]) || /^[A-Z]\d{3,5}$/i.test(firstRowCols[2]))  // 第3列是机架号（纯数字或 A+数字）
             );
 
             const DEFAULT_HEADERS_7 = ['分析时间','机型','机架号','架次','省份','初步结论','问题定性'];
+            const DEFAULT_HEADERS_7_ORDER = ['分析时间','机型','机架号','工单编号','省份','初步结论','问题定性'];
             const DEFAULT_HEADERS_9 = ['分析时间','机型','机架号','地块','反馈人','分析人','问题定性','是否质保','备注'];
             const DEFAULT_HEADERS_10_NEW = ['分析时间','机型','机架号','地块','省区','反馈人','分析人','问题定性','是否质保','备注'];
             const DEFAULT_HEADERS_10 = ['分析时间','工单编号','机架号','机型','架次-地块','省份','反馈人','分析人','问题定性','是否质保'];
 
-            // 备用检测：7列数据，最后一列包含问题定性关键词 → 炸机分析表
-            const PROBLEM_TYPE_KEYWORDS = /操作问题|动力|问题|故障|断裂|烧|炸|裂纹|变形|损坏|质量问题|不符合质保|质保|手动碰撞|卡扣|尾插|机臂|信号|失联|雷达|避障|喷洒|播撒|GPS|RTK|航线|偏航|翻机|坠机|失控/i;
+            // 判断第4列是"工单号"还是"架次"
+            const col3 = firstRowCols[3] || '';
+            const col3IsWorkOrder = /^(J\d{10,}|\d{10,})/.test(col3) || /--/.test(col3);
+            const col3IsFlightBatch = /_FLY_/i.test(col3) || /FLY[-\s_]\d/i.test(col3);
+
+            // 备用检测：含问题定性关键词的7列表 → 炸机分析表（仅对≤7列生效，避免误伤9/10列日常录入）
+            const PROBLEM_TYPE_KEYWORDS = /操作问题|动力|问题|故障|断裂|烧|炸|裂纹|变形|损坏|质量问题|不符合质保|质保|手动碰撞|卡扣|尾插|机臂|信号|失联|雷达|避障|喷洒|播撒|GPS|RTK|航线|偏航|翻机|坠机|失控|跟进/i;
             let isCrashByContent = false;
-            if (!isCrashAnalysisFormat && expectedCols === 7 && firstRowCols.length >= 7) {
-                const lastCol = firstRowCols[firstRowCols.length - 1] || '';
-                const secondLastCol = firstRowCols[firstRowCols.length - 2] || '';
-                // 最后一列或倒数第二列包含问题定性/初步结论关键词
-                if (PROBLEM_TYPE_KEYWORDS.test(lastCol) || PROBLEM_TYPE_KEYWORDS.test(secondLastCol)) {
-                    isCrashByContent = true;
-                }
+            if (expectedCols <= 7 && firstRowCols.length >= 6 &&
+                (PROBLEM_TYPE_KEYWORDS.test(firstRowCols[firstRowCols.length - 1]) ||
+                 PROBLEM_TYPE_KEYWORDS.test(firstRowCols[firstRowCols.length - 2] || ''))) {
+                isCrashByContent = true;
             }
 
-            if (isCrashAnalysisFormat || isCrashByContent) {
-                headers = DEFAULT_HEADERS_7.slice();
-                expectedCols = 7;  // 强制使用7列，即使第一行只有5个Tab
+            if ((isCrashAnalysisFormat || isCrashByContent) && expectedCols <= 7) {
+                // 第4列是工单号（含 -- 或长数字）时用"工单号"模板，否则用"架次"模板
+                if (col3IsWorkOrder && !col3IsFlightBatch) {
+                    headers = DEFAULT_HEADERS_7_ORDER.slice();
+                } else {
+                    headers = DEFAULT_HEADERS_7.slice();
+                }
+                expectedCols = 7;
             } else if (expectedCols === 9) {
                 // 9列数据：没有"省区"列
                 headers = DEFAULT_HEADERS_9.slice();
@@ -3735,6 +3757,29 @@ ${r.remark || '—'}
             }
             rows.push(row);
         }
+
+        // ========== 后处理：机型校验 + 质保状态提取 + 跟进兜底（v86）==========
+        rows.forEach(row => {
+            // 1) 机型合法性校验：若"机型"列不是合法机型代码，尝试从机架号推导
+            const rawModel = (row['机型'] || '').toString().trim();
+            if (rawModel && !/^(J|E)\d{2,3}(pro)?$/i.test(rawModel)) {
+                const d = detectModelFromAirframe(row['机架号'] || '');
+                if (d) row['机型'] = d;
+            }
+            // 2) 质保状态提取：问题定性含"质保"时拆分到"是否质保"列
+            const pt = (row['问题定性'] || '').toString();
+            if (/质保/.test(pt)) {
+                const audit = /非.*质保|不符合质保|非质保/.test(pt) ? '非质保' : '质保';
+                const cleanPt = pt.replace(/(不符合质保|非质保|质保)/g, '').replace(/^[—\-–\s]+/, '').trim();
+                if (cleanPt) row['问题定性'] = cleanPt;
+                row['是否质保'] = audit;
+            }
+            // 3) 兜底：问题定性缺失但初步结论尾部含"跟进"，提取为问题定性
+            if (!row['问题定性'] && /跟进/.test(row['初步结论'] || '')) {
+                row['问题定性'] = '跟进';
+            }
+        });
+
         return rows;
     }
 
