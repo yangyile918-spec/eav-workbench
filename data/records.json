@@ -905,54 +905,59 @@
     "analysisTime": "2026-07-27",
     "workOrderNo": "J160",
     "airframeNo": "A0852",
-    "model": "J160",
+    "model": "",
     "flightBatch": "海南省",
-    "region": "FPV：飞机下降时，与障碍物发生碰撞，振动后向下坠落炸机。",
-    "feedbackPerson": "跟进",
-    "analyst": "杨怡乐"
+    "region": "海南省",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": "跟进"
   },
   {
     "id": "ms30g989dawyv",
     "analysisTime": "2026-07-27",
     "workOrderNo": "J160",
     "airframeNo": "A0621",
-    "model": "J160",
+    "model": "",
     "flightBatch": "广西壮族自治区",
-    "region": "FPV：飞机下降后，手动飞行，发生碰撞导致炸机。\n大屏数据：飞机落地后，切换为手动飞行，手动操作与障碍物发生碰撞导致炸机。",
-    "feedbackPerson": "操作问题——手动碰撞\n不符合质保",
-    "analyst": "杨怡乐"
+    "region": "广西壮族自治区",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": ""
   },
   {
     "id": "ms30g989bxurb",
     "analysisTime": "2026-07-27",
     "workOrderNo": "J160",
     "airframeNo": "A0723",
-    "model": "J160",
+    "model": "",
     "flightBatch": "山西省",
-    "region": "FPV：飞机起飞向右倾斜坠落炸机。\n大屏数据：飞机右后电流异常未上升，右后转速上不去，期望值拉满。\n现场：加药枪未拔，导致炸机。",
-    "feedbackPerson": "操作问题——加药枪没拔\n不符合质保",
-    "analyst": "杨怡乐"
+    "region": "山西省",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": ""
   },
   {
     "id": "ms30g989rzjdc",
     "analysisTime": "2026-07-27",
     "workOrderNo": "J160",
     "airframeNo": "A0929",
-    "model": "J160",
+    "model": "",
     "flightBatch": "山东省",
-    "region": "FPV：飞机航线与电线夹角过小，前进时与电线发生碰撞导致炸机。\n大屏数据：未设置地块内有电线，航线与电线夹角过小，前进时与电线发生碰撞导致炸机。",
-    "feedbackPerson": "设置问题——撞电线\n不符合质保",
-    "analyst": "杨怡乐"
+    "region": "山东省",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": ""
   },
   {
     "id": "ms30g989d0av5",
     "analysisTime": "2026-07-27",
     "workOrderNo": "J160",
     "airframeNo": "A0140",
-    "model": "J160",
+    "model": "",
     "flightBatch": "湖南省",
-    "region": "大屏数据:飞机吊运时，电池电压低向下迫降炸机。",
-    "feedbackPerson": "操作问题——电池电压耗尽\n不符合质保",
-    "analyst": "杨怡乐"
+    "region": "湖南省",
+    "feedbackPerson": "",
+    "analyst": "杨怡乐",
+    "problemType": ""
   }
 ]
