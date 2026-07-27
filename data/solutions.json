@@ -12,14 +12,14 @@
       "drone": true,
       "video": false,
       "app": false,
-      "fpv": true,
-      "flight": true,
+      "fpv": false,
+      "flight": false,
       "other": false
     },
     "status": "分析中",
-    "analysis": "",
-    "solution": "",
-    "remark": "",
+    "analysis": "飞机自主下降时，电池电压异常下降，四个电机转速几乎同时下降，向下坠落炸机。\n初步分析：电池电压异常",
+    "solution": "检查尾插 更换尾插或电池上盖",
+    "remark": "这种情况大概率是尾插烧融或小概率电池上盖mos烧融",
     "createTime": "2026-07-24T08:30:24.994Z"
   },
   {
