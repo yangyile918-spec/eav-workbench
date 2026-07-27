@@ -47,9 +47,10 @@
   },
   {
     "id": "ms306xzxp4txi",
+    "model": "J100",
     "droneNo": "81003",
     "fieldNo": "",
-    "faultTime": "2026-23-03T00:00",
+    "faultTime": "2026-07-25T17:21",
     "faultPeriod": "7月25日23.3～23:10",
     "faultDesc": "无人机起飞时失去动力炸机",
     "requirement": "请求分析原因",
@@ -61,9 +62,9 @@
       "flight": false,
       "other": false
     },
-    "status": "待分析",
-    "analysis": "",
-    "solution": "",
+    "status": "已解决",
+    "analysis": "81003-2026-07-25 无人机自主模式地面起飞，姿态左后异常倾斜，左后PWM输出最大，左后电机转速快速下降，同时左后电调过流坠机。",
+    "solution": "检查左后线束以及左后电调的情况",
     "remark": "",
     "createTime": "2026-07-27T09:07:18.045Z"
   }
