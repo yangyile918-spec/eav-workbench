@@ -959,5 +959,75 @@
     "followUp": "日志上传状态：drone",
     "finalConclusion": "",
     "region": ""
+  },
+  {
+    "id": "ms31q327zn1d6",
+    "analysisTime": "2026-07-26",
+    "model": "J160",
+    "airframeNo": "A0880",
+    "workOrderNo": "178508098935323 -- 3539180",
+    "region": "广西壮族自治区",
+    "initialAnalysis": "FPV：飞机在向右转向的时候，姿态向左前倾斜坠落炸机。\n大屏数据:飞机左前转速异常下降，期望值拉满。",
+    "problemType": "跟进",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms31q327fscew",
+    "analysisTime": "2026-07-27",
+    "model": "J160",
+    "airframeNo": "A0852",
+    "workOrderNo": "178508188464543 -- 2855408",
+    "region": "海南省",
+    "initialAnalysis": "FPV：飞机下降时，与障碍物发生碰撞，振动后向下坠落炸机。",
+    "problemType": "跟进",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms31q327wgk1e",
+    "analysisTime": "2026-07-27",
+    "model": "J160",
+    "airframeNo": "A0621",
+    "workOrderNo": "178508309969722 -- 3559956",
+    "region": "广西壮族自治区",
+    "initialAnalysis": "FPV：飞机下降后，手动飞行，发生碰撞导致炸机。\n大屏数据：飞机落地后，切换为手动飞行，手动操作与障碍物发生碰撞导致炸机。",
+    "problemType": "操作问题——手动碰撞",
+    "auditResult": "非质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms31q327o11j6",
+    "analysisTime": "2026-07-27",
+    "model": "J160",
+    "airframeNo": "A0723",
+    "workOrderNo": "178510609957569 -- 3417528",
+    "region": "山西省",
+    "initialAnalysis": "FPV：飞机起飞向右倾斜坠落炸机。\n大屏数据：飞机右后电流异常未上升，右后转速上不去，期望值拉满。\n现场：加药枪未拔，导致炸机。",
+    "problemType": "操作问题——加药枪没拔",
+    "auditResult": "非质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms31q3279c2u4",
+    "analysisTime": "2026-07-27",
+    "model": "J160",
+    "airframeNo": "A0929",
+    "workOrderNo": "178511378525949 -- 3458307",
+    "region": "山东省",
+    "initialAnalysis": "FPV：飞机航线与电线夹角过小，前进时与电线发生碰撞导致炸机。\n大屏数据：未设置地块内有电线，航线与电线夹角过小，前进时与电线发生碰撞导致炸机。",
+    "problemType": "设置问题——撞电线",
+    "auditResult": "非质保",
+    "analyst": "杨怡乐"
+  },
+  {
+    "id": "ms31q3275toiz",
+    "analysisTime": "2026-07-27",
+    "model": "J160",
+    "airframeNo": "A0140",
+    "workOrderNo": "178512168426998 -- 3409041",
+    "region": "湖南省",
+    "initialAnalysis": "大屏数据:飞机吊运时，电池电压低向下迫降炸机。",
+    "problemType": "操作问题——电池电压耗尽",
+    "auditResult": "非质保",
+    "analyst": "杨怡乐"
   }
 ]
