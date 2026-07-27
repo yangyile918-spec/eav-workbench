@@ -1,17 +1,17 @@
 [
   {
     "id": "fums30g98bnocfn",
-    "sourceRecordId": "ms30g989kdx9p",
-    "analysisTime": "2026-07-27",
+    "analysisTime": "2026-07-27T17:50",
+    "model": "J160",
     "workOrderNo": "J160",
     "airframeNo": "A0852",
-    "model": "J160",
-    "reporter": "跟进",
+    "reporter": "",
     "analyst": "杨怡乐",
-    "isWarranty": "",
-    "status": "待跟进",
+    "problemType": "",
+    "isWarranty": "非质保",
+    "status": "跟进中",
     "notes": "",
     "createdAt": "2026-07-27T09:14:32.507Z",
-    "updatedAt": "2026-07-27T09:14:32.507Z"
+    "updatedAt": "2026-07-27T09:50:34.568Z"
   }
 ]
