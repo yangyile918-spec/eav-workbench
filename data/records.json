@@ -970,25 +970,5 @@
     "auditResult": "非质保",
     "analyst": "杨怡乐",
     "flightBatch": "178512168426998 -- 3409041"
-  },
-  {
-    "id": "ms306xzxp4txi",
-    "analysisTime": "2026-23-03T00:00",
-    "workOrderNo": "",
-    "airframeNo": "81003",
-    "model": "J100",
-    "flightBatch": "",
-    "feedbackPerson": "",
-    "analyst": "",
-    "problemType": "",
-    "auditResult": "",
-    "tracker": "",
-    "reviewer": "",
-    "problemDescription": "请求分析原因",
-    "faultCondition": "无人机起飞时失去动力炸机",
-    "initialAnalysis": "",
-    "followUp": "日志上传状态：drone",
-    "finalConclusion": "",
-    "region": ""
   }
 ]
