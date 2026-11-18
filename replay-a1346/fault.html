@@ -1,0 +1,93 @@
+<!doctype html><html data-inspection data-log-embed lang="zh-CN"><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="data:,"><title>J150 EVO · 结构与线束</title><style>
+*{box-sizing:border-box}body{margin:0;font:14px -apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif;color:#243b44;background:#edf2f3}header{height:88px;padding:18px 24px;background:white;border-bottom:1px solid #d8e2e4}h1{font-size:21px;margin:0 0 7px}header p{margin:0;color:#61747d;font-size:12px}main{display:flex;height:calc(100dvh - 88px)}aside{width:270px;background:white;padding:20px;overflow:auto;border-right:1px solid #d8e2e4}h2{font-size:15px;margin:15px 0 10px}button{font:inherit;cursor:pointer;background:white;border:1px solid #c5d4d8;border-radius:7px;padding:9px;color:#244953}aside button{display:block;width:100%;text-align:left;margin:7px 0}button:hover,button.active{background:#e2f3ef;border-color:#16816f}button:disabled{opacity:.4;cursor:default}aside p{font-size:12px;line-height:1.8;color:#61747d}.route-item{display:flex;align-items:center;gap:6px}.route-item input{flex-shrink:0;accent-color:#177965}.route-item button{font-size:12px}.stage{position:relative;flex:1;min-width:0;overflow:hidden}canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}canvas:active{cursor:grabbing}#overlay{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}.marker{position:absolute;pointer-events:none;background:#fff;border:1px solid #92afb6;box-shadow:0 3px 10px #233b4412;border-radius:6px;padding:7px 10px;font-size:12px;max-width:190px;line-height:1.5}.marker b{background:#177965;color:white;display:inline-block;padding:0 5px;border-radius:3px;margin-right:5px}.marker small{display:block;color:#75858a;margin-left:22px}.toolbar{position:absolute;bottom:18px;left:15px;right:15px;display:flex;justify-content:center;gap:7px;flex-wrap:wrap}.note{position:absolute;left:16px;top:14px;color:#647c84;font-size:12px;background:#ffffffd9;padding:7px 11px;border-radius:5px}#loading{position:absolute;inset:0;display:grid;place-content:center;background:#edf2f3;z-index:5}#loading[hidden]{display:none}#status{color:#177965}@media(max-width:700px){header{height:95px;padding:14px}h1{font-size:18px}main{height:calc(100dvh - 95px)}aside{width:142px;padding:10px}aside button{font-size:11px;padding:7px}aside p{font-size:10px}.marker{font-size:10px;padding:4px;max-width:126px}.toolbar button{font-size:11px;padding:7px}.note{font-size:10px}}
+
+.overview-group{display:none}.whole-wiring .overview-group{display:block}.whole-wiring .position-items,.whole-wiring .local-tool{display:none}.whole-wiring #route-selection{margin-block:8px}.whole-wiring #rear-esc-items{margin-bottom:15px}.whole-wiring #rear-esc-items button{font-size:12px}.whole-wiring #wiring-all{font-weight:650}.route-item[hidden]{display:none}.rear-esc-view .position-items,.rear-arm-view .local-tool:not(#solid-check),.rear-esc-view .local-tool,.rear-esc-view #power-base-panel{display:none}
+.tail-signal-view .local-tool,.tail-signal-view #cover-toggle,.tail-signal-view .position-items,.spray-work-view .local-tool,.spray-work-view #cover-toggle,.spray-work-view .position-items{display:none}
+.controller-clip-view .local-tool,.controller-clip-view .position-items,.controller-clip-view #cover-toggle{display:none}#controller-focus-tools:not([hidden]){display:flex;gap:6px;flex-wrap:wrap;margin:9px 0 14px}#controller-focus-tools button[hidden]{display:none}#controller-focus-tools button,#rf-focus-tools:not([hidden]){display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:10px 0 14px}#rf-focus-tools button{margin:0;font-size:12px;padding:6px;min-height:31px}.rf-review .toolbar button:not(#wiring-all,#rf-feeders-view,#wire-toggle){display:none}#controller-rf-review>div{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:7px 0 13px}#controller-rf-review button{margin:0;min-height:31px;padding:5px;font-size:12px}.rf-review .marker{width:max-content;box-sizing:border-box}
+
+
+
+.controller-clip-view .marker{width:max-content;box-sizing:border-box}
+.external-audit-view .toolbar button:not(#wiring-all,#wire-toggle,#tail-signal-view){display:none}</style>
+<link rel="stylesheet" href="evo--viewer.css">
+<link rel="stylesheet" href="evo--parent--log-fault-embed.css"><body>
+<header class="evo-header">
+  <a class="evo-home" href="./index.html" aria-label="返回整机总览">EAVISION<span>整机总览</span></a>
+  <div class="evo-title"><h1>J150 EVO</h1><p>结构与线束</p></div>
+  <a id="return-system-view" href="index.html" hidden>返回系统查看</a>
+  <button id="evo-sidebar-toggle" type="button" aria-expanded="false" aria-controls="evo-sidebar">目录</button>
+</header>
+<main>
+<aside id="evo-sidebar">
+<section id="wiring-panel" hidden>
+<h2 id="arm-review-title">整机走线</h2><p id="status">读取模型…</p><div id="rf-focus-tools" hidden><button data-view="rf-feeders">馈线总览</button><button data-view="rf-left">左侧对插</button><button data-view="rf-right">右侧对插</button><button data-view="rf-controller">主控射频出口</button><button data-view="rf-controller-lead">五路出线顺序</button><button data-view="rf-wifi-main">Wi‑Fi 到主天线</button><button data-view="rf-underframe">梁下走线</button><button data-view="rf-gps-link">主副天线馈线</button><button data-view="rf-gps-main" data-gps-rf-focus hidden>主天线出线</button><button data-view="rf-gps-secondary" data-gps-rf-focus hidden>副天线出线</button><button data-view="rf-gps-mate" data-gps-rf-focus hidden>对插近景</button><button data-view="rf-gps-main-seat" data-gps-rf-focus hidden>主天线壳内</button><button data-view="rf-gps-secondary-seat" data-gps-rf-focus hidden>副天线壳内</button><button data-view="rf-left-cradle">左 2.4G 座内</button><button data-view="rf-right-cradle">右 2.4G 座内</button><button data-view="controller-peripheral">主控接口总览</button></div>
+<div id="wiring-legend" hidden><p>红色正极 · 黑色负极<br>黄、橙、蓝为动力三相线</p><p>青色标注为喷头电调，每侧两个喷头共用一套。勾选可显隐线路。</p></div>
+<div id="rear-esc-items" hidden></div><div id="m1-review-panel"><h2 class="overview-group">M1 · 右前机臂</h2><div id="arm-route-items"></div><div class="position-items"><h2>接口与走线位置</h2><div id="next-items"></div></div></div><div id="m2-review-panel" hidden><h2 class="overview-group">M2 · 左前机臂</h2><div id="m2-route-items"></div><div class="position-items"><h2>接口与走线位置</h2><div id="m2-items"></div></div></div><div id="m3-review-panel" hidden><h2 class="overview-group">M3 · 左后机臂</h2><div id="m3-route-items"></div><div id="m3-spray-group" hidden><h2>左侧喷头电调线束</h2><div id="m3-spray-route-items"></div></div><div class="position-items"><h2>走线位置与接口</h2><div id="m3-items"></div></div></div><div id="m4-review-panel" hidden><h2 class="overview-group">M4 · 右后机臂</h2><div id="m4-route-items"></div><div id="m4-spray-group" hidden><h2>右侧喷头电调线束</h2><div id="m4-spray-route-items"></div></div><div class="position-items"><h2>尾插线序、孔位与接口</h2><div id="m4-items"></div></div></div><section id="controller-rf-review" hidden><h2>射频馈线</h2><p>从左到右：2.4G、2.4G、4G、4G、Wi‑Fi</p><div>
+<button data-view="rf-controller-lead">主控五路出口</button><button data-view="rf-wifi-main">Wi‑Fi 到主天线</button>
+<button data-view="rf-gps-main-seat">GPS 壳内直插</button><button data-view="rf-underframe">两侧 2.4G</button>
+</div></section><p id="route-selection" hidden></p><div id="power-base-panel"><h2>铜排与尾插线路</h2><div id="route-items"></div></div><div id="controller-focus-tools" hidden><button data-view="gps-101-window" data-gps-focus hidden>支架窗口 A</button><button data-view="gps-101-port" data-gps-focus hidden>直插近景 B</button><button data-view="gps-101-front" data-gps-focus hidden>前侧下线 C</button><button data-view="weight-105" data-weight-focus hidden>105 总览</button><button data-view="weight-105-port" data-weight-focus hidden>主控端</button><button data-view="weight-105-front" data-weight-focus hidden>前称重</button><button data-view="weight-105-join" data-weight-focus hidden>主控下方</button><button data-view="weight-105-rear" data-weight-focus hidden>后壳走线</button><button data-view="weight-105-rail" data-weight-focus hidden>右梁下侧</button><button data-view="radar-207" data-radar-focus hidden>207 总览</button><button data-view="radar-207-controller" data-radar-focus hidden>207 主控端</button><button data-view="radar-207-rail" data-radar-focus hidden>207 与 105 并行</button><button data-view="radar-207-leg" data-radar-focus hidden>207 脚架与雷达</button><button data-view="lidar-103">103 全段</button><button data-view="lidar-103-port">103 雷达端近景</button><button data-view="battery-106">106 全段</button><button data-view="battery-106-seat">防水对插近景</button><button data-view="led-202">202 LED 总览</button><button data-view="led-202-lamp">P4 灯端保护套</button><button data-view="fan-202">P3 风扇线束</button><button data-view="led-202-fan-clip">P3 四针对插</button><button data-view="fan-202-upper">上方风扇出线</button><button data-view="fan-202-lower">下方风扇接线</button><button data-view="controller-peripheral">返回接口总览</button></div><div class="position-items"><p>红色为正极，黑色为负极。虚线用于定位部件。</p><h2>部件定位</h2><div id="items"></div><p>A：负极尾插 · B：正极尾插<br>C：负极铜排（上层）<br>D：正极铜排（下层）<br>L / R：左、右纵梁</p><p>E–H：正极入口、出线孔及两处线卡。N1–N4：负极走线位置。左右沿用原模型名称；机头标记用于判断方向。</p></div></section>
+<section id="parts-panel" hidden>
+  <h2>系统与主要部件</h2>
+  <div id="systems" class="part-systems" aria-label="系统筛选"></div>
+  <details id="system-route-directory">
+    <summary>线束清单 <span id="system-route-count"></span></summary>
+    <input id="system-route-search" type="search" placeholder="搜索线束名称" aria-label="搜索线束名称" autocomplete="off">
+    <div id="system-route-list"></div>
+  </details>
+  <label class="parts-search"><span>搜索</span><input id="search" type="search" placeholder="部件名称" autocomplete="off"></label>
+  <div class="parts-list-heading"><span>主要部件</span><strong id="parts-count"></strong></div>
+  <div id="list" class="parts-list"></div>
+</section>
+</aside>
+<section class="stage" aria-label="整机三维视图">
+<canvas id="canvas" aria-label="J150 EVO 三维模型"></canvas>
+<div id="wiring-tools" hidden>
+<svg id="overlay"></svg><div id="labels"></div><div class="note">整机透视</div><div class="toolbar"><button id="wiring-all">整机走线</button><button id="controller-clips" hidden>主控后侧线卡</button><button id="controller-peripheral" hidden>主控接口总览</button><button id="battery106-view" hidden>106 备用电池</button><button id="rf-feeders-view" hidden>2.4G / 4G 馈线</button><button id="tail-signal-view" hidden>尾插信号走线</button><button id="fc205-view" hidden>205 电源与通讯</button><button id="spray-work-view" hidden>喷洒总线</button><button id="spray-work-front" hidden>机头前侧走线</button><button id="spray-work-port" hidden>24 针卡槽近景</button><button id="spray-work-tank" hidden>药箱四路</button><button id="tail-signal-port" hidden>205 接头近景</button><button id="tail-signal-p3" hidden>梁内四位对插</button><button id="valve-focus-toggle" hidden>集线器定位</button><button id="arm-m4" hidden>M4 右后线束</button><button id="arm-m4-phase" hidden>M4 三相近景</button><button id="arm-m3" hidden>M3 左后线束</button><button id="arm-m3-phase" hidden>M3 三相近景</button><button id="arm-m2">M2 左前线束</button><button id="arm-m2-phase" hidden>M2 三相近景</button><button id="arm-m1">M1 线束全段</button><button id="arm-m1-phase" hidden>M1 三相近景</button><button id="overview">铜排周边总览</button><button id="front" class="local-tool">铜排正面</button><button id="route" class="local-tool">正极近景</button><button id="negative" class="local-tool">负极近景</button><button id="clip" class="local-tool">正极线卡近景</button><button id="shared-negative" class="local-tool">负极共享端子近景</button><button id="shared-positive" class="local-tool">正极共享端子近景</button><button id="cover-toggle">盖板：实体</button><button id="solid-check" class="local-tool">纵梁：透视</button><button id="wire-toggle">线路：显示</button><button id="top">俯视</button><button id="rear">后上方</button><button id="side" class="local-tool">侧视铜排</button><button id="all" class="local-tool">显示全部标注</button></div></div>
+<div id="parts-tools" hidden>
+  <div class="parts-view-status"><span id="view-label">整机视图</span><span id="visible-count"></span></div>
+  <div id="empty-model" hidden>当前筛选没有可显示的部件</div>
+  <div class="parts-display" aria-label="显示模式">
+    <button type="button" data-display="solid" aria-pressed="false">实体</button>
+    <button type="button" data-display="transparent" aria-pressed="true">透视</button>
+    <label class="system-wire-control"><input type="checkbox" id="system-wire-toggle" checked>显示线束</label>
+    <button id="chain-context-toggle" type="button" aria-pressed="true" hidden>整机参照</button>
+    <button id="spray-flow-toggle" type="button" aria-pressed="false" aria-controls="spray-flow-controls" hidden>喷洒演示</button>
+  </div>
+  <div id="spray-flow-markers" hidden aria-hidden="true"></div>
+  <div id="spray-flow-controls" hidden>
+    <div class="flow-buttons" role="group" aria-label="喷洒演示视角与播放">
+      <button type="button" data-spray-view="all" aria-pressed="true">两侧总览</button>
+      <button type="button" data-spray-view="follow" aria-pressed="false">跟随水流</button>
+      <button type="button" data-spray-view="supply" aria-pressed="false">水箱与双泵</button>
+      <button type="button" data-spray-view="left" aria-pressed="false">左后三通</button>
+      <button type="button" data-spray-view="right" aria-pressed="false">右后三通</button>
+      <button type="button" id="spray-flow-play">暂停流动</button>
+      <button type="button" id="spray-flow-replay">从水箱重播</button>
+    </div>
+    <p id="spray-flow-caption" aria-live="polite">箱底滤网 → 左右水泵 → 双通道流量计 → 穿过机臂 → 三通分流 → 四个喷头</p>
+  </div>
+  <div class="parts-controls">
+    <button id="fit" type="button">适配视图</button>
+    <button id="animate-explode" type="button">播放拆解</button>
+    <button id="reset" type="button">恢复整机</button>
+    <label class="explode"><span>拆解展开</span><input id="explode" type="range" min="0" max="100" value="0"><output id="explode-value" for="explode">0%</output></label>
+  </div>
+  <p id="explode-note" hidden>拆解时，线束保留安装位置。点击链路步骤可归位并定位接线。</p>
+  <div class="parts-gesture">点击部件或线束查看连接 · 拖动旋转 · 滚轮缩放</div>
+</div>
+<div id="loading" role="status">正在加载 J150 EVO…</div>
+</section>
+<aside id="details" class="part-details" aria-label="部件与控制链路" hidden>
+  <button id="detail-close" type="button" aria-label="关闭部件详情">×</button>
+  <span id="detail-system"></span>
+  <h2 id="detail-name"></h2>
+  <p id="detail-description"></p>
+  <section id="detail-paths" aria-label="控制链路"></section>
+</aside>
+</main>
+
+
+<link rel="stylesheet" href="evo--parent--evo-inspection.css">
+
+<script type="module" src="fault-boot.js"></script></body>
+</html>

@@ -1,0 +1,4 @@
+import {installAssetFetch} from './secure.js';
+let started=false;
+window.addEventListener('message',async event=>{if(started||event.origin!==location.origin||event.source!==parent||event.data?.type!=='share-key')return;started=true;installAssetFetch(event.data.key,event.data.manifest,'evo/');try{for(const src of ["evo--parent--log-fault-bridge.js","evo--assets--three.global.js","evo--assets--OrbitControls.global.js","evo--assets--glb-loader.js","evo--assets--evo-component-geometry.js","evo--system-connections.js","evo--spray-water.js","evo--app.js","evo--parent--evo-inspection-bridge.js","evo--power-review.js"])await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src=src;s.onload=resolve;s.onerror=reject;document.body.append(s);});}catch{document.getElementById('loading').textContent='模型加载失败，请重新打开分享页面';}});
+if(parent!==window)parent.postMessage({type:'share-key-request'},location.origin);
